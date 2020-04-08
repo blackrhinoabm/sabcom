@@ -103,3 +103,6 @@ JSTmoneyR3.xlsx
 *.csv
 *.pickle
 *.graphml
+*.png
+*.7z
+*.zip
