@@ -79,7 +79,7 @@ class EnvironmentNetwork:
         # Next, create the agents
         self.agents = [NetworkAgent(x, 's', parameters["probability_transmission"],
                                     parameters["probability_critical"], parameters["probability_to_die"],
-                                    parameters["probability_critical"], parameters["probability_to_travel"]
+                                    parameters["probability_susceptible"], parameters["probability_to_travel"]
                                     ) for x in range(len(self.network.nodes))]
 
         # add agent to the network structure
