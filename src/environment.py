@@ -12,18 +12,19 @@ class EnvironmentNetwork:
     The environment class contains the agents in a network structure
     """
 
-    def __init__(self, seed, number_agents, prob_transmit, prob_hospital,
-                 prob_death, prob_susceptible, prob_travel, neighbourhood_data):
+    def __init__(self, seed, parameters, neighbourhood_data):
         np.random.seed(seed)
         random.seed(seed)
+
+        self.parameters = parameters
 
         # sort data
         nbd_values = [x[1] for x in neighbourhood_data]
         nbd_keys = [x[0] for x in neighbourhood_data]
-        population_per_neighbourhood = [x['population'] for x in nbd_values]
+        population_per_neighbourhood = [x['Population'] for x in nbd_values]
 
         # correct the population in neighbourhoods to be proportional to number of agents
-        correction_factor = sum(population_per_neighbourhood) / number_agents
+        correction_factor = sum(population_per_neighbourhood) / parameters["number_of_agents"]
         corrected_populations = [int(x / correction_factor) for x in population_per_neighbourhood]
 
         # only count neighbourhoods that then have an amount of people bigger than 3
@@ -51,9 +52,9 @@ class EnvironmentNetwork:
         cliques = list(nx.find_cliques(self.network))
 
         # Next, reduce the amount of edges to reflect the density of the neighbourhood
-        corrected_density_per_neighbourhood = [x['population_KM'] for i, x in enumerate(nbd_values) if
+        corrected_density_per_neighbourhood = [x['Density'] for i, x in enumerate(nbd_values) if
                                                i in indices_big_neighbourhoods]
-        highest_density = 0.4 #TODO replace this with parameter input
+        highest_density = parameters["highest_density_neighbourhood"]
         density_scores = [(float(i) / max(corrected_density_per_neighbourhood)) * highest_density for i in
                           corrected_density_per_neighbourhood]
         density_score_per_neighbourhood = {key: value for key, value in zip(neighbourhoods, density_scores)}
@@ -76,9 +77,10 @@ class EnvironmentNetwork:
             neighbourhood_nodes[neighb] = [mapping[x] for x in neighbourhood_nodes[neighb]]
 
         # Next, create the agents
-        self.agents = [NetworkAgent(x, 's', prob_transmit,
-                                    prob_hospital, prob_death,
-                                    prob_susceptible, prob_travel) for x in range(len(self.network.nodes))]
+        self.agents = [NetworkAgent(x, 's', parameters["probability_transmission"],
+                                    parameters["probability_critical"], parameters["probability_to_die"],
+                                    parameters["probability_critical"], parameters["probability_to_travel"]
+                                    ) for x in range(len(self.network.nodes))]
 
         # add agent to the network structure
         for idx, agent in enumerate(self.agents):
@@ -104,5 +106,5 @@ class EnvironmentNetwork:
             location_status_data['status'].append(agent.status)
             location_status_data['sp_code'].append(agent.neighbourhood)
 
-        pd.DataFrame(location_status_data).to_csv("output/2agent_data{}.csv".format(period))
+        pd.DataFrame(location_status_data).to_csv("measurement/2agent_data{}.csv".format(period))
 
