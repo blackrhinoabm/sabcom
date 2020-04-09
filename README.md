@@ -9,7 +9,7 @@ be used to simulate and analyse a spread of the Covid-19 virus on the level of t
 This distinguishes the model from most models, that have a more high level perspective. This makes 
 our model particularly usefull for researchers and policy makers that want to study the impact of 
 heterogeneity in the population (e.g. by modelling neighbourhoods with vulnerable populations) and
-who want to study the impact of targeted measures (e.g. quartantaining certain neighbourhoods,
+who want to study the impact of targeted measures (e.g. quarantining certain neighbourhoods,
 or targetted social distancing measures at aimed at specific segments of the population). 
  
  __Getting started__
