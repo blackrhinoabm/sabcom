@@ -25,23 +25,7 @@ parameters = {
     # general simulation parameters
     "time": 150,
     "number_of_agents": 10000,
-    "monte_carlo_runs": 1,
-    "high_performance": False,
-    # specific simulation parameters
-    "share_inital_agents_infected": 0.05, # percentage of agents infected randomly at the start of the simulation
-    "highest_density_neighbourhood": 0.4, # percentage of nodes the highest density neighbourhoods has compared to caveman graph
-    "incubation_days": 5, # average number of days agents are infected but do not have symptoms SOURCE Zhang et al. 2020
-    "symptom_days": 10,# average number of days agents have mild symptoms
-    "critical_days": 20, # average number of days agents are in critical condition
-    "health_system_capacity": 0.28, # relative (in terms of population) capacity of the hospitals
-    "no_hospital_multiplier": 1.79, # the increase in probability if a critical agent cannot go to the hospital SOURCE: Zhou et al. 2020
-    "travel_sample_size": 0.05, # amount of agents that an agent might choose to travel to
-    # agent parameters
-    "probability_transmission": 0.20, # should be estimated to replicate realistic R0 number.
-    "probability_to_travel": 0.25, # should be estimated to replicate travel data 
-    "probability_critical": 0.19, # probability that an agent enters a critical stage of the disease SOURCE: Spycharlsky et al. 2020, & Zhou et al. 2020
-    "probability_to_die": 0.28, # base probability to die for an agent in the critical stage SOURCE: Zhou et al. 2020
-    "probability_susceptible": 0.0001, # probability that the agent will again be susceptible after having recovered
+    ...
 }
 ```
 and save as json file with
