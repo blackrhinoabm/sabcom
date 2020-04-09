@@ -3,6 +3,7 @@
 
 [comment]: <> (One paragraph overview of the project, TODO add link to blog?)
  __The Spatial Agent-Based Covid Model (SABCom)__ 
+ 
 SABCoM is an open source easy-to-use-and-adapt spatial network multi-agent simulation model of the spread of the Covid-19 virus. The model can 
 be used to simulate and analyse a spread of the Covid-19 virus on the level of the individual.
 This distinguishes the model from most models, that have a more high level perspective. This makes 
