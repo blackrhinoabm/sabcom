@@ -1,4 +1,5 @@
 <dl>
+
 <div class="row">
   <div class="column">
     <img src="https://cogeorg.github.io/images/black_rhino_logo.jpg" alt="Snow" style="height:64px">
@@ -7,8 +8,6 @@
     <img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png" height="64px"/>
   </div>
 </div>
-
-<img src="" />
 
 </dl>
 
