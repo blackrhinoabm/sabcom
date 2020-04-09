@@ -2,8 +2,8 @@
 <img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png" height="64px"/>
 
 [comment]: <> (One paragraph overview of the project, TODO add link to blog?)
-**The Spatial Agent-Based Covid Model (SABCom)** is an open source easy-to-use-and-adapt 
-spatial network multi-agent simulation model of the spread of the Covid-19 virus. The model can 
+ __The Spatial Agent-Based Covid Model (SABCom)__ 
+SABCoM is an open source easy-to-use-and-adapt spatial network multi-agent simulation model of the spread of the Covid-19 virus. The model can 
 be used to simulate and analyse a spread of the Covid-19 virus on the level of the individual.
 This distinguishes the model from most models, that have a more high level perspective. This makes 
 our model particularly usefull for researchers and policy makers that want to study the impact of 
@@ -16,6 +16,7 @@ or targetted social distancing measures at aimed at specific segments of the pop
 You can **install** the SABCom model by cloning this repository to your system. After that, you are ready to start using the model.
 
 __Running the model__
+
 There are two files in the main folder that will allow you to run the model. The first is the 
 SABCoModel.py model. This will run the model using the neighbourhood_data.json and parameters.json
 files. These are the calibration files for Cape Town. The second file to run the model is the Jupyter notebook:
