@@ -27,12 +27,6 @@ class NetworkAgent:
         self.prob_susceptible = prob_susceptible
         self.prob_travel = prob_travel
 
-    def infect(self, neighours):
-        for neighbour in neighours:
-            # only infect neighbours that are susceptible
-            if neighbour.status == 's' and np.random.random() < self.prob_transmission:
-                neighbour.status = 'i1'
-
     def __repr__(self):
         """
         :return: String representation of the trader
