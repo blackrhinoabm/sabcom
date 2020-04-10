@@ -120,6 +120,7 @@ class Runner:
             else:
                 environment.infection_states.append(environment.store_network())
                 environment.write_status_location(t)
+                # environment.write_status_location_montecarlo(t,seed)
 
             # delete travel edges
             environment.network.remove_edges_from(travel_edges)

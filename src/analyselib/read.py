@@ -49,5 +49,5 @@ def get_csvlist(data_path, template):
 	        pd_list.append(df)
 	    else:
 	        continue
-
+	        
 	return pd_list
