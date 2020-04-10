@@ -1,0 +1,4 @@
+
+
+def calculate():
+	pass
