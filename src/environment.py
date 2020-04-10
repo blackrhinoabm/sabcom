@@ -12,7 +12,7 @@ class EnvironmentNetwork:
     The environment class contains the agents in a network structure
     """
 
-    def __init__(self, seed, parameters, neighbourhood_data):
+    def __init__(self, seed, parameters, neighbourhood_data, age_distribution_per_ward):
         np.random.seed(seed)
         random.seed(seed)
 
@@ -65,7 +65,7 @@ class EnvironmentNetwork:
             for e in edges_to_remove_neighbourhood(edges, density_score_per_neighbourhood[n], neighbourhood_nodes[n]):
                 self.network.remove_edge(e[0], e[1])
 
-        # update neighbourhood notes to reflect some nodes have been removed
+        # update neighbourhood nodes to reflect some nodes have been removed
         neighbourhood_nodes = {ne: cl for ne, cl in zip(neighbourhoods, cliques)}
 
         # finally re-label the nodes & edges to 1, 2 ...
@@ -76,9 +76,19 @@ class EnvironmentNetwork:
         for neighb in neighbourhood_nodes:
             neighbourhood_nodes[neighb] = [mapping[x] for x in neighbourhood_nodes[neighb]]
 
-        # Next, create the agents
+        # TODO per neighbourhood, create a list
+        age_list = []
+        for neighbourhood in neighbourhoods:
+            age_categories = np.random.choice(age_distribution_per_ward[neighbourhood].index,
+                                              size=len(neighbourhood_nodes[neighbourhood]),
+                                              replace=True,
+                                              p=age_distribution_per_ward[neighbourhood].values)
+            age_list.append(age_categories)
+        # flatten list
+        age_list = [y for x in age_list for y in x]
+
+        # Next, create the agents TODO add realistic probability
         self.agents = [NetworkAgent(x, 's', parameters["probability_transmission"],
-                                    parameters["probability_critical"], parameters["probability_to_die"],
                                     parameters["probability_susceptible"], parameters["probability_to_travel"]
                                     ) for x in range(len(self.network.nodes))]
 
@@ -87,6 +97,10 @@ class EnvironmentNetwork:
             self.network.nodes[idx]['agent'] = agent
             agent.neighbourhood = what_neighbourhood(idx, neighbourhood_nodes)
             agent.coordinates = what_coordinates(agent.neighbourhood, neighbourhood_data)
+            agent.age_group = age_list[idx]
+            agent.prob_hospital = parameters['probability_critical'][agent.age_group]
+            agent.prob_death = parameters['probability_to_die'][agent.age_group]
+
 
         self.infection_states = []
 
@@ -98,13 +112,14 @@ class EnvironmentNetwork:
         return current_network
 
     def write_status_location(self, period, seed):
-        location_status_data = {'agent': [], 'lon': [], 'lat': [], 'status': [], 'WardID': []}
+        location_status_data = {'agent': [], 'lon': [], 'lat': [], 'status': [], 'WardID': [], 'age_group': []}
         for agent in self.agents:
             location_status_data['agent'].append(agent.name)
             location_status_data['lon'].append(agent.coordinates[0])
             location_status_data['lat'].append(agent.coordinates[1])
             location_status_data['status'].append(agent.status)
             location_status_data['WardID'].append(agent.neighbourhood)
+            location_status_data['age_group'].append(agent.age_group)
 
         pd.DataFrame(location_status_data).to_csv("measurement/" + str(seed) + "_agent_data{0:04}.csv".format(period))
 
