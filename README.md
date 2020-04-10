@@ -14,11 +14,11 @@ or targetted social distancing measures at aimed at specific segments of the pop
 
 The model is inspired by the canonical SEIRS structure and generates curves that reflect the amount of agents that are susceptible (s) infected without symptoms (i1), with symptoms (i2), critically ill (c), and are recovered (r). The output of one simulation might look something like this:  
 
-<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/the_curve.png" height="256px"/>
+<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/the_curve.png" height="512px"/>
 
 Due to the unique spatial structure of the model, we can track how a virus spreads spatially. For example through Cape Town: 
 
-<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/Infected.gif" height="512px"/>
+<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/Infected.gif" height="768px"/>
 
  __Getting started__
 
