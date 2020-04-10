@@ -27,4 +27,5 @@ for seed in range(parameters['monte_carlo_runs']):
             for i, node in enumerate(network.nodes):
                 network.nodes[i]['agent'] = network.nodes[i]['agent'].status
 
-            nx.write_graphml_lxml(network, "measurement/network_time{}.graphml".format(idx))
+            idx_string = '{0:04}'.format(idx)
+            nx.write_graphml_lxml(network, "measurement/{}_network_time{}.graphml".format(seed, idx_string))

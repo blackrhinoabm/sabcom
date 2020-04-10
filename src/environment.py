@@ -97,7 +97,7 @@ class EnvironmentNetwork:
         current_network = copy.deepcopy(self.network)
         return current_network
 
-    def write_status_location_montecarlo(self, period, seed):
+    def write_status_location(self, period, seed):
         location_status_data = {'agent': [], 'lon': [], 'lat': [], 'status': [], 'WardID': []}
         for agent in self.agents:
             location_status_data['agent'].append(agent.name)
@@ -106,16 +106,5 @@ class EnvironmentNetwork:
             location_status_data['status'].append(agent.status)
             location_status_data['WardID'].append(agent.neighbourhood)
 
-        pd.DataFrame(location_status_data).to_csv("measurement/"+str(seed)+"agent_data{}.csv".format(period))
-
-    def write_status_location(self, period):
-        location_status_data = {'agent': [], 'lon': [], 'lat': [], 'status': [], 'WardID': []}
-        for agent in self.agents:
-            location_status_data['agent'].append(agent.name)
-            location_status_data['lon'].append(agent.coordinates[0])
-            location_status_data['lat'].append(agent.coordinates[1])
-            location_status_data['status'].append(agent.status)
-            location_status_data['WardID'].append(agent.neighbourhood)
-
-        pd.DataFrame(location_status_data).to_csv("measurement/2agent_data{}.csv".format(period))
+        pd.DataFrame(location_status_data).to_csv("measurement/" + str(seed) + "_agent_data{0:04}.csv".format(period))
 

@@ -123,8 +123,7 @@ class Runner:
                 #             'c': len(critical), 'd': len(dead), 'r': len(recovered)})
             else:
                 environment.infection_states.append(environment.store_network())
-                environment.write_status_location(t)
-                # environment.write_status_location_montecarlo(t,seed)
+                environment.write_status_location(t, seed)
 
             # delete travel edges
             environment.network.remove_edges_from(travel_edges)
