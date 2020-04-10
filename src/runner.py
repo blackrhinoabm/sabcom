@@ -33,9 +33,9 @@ class Runner:
             # create empty list of travel edges
             travel_edges = []
 
-            for agent in susceptible + sick_without_symptoms + sick_with_symptoms:
-                # an agent might travel
-                if np.random.random() < agent.prob_travel:
+            for agent in susceptible + sick_without_symptoms + sick_with_symptoms + critical:
+                # an agent might travel if it is not in critical state
+                if np.random.random() < agent.prob_travel and agent.status != 'c':
                     # they sample all agents
                     agents_to_travel_to = random.sample(
                         environment.agents, int(environment.parameters["travel_sample_size"] * len(environment.agents)))
@@ -63,7 +63,7 @@ class Runner:
                         sick_without_symptoms.remove(agent)
                         sick_with_symptoms.append(agent)
 
-                if agent.status == 'i2':
+                elif agent.status == 'i2':
                     agent.sick_days += 1
                     # some agents recover
                     if agent.sick_days > environment.parameters["symptom_days"]:
@@ -76,7 +76,7 @@ class Runner:
                             sick_with_symptoms.remove(agent)
                             recovered.append(agent)
 
-                if agent.status == 'c':
+                elif agent.status == 'c':
                     agent.critical_days += 1
                     # some agents in critical status will die, the rest will recover
                     if agent.critical_days > environment.parameters["critical_days"]:
@@ -89,7 +89,7 @@ class Runner:
                             critical.remove(agent)
                             recovered.append(agent)
 
-                if agent.status == 'r':
+                elif agent.status == 'r':
                     agent.days_recovered += 1
                     if np.random.random() < (agent.prob_susceptible * agent.days_recovered):
                         recovered.remove(agent)
@@ -110,9 +110,12 @@ class Runner:
                 neighbours_from_graph = [x for x in environment.network.neighbors(agent.name)]
                 # find the corresponding agents
                 neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
-                agent.infect(neighbours_to_infect)
-                # add these neighbours to list of infected agents
-                sick_without_symptoms = sick_without_symptoms + neighbours_to_infect
+                # let these agents be infected (with random probability
+                for neighbour in neighbours_to_infect:
+                    if neighbour.status == 's' and np.random.random() < agent.prob_transmission:
+                        neighbour.status = 'i1'
+                        susceptible.remove(neighbour)
+                        sick_without_symptoms.append(neighbour)
 
             if high_performance:
                 print(t)
