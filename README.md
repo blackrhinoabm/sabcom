@@ -16,7 +16,7 @@ The model is inspired by the canonical SEIRS structure and generates curves that
 
 <img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/the_curve.png" height="512px"/>
 
-Due to the unique spatial structure of the model, we can track how a virus spreads spatially. For example through Cape Town: 
+Due to the unique spatial structure of the model, we can track how a virus spreads spatially. For example through Cape Town. The figure below shows the quantity of the population infected in different Wards in the City of Cape town. Note that thisconcerns a hypothetical simulation of the non-calibrated model and is only used to give an idea of possible dynamics. 
 
 <img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/Infected.gif" height="768px"/>
 
