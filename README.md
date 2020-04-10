@@ -12,6 +12,14 @@ heterogeneity in the population (e.g. by modelling neighbourhoods with vulnerabl
 who want to study the impact of targeted measures (e.g. quarantining certain neighbourhoods,
 or targetted social distancing measures at aimed at specific segments of the population).
 
+The model is inspired by the canonical SEIRS structure and generates curves that reflect the amount of agents that are susceptible (s) infected without symptoms (i1), with symptoms (i2), critically ill (c), and are recovered (r). The output of one simulation might look something like this:  
+
+<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/the_curve.png" height="64px"/>
+
+Due to the unique spatial structure of the model, we can track how a virus spreads spatially. For example through Cape Town: 
+
+<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/Infected.gif" height="64px"/>
+
  __Getting started__
 
 You can **install** the SABCom model by cloning this repository to your system. After that, you are ready to start using the model.
