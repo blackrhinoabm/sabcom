@@ -44,10 +44,45 @@ def get_csvlist(data_path, template):
 	        df = pd.read_csv(data_path+filename)
 
 	        x = re.findall(r'\d+',filename)
+	        day = x[0]
+	       	df['t'] = x[0]
+	        pd_list.append(df)
+	    else:
+	        continue
+
+	return pd_list
+
+def get_csvlist_old(data_path, template):
+	import os
+	import pandas as pd
+	import re
+	import sys
+
+	# check if template matches first day
+	temp =[]
+	for filename in os.listdir(data_path):
+	    if filename.endswith(".csv"):
+	    	temp.append(filename)
+	    	
+	if template !=(sorted(temp)[0]):
+		print("Template",template,len(template),'letters',type(template))
+		print("data name",sorted(temp)[0],len(sorted(temp)[0]),'letters',type(sorted(temp)[0]))
+		print('firstdaydata incorreclty passed in')
+		sys.exit()
+	#read csv
+	pd_list = []
+
+	for filename in (os.listdir(data_path)):
+	    if filename.endswith(".csv"): 
+	         # print(os.path.join(directory, filename))
+	        df = pd.read_csv(data_path+filename)
+
+	        x = re.findall(r'\d+',filename)
 	        day = x[1]
 	       	df['t'] = x[1]
 	        pd_list.append(df)
 	    else:
 	        continue
-	        
+
 	return pd_list
+
