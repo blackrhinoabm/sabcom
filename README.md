@@ -12,9 +12,12 @@ heterogeneity in the population (e.g. by modelling neighbourhoods with vulnerabl
 who want to study the impact of targeted measures (e.g. quarantining certain neighbourhoods,
 or targetted social distancing measures at aimed at specific segments of the population).
 
-The model is inspired by the canonical SEIRS structure and generates curves that reflect the amount of agents that are susceptible (s) infected without symptoms (i1), with symptoms (i2), critically ill (c), and are recovered (r). The output of one simulation might look something like this:  
+The model is inspired by the canonical SEIRS structure and generates curves that reflect the amount of agents that are susceptible (s) infected without symptoms (i1), with symptoms (i2), critically ill (c), and are recovered (r). 
 
-<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/the_curve.png" height="512px"/>
+
+[comment]: <> (The output of one simulation might look something like this:  ) 
+
+[comment]: <> (<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/the_curve.png" height="512px"/> ) 
 
 Due to the unique spatial structure of the model, we can track how a virus spreads spatially. For example through Cape Town. The figure below shows the quantity of the population infected in different Wards in the City of Cape town. Note that thisconcerns a hypothetical simulation of the non-calibrated model and is only used to give an idea of possible dynamics. 
 
