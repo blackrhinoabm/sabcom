@@ -1,6 +1,7 @@
 import pandas as pd
 import networkx as nx
 import json
+import os
 
 from src.environment import EnvironmentNetwork
 from src.runner import Runner
@@ -20,6 +21,10 @@ age_distribution_per_ward = dict(age_distribution.transpose())
 
 # Monte Carlo simulation
 for seed in range(parameters['monte_carlo_runs']):
+    # make new folder for seed, if it does not exist
+    if not os.path.exists('measurement/seed{}'.format(seed)):
+        os.makedirs('measurement/seed{}'.format(seed))
+
     # initialization
     environment = EnvironmentNetwork(seed, parameters, neighbourhood_data, age_distribution_per_ward)
 
@@ -34,4 +39,4 @@ for seed in range(parameters['monte_carlo_runs']):
                 network.nodes[i]['agent'] = network.nodes[i]['agent'].status
 
             idx_string = '{0:04}'.format(idx)
-            nx.write_graphml_lxml(network, "measurement/{}_network_time{}.graphml".format(seed, idx_string))
+            nx.write_graphml_lxml(network, "measurement/seed{}/network_time{}.graphml".format(seed, idx_string))

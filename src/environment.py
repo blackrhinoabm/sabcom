@@ -101,7 +101,6 @@ class EnvironmentNetwork:
             agent.prob_hospital = parameters['probability_critical'][agent.age_group]
             agent.prob_death = parameters['probability_to_die'][agent.age_group]
 
-
         self.infection_states = []
 
     def show(self):
@@ -123,5 +122,5 @@ class EnvironmentNetwork:
             location_status_data['age_group'].append(agent.age_group)
             location_status_data['others_infected'].append(agent.others_infected)
 
-        pd.DataFrame(location_status_data).to_csv("measurement/" + str(seed) + "_agent_data{0:04}.csv".format(period))
+        pd.DataFrame(location_status_data).to_csv("measurement/seed" + str(seed) + "/agent_data{0:04}.csv".format(period))
 
