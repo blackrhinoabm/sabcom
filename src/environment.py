@@ -112,7 +112,8 @@ class EnvironmentNetwork:
         return current_network
 
     def write_status_location(self, period, seed):
-        location_status_data = {'agent': [], 'lon': [], 'lat': [], 'status': [], 'WardID': [], 'age_group': []}
+        location_status_data = {'agent': [], 'lon': [], 'lat': [], 'status': [],
+                                'WardID': [], 'age_group': [], 'others_infected': []}
         for agent in self.agents:
             location_status_data['agent'].append(agent.name)
             location_status_data['lon'].append(agent.coordinates[0])
@@ -120,6 +121,7 @@ class EnvironmentNetwork:
             location_status_data['status'].append(agent.status)
             location_status_data['WardID'].append(agent.neighbourhood)
             location_status_data['age_group'].append(agent.age_group)
+            location_status_data['others_infected'].append(agent.others_infected)
 
         pd.DataFrame(location_status_data).to_csv("measurement/" + str(seed) + "_agent_data{0:04}.csv".format(period))
 

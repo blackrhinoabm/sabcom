@@ -14,6 +14,7 @@ class NetworkAgent:
         self.critical_days = 0
         self.days_recovered = 0
         self.status = status
+        self.others_infected = 0
 
         # parameters
         self.name = name

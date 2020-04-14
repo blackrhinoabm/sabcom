@@ -106,6 +106,8 @@ class Runner:
             environment.network.add_edges_from(travel_edges)
 
             for agent in sick_without_symptoms + sick_with_symptoms:
+                # set the number of other agents infected this period 0
+                agent.others_infected = 0
                 # find indices from neighbour agents
                 neighbours_from_graph = [x for x in environment.network.neighbors(agent.name)]
                 # find the corresponding agents
@@ -116,6 +118,7 @@ class Runner:
                         neighbour.status = 'i1'
                         susceptible.remove(neighbour)
                         sick_without_symptoms.append(neighbour)
+                        agent.others_infected += 1
 
             if high_performance:
                 print(t)
