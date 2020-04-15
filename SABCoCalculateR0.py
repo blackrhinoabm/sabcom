@@ -7,11 +7,11 @@ from src.runner import Runner
 
 
 # load parameters
-with open('parameters_R0.json') as json_file:
+with open('parameters/calculate_R0/parameters_R0.json') as json_file:
     parameters = json.load(json_file)
 
 # load neighbourhood data
-with open('neighbourhood_data_R0.json') as json_file:
+with open('parameters/calculate_R0/neighbourhood_data_R0.json') as json_file:
     neighbourhood_data = json.load(json_file)
 
 # make new folder for R0
