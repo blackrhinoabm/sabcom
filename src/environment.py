@@ -1,6 +1,6 @@
 import numpy as np
 from src.agent import NetworkAgent
-from src.helpers import edges_to_remove_neighbourhood, what_neighbourhood, what_coordinates
+from src.helpers import edges_to_remove_neighbourhood, what_neighbourhood, what_coordinates, what_informality
 import networkx as nx
 import random
 import copy
@@ -100,6 +100,7 @@ class EnvironmentNetwork:
             agent.age_group = age_list[idx]
             agent.prob_hospital = parameters['probability_critical'][agent.age_group]
             agent.prob_death = parameters['probability_to_die'][agent.age_group]
+            agent.informality = what_informality(agent.neighbourhood, neighbourhood_data)
 
         self.infection_states = []
 
@@ -110,7 +111,7 @@ class EnvironmentNetwork:
         current_network = copy.deepcopy(self.network)
         return current_network
 
-    def write_status_location(self, period, seed):
+    def write_status_location(self, period, seed, base_folder='measurement/'):
         location_status_data = {'agent': [], 'lon': [], 'lat': [], 'status': [],
                                 'WardID': [], 'age_group': [], 'others_infected': []}
         for agent in self.agents:
@@ -122,5 +123,5 @@ class EnvironmentNetwork:
             location_status_data['age_group'].append(agent.age_group)
             location_status_data['others_infected'].append(agent.others_infected)
 
-        pd.DataFrame(location_status_data).to_csv("measurement/seed" + str(seed) + "/agent_data{0:04}.csv".format(period))
+        pd.DataFrame(location_status_data).to_csv(base_folder + "seed" + str(seed) + "/agent_data{0:04}.csv".format(period))
 
