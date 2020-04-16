@@ -126,7 +126,7 @@ class Runner:
                 #             'c': len(critical), 'd': len(dead), 'r': len(recovered)})
             else:
                 environment.infection_states.append(environment.store_network())
-                environment.write_status_location(t, seed)
+                environment.write_status_location(t, seed, "measurement/baseline/")
 
             # delete travel edges
             environment.network.remove_edges_from(travel_edges)
