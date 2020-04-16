@@ -23,7 +23,7 @@ seed=pos
 environment = EnvironmentNetwork(seed, parameters, neighbourhood_data)
 # running the simulation
 runner = Runner()
-runner.do_run(environment, seed)
+runner.baseline(environment, seed)
 
 # save network
 if not parameters["high_performance"]:

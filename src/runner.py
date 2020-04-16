@@ -7,7 +7,7 @@ class Runner:
     def __init__(self):
         self.identifier = 1
 
-    def do_run(self, environment, seed, verbose=False, high_performance=False):
+    def baseline(self, environment, seed, verbose=False, high_performance=False):
         # set monte carlo seed
         np.random.seed(seed)
         random.seed(seed)

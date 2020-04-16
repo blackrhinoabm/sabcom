@@ -30,7 +30,7 @@ for seed in range(parameters['monte_carlo_runs']):
 
     # running the simulation
     runner = Runner()
-    runner.do_run(environment, seed)
+    runner.baseline(environment, seed)
 
     # save network
     if not parameters["high_performance"]:
