@@ -276,11 +276,6 @@ class Runner:
         for t in range(environment.parameters["time"]):
             # the lockdown influence the travel multiplier and infection multiplier (probability to infect)
             if t in environment.parameters["lockdown_days"]:
-                lockdown = True
-            else:
-                lockdown = False
-
-            if lockdown:
                 # reduce probability of infecting others by ...
                 lockdown_infection_multiplier = environment.parameters["lockdown_infection_multiplier"]
                 # reduce travel proability by ..
@@ -420,11 +415,6 @@ class Runner:
         for t in range(environment.parameters["time"]):
             # the lockdown influence the travel multiplier and infection multiplier (probability to infect)
             if t in environment.parameters["lockdown_days"]:
-                lockdown = True
-            else:
-                lockdown = False
-
-            if lockdown:
                 # reduce probability of infecting others by ...
                 lockdown_infection_multiplier = environment.parameters["lockdown_infection_multiplier"]
                 # reduce travel proability by ..
@@ -528,8 +518,6 @@ class Runner:
 
             if high_performance:
                 print(t)
-                # self.infection_states.append({'s1':len(sick_without_symptoms), 's2': len(sick_with_symptoms),
-                #             'c': len(critical), 'd': len(dead), 'r': len(recovered)})
             else:
                 environment.infection_states.append(environment.store_network())
                 environment.write_status_location(t, seed, data_folder)

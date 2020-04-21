@@ -21,7 +21,7 @@ with open('neighbourhood_data.json') as json_file:
 age_distribution = pd.read_csv('age_dist.csv', sep=';', index_col=0)
 age_distribution_per_ward = dict(age_distribution.transpose())
 
-# Monte Carlo simulation
+# Monte Carlo simulations
 for seed in range(parameters['monte_carlo_runs']):
     # make new folder for seed, if it does not exist
     if not os.path.exists('{}seed{}'.format(data_folder, seed)):
