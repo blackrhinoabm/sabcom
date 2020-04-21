@@ -30,3 +30,14 @@ def what_coordinates(neighbourhood_name, dataset):
             return dataset[x][1]['lon'], dataset[x][1]['lat'],
 
     raise ValueError("Corresponding coordinates not found")
+
+
+def what_informality(neighbourhood_name, dataset):
+    for x in range(len(dataset)):
+        if neighbourhood_name in dataset[x]:
+            try:
+                return dataset[x][1]['Informal_residential']
+            except:
+                return None
+
+    raise ValueError("Corresponding informality not found")
