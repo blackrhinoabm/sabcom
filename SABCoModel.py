@@ -3,10 +3,12 @@ import networkx as nx
 import json
 import os
 
-from src.environment import EnvironmentNetwork
+from src.environment import EnvironmentNetwork, Environment
 from src.runner import Runner
+import time
 
 
+start = time.time()
 data_folder = 'measurement/baseline/'
 
 # load parameters
@@ -28,7 +30,7 @@ for seed in range(parameters['monte_carlo_runs']):
         os.makedirs('{}seed{}'.format(data_folder, seed))
 
     # initialization
-    environment = EnvironmentNetwork(seed, parameters, neighbourhood_data, age_distribution_per_ward)
+    environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward)
 
     # running the simulation
     runner = Runner()
@@ -42,3 +44,6 @@ for seed in range(parameters['monte_carlo_runs']):
 
             idx_string = '{0:04}'.format(idx)
             nx.write_graphml_lxml(network, "{}seed{}/network_time{}.graphml".format(data_folder, seed, idx_string))
+
+end = time.time()
+print(end - start)

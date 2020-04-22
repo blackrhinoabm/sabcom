@@ -30,10 +30,12 @@ class Runner:
         health_overburdened_multiplier = 1
 
         for t in range(environment.parameters["time"]):
-            # create empty list of travel edges
+            # create empty list of travel edges TODO change travel here
             travel_edges = []
 
             for agent in susceptible + sick_without_symptoms + sick_with_symptoms + critical:
+                #agent.travel_neighbours = []
+
                 # an agent might travel if it is not in critical state
                 if np.random.random() < agent.prob_travel and agent.status != 'c':
                     # they sample all agents
@@ -50,6 +52,8 @@ class Runner:
 
                         # create edge to that agent
                         edge = (agent.name, location_closest_agent)  # own network location to other network location
+                        # add this agent to temporary neighbours
+                        #agent.travel_neighbours.append(environment.agents[location_closest_agent])
 
                         # and store that edge
                         travel_edges.append(edge)
@@ -113,7 +117,7 @@ class Runner:
                 # find the corresponding agents
                 neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
                 # let these agents be infected (with random probability
-                for neighbour in neighbours_to_infect:
+                for neighbour in neighbours_to_infect + agent.travel_neighbours:
                     if neighbour.status == 's' and np.random.random() < agent.prob_transmission:
                         neighbour.status = 'i1'
                         susceptible.remove(neighbour)
