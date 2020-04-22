@@ -7,6 +7,8 @@ from src.environment import EnvironmentNetwork
 from src.runner import Runner
 
 
+data_folder = 'measurement/baseline/'
+
 # load parameters
 with open('parameters.json') as json_file:
     parameters = json.load(json_file)
@@ -22,15 +24,15 @@ age_distribution_per_ward = dict(age_distribution.transpose())
 # Monte Carlo simulation
 for seed in range(parameters['monte_carlo_runs']):
     # make new folder for seed, if it does not exist
-    if not os.path.exists('measurement/seed{}'.format(seed)):
-        os.makedirs('measurement/seed{}'.format(seed))
+    if not os.path.exists('{}seed{}'.format(data_folder, seed)):
+        os.makedirs('{}seed{}'.format(data_folder, seed))
 
     # initialization
     environment = EnvironmentNetwork(seed, parameters, neighbourhood_data, age_distribution_per_ward)
 
     # running the simulation
     runner = Runner()
-    runner.baseline(environment, seed)
+    runner.baseline(environment, seed, data_folder=data_folder)
 
     # save network
     if not parameters["high_performance"]:
@@ -39,4 +41,4 @@ for seed in range(parameters['monte_carlo_runs']):
                 network.nodes[i]['agent'] = network.nodes[i]['agent'].status
 
             idx_string = '{0:04}'.format(idx)
-            nx.write_graphml_lxml(network, "measurement/seed{}/network_time{}.graphml".format(seed, idx_string))
+            nx.write_graphml_lxml(network, "{}seed{}/network_time{}.graphml".format(data_folder, seed, idx_string))

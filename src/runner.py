@@ -7,7 +7,7 @@ class Runner:
     def __init__(self):
         self.identifier = 1
 
-    def baseline(self, environment, seed, verbose=False, high_performance=False):
+    def baseline(self, environment, seed, data_folder='measurement/', verbose=False, high_performance=False):
         # set monte carlo seed
         np.random.seed(seed)
         random.seed(seed)
@@ -122,11 +122,9 @@ class Runner:
 
             if high_performance:
                 print(t)
-                # self.infection_states.append({'s1':len(sick_without_symptoms), 's2': len(sick_with_symptoms),
-                #             'c': len(critical), 'd': len(dead), 'r': len(recovered)})
             else:
                 environment.infection_states.append(environment.store_network())
-                environment.write_status_location(t, seed, "measurement/baseline/")
+                environment.write_status_location(t, seed, data_folder)
 
             # delete travel edges
             environment.network.remove_edges_from(travel_edges)
@@ -252,7 +250,7 @@ class Runner:
             # delete travel edges
             environment.network.remove_edges_from(travel_edges)
 
-    def lock_down(self, environment, seed, verbose=False, high_performance=False):
+    def lock_down(self, environment, seed, data_folder='measurement/', verbose=False, high_performance=False):
         """In this simulation there is a lockdown for a certain period"""
         # set monte carlo seed
         np.random.seed(seed)
@@ -387,7 +385,7 @@ class Runner:
                 #             'c': len(critical), 'd': len(dead), 'r': len(recovered)})
             else:
                 environment.infection_states.append(environment.store_network())
-                environment.write_status_location(t, seed, "measurement/lockdown/")
+                environment.write_status_location(t, seed, data_folder)
 
             # delete travel edges
             environment.network.remove_edges_from(travel_edges)
@@ -396,7 +394,7 @@ class Runner:
                 print('time = ', t)
                 print(environment.network.nodes)
 
-    def ineffective_lock_down(self, environment, seed, verbose=False, high_performance=False):
+    def ineffective_lock_down(self, environment, seed, data_folder='measurement/', verbose=False, high_performance=False):
         """In this simulation the lock-down is not effective in informal settlements"""
         # set monte carlo seed
         np.random.seed(seed)
@@ -534,7 +532,7 @@ class Runner:
                 #             'c': len(critical), 'd': len(dead), 'r': len(recovered)})
             else:
                 environment.infection_states.append(environment.store_network())
-                environment.write_status_location(t, seed, "measurement/inef_lockdown/")
+                environment.write_status_location(t, seed, data_folder)
 
             # delete travel edges
             environment.network.remove_edges_from(travel_edges)
@@ -543,7 +541,7 @@ class Runner:
                 print('time = ', t)
                 print(environment.network.nodes)
 
-    def elderly_inef_lock_down(self, environment, seed, verbose=False, high_performance=False):
+    def elderly_inef_lock_down(self, environment, seed, data_folder='measurement/', verbose=False, high_performance=False):
         """In this simulation the lock-down applies only to risk groups and is not effective in informal settlements"""
         # set monte carlo seed
         np.random.seed(seed)
@@ -692,7 +690,7 @@ class Runner:
                 #             'c': len(critical), 'd': len(dead), 'r': len(recovered)})
             else:
                 environment.infection_states.append(environment.store_network())
-                environment.write_status_location(t, seed, "measurement/lock_down_elderly/")
+                environment.write_status_location(t, seed, data_folder)
 
             # delete travel edges
             environment.network.remove_edges_from(travel_edges)

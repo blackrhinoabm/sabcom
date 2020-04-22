@@ -18,14 +18,17 @@ class NetworkAgent:
 
         # parameters
         self.name = name
-        self.prob_transmission = prob_transmission
-        self.prob_hospital = None
-        self.prob_death = None
-        self.prob_susceptible = prob_susceptible
-        self.prob_travel = prob_travel
-        self.neighbourhood = None
         self.coordinates = None
+        self.neighbourhood = None
         self.age_group = None
+
+        # these are technically global parameters because they are not unique in the current implementation of the model
+        self.prob_transmission = prob_transmission  # not unique in current implementation
+        self.prob_hospital = None  # not unique in current implementation
+        self.prob_death = None  # not unique in current implementation
+        self.prob_susceptible = prob_susceptible  # not unique in current implementation
+        self.prob_travel = prob_travel  # not unique in current implementation
+
 
     def __repr__(self):
         """
