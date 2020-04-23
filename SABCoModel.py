@@ -3,8 +3,8 @@ import networkx as nx
 import json
 import os
 
-from src.environment import EnvironmentNetwork, Environment
-from src.runner import Runner
+from src.environment import Environment
+from src.runner import runner
 import time
 
 
@@ -23,6 +23,8 @@ with open('neighbourhood_data.json') as json_file:
 age_distribution = pd.read_csv('age_dist.csv', sep=';', index_col=0)
 age_distribution_per_ward = dict(age_distribution.transpose())
 
+#parameters['high_performance'] = True
+
 # Monte Carlo simulations
 for seed in range(parameters['monte_carlo_runs']):
     # make new folder for seed, if it does not exist
@@ -33,8 +35,7 @@ for seed in range(parameters['monte_carlo_runs']):
     environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward)
 
     # running the simulation
-    runner = Runner()
-    runner.baseline(environment, seed, data_folder=data_folder)
+    runner(environment, seed, data_folder=data_folder)
 
     # save network
     if not parameters["high_performance"]:
