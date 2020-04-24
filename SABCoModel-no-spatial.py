@@ -3,13 +3,13 @@ import networkx as nx
 import json
 import os
 
-from src.environment import Environment
-from src.runner import runner
+from src.environment import EnvironmentSimpleNetwork
+from src.runner import runner_no_geography
 import time
 
 
 start = time.time()
-data_folder = 'measurement/baseline/'
+data_folder = 'measurement/no-spatial/'
 
 # load parameters
 with open('parameters/baseline/parameters.json') as json_file:
@@ -35,10 +35,10 @@ for seed in range(parameters['monte_carlo_runs']):
         os.makedirs('{}seed{}'.format(data_folder, seed))
 
     # initialization
-    environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward, distance_matrix)
+    environment = EnvironmentSimpleNetwork(seed, parameters, neighbourhood_data, age_distribution_per_ward, distance_matrix)
 
     # running the simulation
-    runner(environment, seed, data_folder=data_folder)
+    runner_no_geography(environment, seed, data_folder=data_folder)
 
     # save network
     if not parameters["high_performance"]:
