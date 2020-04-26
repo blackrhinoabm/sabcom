@@ -19,6 +19,9 @@ with open('parameters/baseline/parameters.json') as json_file:
 with open('parameters/baseline/district_data.json') as json_file:
     neighbourhood_data = json.load(json_file)
 
+# load travel matrix
+travel_matrix = pd.read_csv('input_data/Travel_Probability_Matrix.csv', index_col=0)
+
 # load age data
 age_distribution = pd.read_csv('input_data/age_dist.csv', sep=';', index_col=0)
 age_distribution_per_ward = dict(age_distribution.transpose())
@@ -38,7 +41,7 @@ for seed in range(parameters['monte_carlo_runs']):
     environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward, distance_matrix)
 
     # running the simulation
-    runner(environment, seed, data_folder=data_folder)
+    runner(environment, seed, data_folder=data_folder, travel_matrix=travel_matrix)
 
     # save network
     if not parameters["high_performance"]:

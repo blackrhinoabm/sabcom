@@ -4,7 +4,7 @@ import geopy.distance
 
 
 def runner(environment, seed, data_folder='measurement/',
-           verbose=False, high_performance=False):
+           verbose=False, data_output=False, travel_matrix=None):
     """
     This function is used to run / simulate the model.
 
@@ -12,7 +12,7 @@ def runner(environment, seed, data_folder='measurement/',
     :param seed: used to initialise the random generators to ensure reproducibility, int
     :param data_folder: specifying the folder that will be used to write the data to, string
     :param verbose: specify whether or not the model will print out overview, Boolean
-    :param high_performance:  when turned on the model will not record data to increase performance, Boolean
+    :param data_output:  can be 'csv', 'network', or False (for no output)
     :return: environment object containing the updated agents, Environment object
     """
     # set monte carlo seed
@@ -64,18 +64,34 @@ def runner(environment, seed, data_folder='measurement/',
             if np.random.random() < (agent.prob_travel * (
                     lockdown_travel_multiplier + informality_term + (at_risk_term * not_at_risk_dummy))) and \
                     agent.status != 'c':
+
                 # they sample all agents
                 agents_to_travel_to = random.sample(
                     environment.agents, int(environment.parameters["travel_sample_size"] * len(environment.agents)))
-                # and include travel time to each of these
-                agents_to_travel_to = {a2.name: environment.distance_matrix[str(agent.district)].loc[a2.district] for a2 in
-                                       agents_to_travel_to if
-                                       environment.distance_matrix[str(agent.district)].loc[a2.district] > 0.0}
+
+                if travel_matrix is None:
+                    # and include travel time to each of these
+                    agents_to_travel_to = {a2.name: environment.distance_matrix[str(agent.district)].loc[a2.district] for a2 in
+                                           agents_to_travel_to if
+                                           environment.distance_matrix[str(agent.district)].loc[a2.district] > 0.0}
+                else:
+                    probabilities = list(travel_matrix.loc[agent.district])
+                    # make probabilities sum up to 1
+                    # if 1 - sum(probabilities) > 0:
+                    #     probabilities[random.randint(0, len(probabilities)-1)] += 1 - sum(probabilities)
+                    # elif 1 - sum(probabilities) < 0:
+                    #     probabilities[random.randint(0, len(probabilities) - 1)] -= 1 - sum(probabilities)
+
+                    district_to_travel_to = np.random.choice(environment.districts, size=1, p=probabilities)[0]
+                    agents_to_travel_to = environment.district_agents[district_to_travel_to]
 
                 # consider there are no viable options to travel to
                 if agents_to_travel_to:
-                    # select the agent with shortest travel time
-                    location_closest_agent = min(agents_to_travel_to, key=agents_to_travel_to.get)
+                    if travel_matrix is None:
+                        # select the agent with shortest travel time
+                        location_closest_agent = min(agents_to_travel_to, key=agents_to_travel_to.get)
+                    else:
+                        location_closest_agent = random.choice(agents_to_travel_to).name
 
                     # create edge to that agent
                     edge = (agent.name, location_closest_agent)  # own network location to other network location
@@ -153,14 +169,15 @@ def runner(environment, seed, data_folder='measurement/',
 
                 if neighbour.status == 's' and np.random.random() < (
                         agent.prob_transmission * (
-                        lockdown_travel_multiplier + informality_term + (at_risk_term * not_at_risk_dummy))):
+                        lockdown_infection_multiplier + informality_term + (at_risk_term * not_at_risk_dummy))):
                     neighbour.status = 'i1'
                     susceptible.remove(neighbour)
                     sick_without_symptoms.append(neighbour)
                     agent.others_infected += 1
 
-        if not high_performance:
+        if data_output == 'network':
             environment.infection_states.append(environment.store_network())
+        elif data_output == 'csv':
             environment.write_status_location(t, seed, data_folder)
 
         # delete travel edges
@@ -174,7 +191,7 @@ def runner(environment, seed, data_folder='measurement/',
 
 
 def runner_no_geography(environment, seed, data_folder='measurement/',
-                        verbose=False, high_performance=False):
+                        verbose=False, high_performance=False, travel_matrix=None):
     """
     This function is used to run / simulate the model but takes out any effects from geography on travel between districts.
 
