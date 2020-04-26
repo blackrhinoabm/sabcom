@@ -13,6 +13,8 @@ def runner(environment, seed, data_folder='measurement/',
     :param data_folder: specifying the folder that will be used to write the data to, string
     :param verbose: specify whether or not the model will print out overview, Boolean
     :param data_output:  can be 'csv', 'network', or False (for no output)
+    :param travel_matrix: contains rows per district and the probability of travelling to another int he columns,
+    pandas Dataframe
     :return: environment object containing the updated agents, Environment object
     """
     # set monte carlo seed
