@@ -37,9 +37,15 @@ def runner(environment, seed, data_folder='measurement/',
             chosen_district = np.random.choice(environment.districts, 1,
                                                environment.probabilities_new_infection_district)[0]
             # select random agent in that ward
-            chosen_agent = random.choice(environment.district_agents[chosen_district])
-            chosen_agent.status = 'i1'
-            sick_without_symptoms.append(chosen_agent)
+            if t == 0:
+                for x in range(8):
+                    chosen_agent = random.choice(environment.district_agents[chosen_district])
+                    chosen_agent.status = 'i1'
+                    sick_without_symptoms.append(chosen_agent)
+            else:
+                chosen_agent = random.choice(environment.district_agents[chosen_district])
+                chosen_agent.status = 'i1'
+                sick_without_symptoms.append(chosen_agent)
 
         # the lockdown influence the travel multiplier and infection multiplier (probability to infect)
         if t in environment.parameters["lockdown_days"]:
@@ -78,11 +84,6 @@ def runner(environment, seed, data_folder='measurement/',
                                            environment.distance_matrix[str(agent.district)].loc[a2.district] > 0.0}
                 else:
                     probabilities = list(travel_matrix.loc[agent.district])
-                    # make probabilities sum up to 1
-                    # if 1 - sum(probabilities) > 0:
-                    #     probabilities[random.randint(0, len(probabilities)-1)] += 1 - sum(probabilities)
-                    # elif 1 - sum(probabilities) < 0:
-                    #     probabilities[random.randint(0, len(probabilities) - 1)] -= 1 - sum(probabilities)
 
                     district_to_travel_to = np.random.choice(environment.districts, size=1, p=probabilities)[0]
                     agents_to_travel_to = environment.district_agents[district_to_travel_to]
