@@ -69,7 +69,7 @@ for seed in range(parameters['monte_carlo_runs']):
     environment = Environment(0, parameters, districts_data, age_distribution_per_district, distance_matrix)
 
     # running the simulation
-    runner(environment, 0, data_folder=data_folder)
+    runner(environment, 0, data_output='csv', data_folder=data_folder)
 
     # save network
     if parameters["high_performance"] == 'network':
