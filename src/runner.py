@@ -38,7 +38,7 @@ def runner(environment, seed, data_folder='measurement/',
                                                environment.probabilities_new_infection_district)[0]
             # select random agent in that ward
             if t == 0:
-                for x in range(8):
+                for x in range(1):
                     chosen_agent = random.choice(environment.district_agents[chosen_district])
                     chosen_agent.status = 'i1'
                     sick_without_symptoms.append(chosen_agent)
