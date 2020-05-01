@@ -1,1 +1,14 @@
-{"time": 130, "number_of_agents": 1000000, "monte_carlo_runs": 1, "data_output": "csv", "share_inital_agents_infected": 0.01, "incubation_days": 5, "symptom_days": 10, "critical_days": 8, "health_system_capacity": 0.0021, "no_hospital_multiplier": 1.79, "travel_sample_size": 0.01, "foreign_infection_days": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], "probability_transmission": 0.09, "probability_to_travel": 0.03, "probability_critical": {"age_0_10": 0.001, "age_10_20": 0.003, "age_20_30": 0.012, "age_30_40": 0.032, "age_40_50": 0.049, "age_50_60": 0.102, "age_60_70": 0.166, "age_70_80": 0.244, "age_80_plus": 0.273}, "probability_to_die": {"age_0_10": 0.005, "age_10_20": 0.021, "age_20_30": 0.053, "age_30_40": 0.126, "age_40_50": 0.221, "age_50_60": 0.303, "age_60_70": 0.565, "age_70_80": 0.653, "age_80_plus": 0.765}, "probability_susceptible": 0.0, "lockdown_days": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], "lockdown_travel_multiplier": 0.265, "lockdown_infection_multiplier": 0.27, "informality_dummy": 0.0, "at_risk_groups": ["age_0_10", "age_10_20", "age_20_30", "age_30_40", "age_40_50", "age_50_60", "age_60_70", "age_70_80", "age_80_plus"]}
+{"time": 130, "number_of_agents": 1000000, 
+"monte_carlo_runs": 1, "data_output": "csv", 
+"share_inital_agents_infected": 0.01, "incubation_days": 5, 
+"symptom_days": 10, "critical_days": 8, "health_system_capacity": 0.0021, 
+"no_hospital_multiplier": 1.79, "travel_sample_size": 0.01, 
+"foreign_infection_days": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], 
+"probability_transmission": 0.09, 
+"probability_to_travel": 0.03, 
+"probability_critical": {"age_0_10": 0.001, "age_10_20": 0.003, "age_20_30": 0.012, "age_30_40": 0.032, "age_40_50": 0.049, "age_50_60": 0.102, "age_60_70": 0.166, "age_70_80": 0.244, "age_80_plus": 0.273}, 
+"probability_to_die": {"age_0_10": 0.005, "age_10_20": 0.021, "age_20_30": 0.053, "age_30_40": 0.126, "age_40_50": 0.221, "age_50_60": 0.303, "age_60_70": 0.565, "age_70_80": 0.653, "age_80_plus": 0.765}, 
+"probability_susceptible": 0.0, 
+"lockdown_days": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null], 
+"lockdown_travel_multiplier": 0.265, 
+"lockdown_infection_multiplier": 0.27, "informality_dummy": 0.0, "at_risk_groups": ["age_0_10", "age_10_20", "age_20_30", "age_30_40", "age_40_50", "age_50_60", "age_60_70", "age_70_80", "age_80_plus"]}

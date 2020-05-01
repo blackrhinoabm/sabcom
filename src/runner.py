@@ -182,8 +182,14 @@ def runner(environment, seed, data_folder='measurement/',
             environment.infection_states.append(environment.store_network())
         elif data_output == 'csv':
             environment.write_status_location(t, seed, data_folder)
+        elif data_output == 'csv_light':
+            # save only the total quantity of agents per category
+            for key, quantity in zip(['s', 'i1', 'i2', 'c', 'r', 'd'], [susceptible,
+                                                                        sick_without_symptoms, sick_with_symptoms,
+                                                                        critical, recovered, dead]):
+                environment.infection_quantities[key].append(len(quantity))
 
-        # delete travel edges
+            # delete travel edges
         environment.network.remove_edges_from(travel_edges)
 
         if verbose:

@@ -110,6 +110,7 @@ class Environment:
             self.network.nodes[idx]['agent'] = agent
 
         self.infection_states = []
+        self.infection_quantities = {key: [] for key in ['s', 'i1', 'i2', 'c', 'r', 'd']}
 
     def show(self):
         """ Uses the network x draw function to draw the status of the current network"""
