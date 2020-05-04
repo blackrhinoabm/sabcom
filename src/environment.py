@@ -70,8 +70,10 @@ class Environment:
                                            district_code,
                                            age_categories[a],
                                            informality,
+                                           parameters["probability_symptomatic"],
                                            parameters['probability_critical'][age_categories[a]],
-                                           parameters['probability_to_die'][age_categories[a]]
+                                           parameters['probability_to_die'][age_categories[a]],
+                                           round(np.random.lognormal(1)) # TODO debug the amount of trips is drawn from a lognormal distribution
                                            ))
                 agent_name += 1
 
@@ -110,7 +112,7 @@ class Environment:
             self.network.nodes[idx]['agent'] = agent
 
         self.infection_states = []
-        self.infection_quantities = {key: [] for key in ['s', 'i1', 'i2', 'c', 'r', 'd']}
+        self.infection_quantities = {key: [] for key in ['e','s', 'i1', 'i2', 'c', 'r', 'd']}
 
     def show(self):
         """ Uses the network x draw function to draw the status of the current network"""
@@ -144,9 +146,10 @@ class Environment:
         pd.DataFrame(location_status_data).to_csv(base_folder + "seed" + str(seed) + "/agent_data{0:04}.csv".format(period))
 
 
-class EnvironmentSimpleNetwork:
+class EnvironmentMeanField:
     """
-    The environment class contains the agents in a network structure
+    The environment class contains the agents in (1) a random network structure, furthermore, agents all make
+    (2) the same amount of trips
     """
 
     def __init__(self, seed, parameters, district_data, age_distribution_per_district, distance_matrix):
@@ -207,12 +210,14 @@ class EnvironmentSimpleNetwork:
                                            district_code,
                                            age_categories[a],
                                            informality,
+                                           parameters["probability_symptomatic"],
                                            parameters['probability_critical'][age_categories[a]],
-                                           parameters['probability_to_die'][age_categories[a]]
+                                           parameters['probability_to_die'][age_categories[a]],
+                                           4 # TODO everyone travels as much as in the lognormal distribution on average
                                            ))
                 agent_name += 1
 
-            # create a random regular graph
+            # create a random regular graph TODO this is the unique feature of this initaliser
             nodes = len(district_list)
 
             degree = 2
@@ -245,6 +250,7 @@ class EnvironmentSimpleNetwork:
             self.network.nodes[idx]['agent'] = agent
 
         self.infection_states = []
+        self.infection_quantities = {key: [] for key in ['e','s', 'i1', 'i2', 'c', 'r', 'd']}
 
     def show(self):
         """ Uses the network x draw function to draw the status of the current network"""
