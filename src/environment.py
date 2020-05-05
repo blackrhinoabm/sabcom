@@ -200,6 +200,8 @@ class EnvironmentMeanField:
                                               replace=True,
                                               p=age_distribution_per_district[district_code].values)
 
+            average_travel = int(round(np.mean([round(np.random.lognormal(1)) for x in range(num_agents)])))
+
             # add agents to neighbourhood
             for a in range(num_agents):
                 district_list.append(Agent(agent_name, 's',
@@ -213,14 +215,20 @@ class EnvironmentMeanField:
                                            parameters["probability_symptomatic"],
                                            parameters['probability_critical'][age_categories[a]],
                                            parameters['probability_to_die'][age_categories[a]],
-                                           4 # TODO everyone travels as much as in the lognormal distribution on average
+                                           average_travel
                                            ))
                 agent_name += 1
 
-            # create a random regular graph TODO this is the unique feature of this initaliser
+            # create a random regular graph TODO this is the unique feature of this initialiser
             nodes = len(district_list)
 
-            degree = 2
+            #degree = 2
+            nodes = len(district_list) #TODO remove?
+            if nodes <= 4:
+                degree = nodes - 1
+            else:
+                degree = 4
+
             NG = nx.random_regular_graph(degree, nodes, seed=0)
 
             edges = list(NG.edges)
