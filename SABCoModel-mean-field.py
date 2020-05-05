@@ -4,12 +4,12 @@ import json
 import os
 
 from src.environment import EnvironmentMeanField
-from src.runner import runner_mean_field, runner
+from src.runner import runner_mean_field
 import time
 
 
 start = time.time()
-data_folder = 'measurement/baseline/'
+data_folder = 'measurement/meanfield/'
 
 # load parameters
 with open('parameters/parameters.json') as json_file:

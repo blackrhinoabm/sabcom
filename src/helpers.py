@@ -1,4 +1,7 @@
 import random
+import numpy as np
+import math
+import scipy.stats as stats
 
 
 def edge_in_cliq(edge, nodes_in_cliq):
@@ -41,3 +44,9 @@ def what_informality(neighbourhood_name, dataset):
                 return None
 
     raise ValueError("Corresponding informality not found")
+
+
+def confidence_interval(data, av):
+    sample_stdev = np.std(data)
+    sigma = sample_stdev/math.sqrt(len(data))
+    return stats.t.interval(alpha=0.95, df=24, loc=av, scale=sigma)
