@@ -48,34 +48,43 @@ def runner(environment, seed, data_folder='measurement/',
                 chosen_agent.status = 'i1'
                 sick_without_symptoms.append(chosen_agent)
 
-        # the lockdown influence the travel multiplier and infection multiplier (probability to infect) TODO add influence superspreaders?
         if t in environment.parameters["lockdown_days"]:
             # During lockdown days the probability that others are infected and that there is travel will be reduced
-            lockdown_infection_multiplier = environment.parameters["lockdown_infection_multiplier"]
-            lockdown_travel_multiplier = environment.parameters["lockdown_travel_multiplier"]
-            lockdown_travel_max = environment.parameters['lockdown_travel_max_contacts']
+            physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
+            travel_restrictions_multiplier = environment.parameters["travel_restrictions_multiplier"]
+            gathering_max_contacts = environment.parameters['gathering_max_contacts']
+            general_isolation_multiplier = environment.parameters['self_isolation_multiplier']
+
+            # Furthermore, a set of close contact edges may be removed
+            original_edges = environment.network.edges  # TODO debug and move to lockdown days
+            k = int(round(len(original_edges) * environment.parameters['visiting_close_contacts_multiplier']))
+            to_be_removed_edges = random.sample(original_edges, k)
+            # remove some of the original edges
+            environment.network.remove_edges_from(to_be_removed_edges)
         else:
-            lockdown_infection_multiplier = 1.0
-            lockdown_travel_multiplier = 1.0
-            lockdown_travel_max = float('inf')
+            general_isolation_multiplier = 1.0
+            physical_distancing_multiplier = 1.0
+            travel_restrictions_multiplier = 1.0
+            gathering_max_contacts = float('inf')
+            to_be_removed_edges = []
 
         # create empty list of travel edges
         travel_edges = []
 
         for agent in exposed + susceptible + sick_without_symptoms + sick_with_symptoms + critical:
-            # determine if the agent is at risk
-            if agent.age_group not in environment.parameters["at_risk_groups"]:
-                not_at_risk_dummy = 1.0
+            # determine if the agent is at risk #TODO add here groups that can or cannot travel (e.g. schools)
+            if agent.age_group not in environment.parameters["reduced_travel_groups"]:
+                reduced_travel_dummy = 1.0
             else:
-                not_at_risk_dummy = 0.0
+                reduced_travel_dummy = 0.0
 
-            informality_term = (1 - lockdown_travel_multiplier) * agent.informality
-            at_risk_term = 1 - lockdown_travel_multiplier - informality_term
+            informality_term = (1 - travel_restrictions_multiplier) * agent.informality
+            at_risk_term = 1 - travel_restrictions_multiplier - informality_term
             # an agent might travel (multiple times) if it is not in critical state agent.num_travel
             if np.random.random() < (agent.prob_travel * (
-                    lockdown_travel_multiplier + informality_term + (at_risk_term * not_at_risk_dummy))) and \
+                    travel_restrictions_multiplier + informality_term + (at_risk_term * reduced_travel_dummy))) and \
                     agent.status != 'c':
-                for trip in range(min(lockdown_travel_max, agent.num_trips)):  # TODO debug... can this be targeted directly? Perhaps in if lockdown... reduce num_trips
+                for trip in range(min(gathering_max_contacts, agent.num_trips)):  # TODO debug... can this be targeted directly? Perhaps in if lockdown... reduce num_trips
                     # they sample all agents
                     agents_to_travel_to = random.sample(
                         environment.agents, int(environment.parameters["travel_sample_size"] * len(environment.agents)))
@@ -169,25 +178,35 @@ def runner(environment, seed, data_folder='measurement/',
         environment.network.add_edges_from(travel_edges)
 
         for agent in sick_without_symptoms + sick_with_symptoms:
+            if agent.status in environment.parameters['aware_status'] and \
+                    np.random.random() < environment.parameters['likelihood_awareness']:
+                self_isolation_multiplier = general_isolation_multiplier  # TODO debug this
+            else:
+                self_isolation_multiplier = 1.0
             # set the number of other agents infected this period 0
             agent.others_infected = 0
             # find indices from neighbour agents
             neighbours_from_graph = [x for x in environment.network.neighbors(agent.name)]
+            # TODO debug this new feature
+            # only consider a subset of neighbours to infect environment.parameters['visiting_close_contacts_multiplier']
+            k = int(round(len(neighbours_from_graph) * self_isolation_multiplier))
+            neighbours_from_graph = random.sample(neighbours_from_graph, k)
+
             # find the corresponding agents
             neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
             # let these agents be infected (with random probability
             for neighbour in neighbours_to_infect:
-                if neighbour.age_group not in environment.parameters["at_risk_groups"]:
-                    not_at_risk_dummy = 1.0
-                else:
-                    not_at_risk_dummy = 0.0
+                #if neighbour.age_group not in environment.parameters["at_risk_groups"]: #TODO add here physical distancing risk groups?
+                #    reduced_travel_dummy = 1.0
+                #else:
+                should_social_distance_dummy = 0.0 #TODo later add for specific groups wether or not they need to do social distancing.
 
-                informality_term = (1 - lockdown_infection_multiplier) * agent.informality
-                at_risk_term = 1 - lockdown_infection_multiplier - informality_term
+                informality_term = (1 - physical_distancing_multiplier) * agent.informality
+                at_risk_term = 1 - physical_distancing_multiplier - informality_term
 
                 if neighbour.status == 's' and np.random.random() < (
                         agent.prob_transmission * (
-                        lockdown_infection_multiplier + informality_term + (at_risk_term * not_at_risk_dummy))):
+                        physical_distancing_multiplier + informality_term + (at_risk_term * should_social_distance_dummy))):
                     neighbour.status = 'e'
                     susceptible.remove(neighbour)
                     exposed.append(neighbour)
@@ -204,8 +223,11 @@ def runner(environment, seed, data_folder='measurement/',
                                                                         critical, recovered, dead]):
                 environment.infection_quantities[key].append(len(quantity))
 
-            # delete travel edges
+        # delete travel edges
         environment.network.remove_edges_from(travel_edges)
+
+        # add social network edges that were removed in lockdown
+        environment.network.add_edges_from(to_be_removed_edges) #TODO debug
 
         if verbose:
             print('time = ', t)
@@ -263,13 +285,13 @@ def runner_mean_field(environment, seed, data_folder='measurement/',
         # the lockdown influence the travel multiplier and infection multiplier (probability to infect) TODO add influence superspreaders?
         if t in environment.parameters["lockdown_days"]:
             # During lockdown days the probability that others are infected and that there is travel will be reduced
-            lockdown_infection_multiplier = environment.parameters["lockdown_infection_multiplier"]
-            lockdown_travel_multiplier = environment.parameters["lockdown_travel_multiplier"]
-            lockdown_travel_max = environment.parameters['lockdown_travel_max_contacts']
+            physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
+            travel_restrictions_multiplier = environment.parameters["travel_restrictions_multiplier"]
+            gathering_max_contacts = environment.parameters['gathering_max_contacts']
         else:
-            lockdown_infection_multiplier = 1.0
-            lockdown_travel_multiplier = 1.0
-            lockdown_travel_max = float('inf')
+            physical_distancing_multiplier = 1.0
+            travel_restrictions_multiplier = 1.0
+            gathering_max_contacts = float('inf')
 
         # create empty list of travel edges
         travel_edges = []
@@ -281,13 +303,13 @@ def runner_mean_field(environment, seed, data_folder='measurement/',
             else:
                 not_at_risk_dummy = 0.0
 
-            informality_term = (1 - lockdown_travel_multiplier) * agent.informality
-            at_risk_term = 1 - lockdown_travel_multiplier - informality_term
+            informality_term = (1 - travel_restrictions_multiplier) * agent.informality
+            at_risk_term = 1 - travel_restrictions_multiplier - informality_term
             # an agent might travel (multiple times) if it is not in critical state agent.num_travel
             if np.random.random() < (agent.prob_travel * (
-                    lockdown_travel_multiplier + informality_term + (at_risk_term * not_at_risk_dummy))) and \
+                    travel_restrictions_multiplier + informality_term + (at_risk_term * not_at_risk_dummy))) and \
                     agent.status != 'c':
-                for trip in range(min(lockdown_travel_max, agent.num_trips)):  # TODO can this be targeted directly? Perhaps in if lockdown... reduce num_trips
+                for trip in range(min(gathering_max_contacts, agent.num_trips)):  # TODO can this be targeted directly? Perhaps in if lockdown... reduce num_trips
                     # they sample all agents
                     agents_to_travel_to = random.sample(
                         environment.agents, int(environment.parameters["travel_sample_size"] * len(environment.agents)))
@@ -380,12 +402,12 @@ def runner_mean_field(environment, seed, data_folder='measurement/',
                 else:
                     not_at_risk_dummy = 0.0
 
-                informality_term = (1 - lockdown_infection_multiplier) * agent.informality
-                at_risk_term = 1 - lockdown_infection_multiplier - informality_term
+                informality_term = (1 - physical_distancing_multiplier) * agent.informality
+                at_risk_term = 1 - physical_distancing_multiplier - informality_term
 
                 if neighbour.status == 's' and np.random.random() < (
                         agent.prob_transmission * (
-                        lockdown_infection_multiplier + informality_term + (at_risk_term * not_at_risk_dummy))):
+                        physical_distancing_multiplier + informality_term + (at_risk_term * not_at_risk_dummy))):
                     neighbour.status = 'e'
                     susceptible.remove(neighbour)
                     exposed.append(neighbour)
