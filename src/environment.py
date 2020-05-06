@@ -145,6 +145,9 @@ class Environment:
 
         pd.DataFrame(location_status_data).to_csv(base_folder + "seed" + str(seed) + "/agent_data{0:04}.csv".format(period))
 
+        # output links
+        pd.DataFrame(self.network.edges()).to_csv(base_folder + "seed" + str(seed) + "/edge_list{0:04}.csv".format(period))
+
 
 class EnvironmentMeanField:
     """
@@ -258,7 +261,7 @@ class EnvironmentMeanField:
             self.network.nodes[idx]['agent'] = agent
 
         self.infection_states = []
-        self.infection_quantities = {key: [] for key in ['e','s', 'i1', 'i2', 'c', 'r', 'd']}
+        self.infection_quantities = {key: [] for key in ['e', 's', 'i1', 'i2', 'c', 'r', 'd']}
 
     def show(self):
         """ Uses the network x draw function to draw the status of the current network"""
@@ -290,3 +293,7 @@ class EnvironmentMeanField:
             location_status_data['others_infected'].append(agent.others_infected)
 
         pd.DataFrame(location_status_data).to_csv(base_folder + "seed" + str(seed) + "/agent_data{0:04}.csv".format(period))
+
+        # output links
+        pd.DataFrame(self.network.edges()).to_csv(
+            base_folder + "seed" + str(seed) + "/edge_list{0:04}.csv".format(period))

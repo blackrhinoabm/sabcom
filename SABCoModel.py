@@ -23,7 +23,7 @@ age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
 #parameters["informality_dummy"] = 0.0 # setting this parameter at 0 will mean the lockdown is equally effective anywhere, alternative = 1
 #parameters["at_risk_groups"] = age_groups[:] # use list slicing to make this only vulnerable parameters e.g. age_groups[start_idx:stop_idx]
 
-parameters['data_output'] = 'csv_light'
+parameters['data_output'] = 'csv'
 
 # load neighbourhood data
 with open('parameters/district_data.json') as json_file:
