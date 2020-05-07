@@ -79,10 +79,7 @@ class Environment:
 
             # create a Barabasi Albert graph for the ward
             nodes = len(district_list)
-            if nodes <= 4:
-                new_edges = nodes - 1
-            else:
-                new_edges = 4
+            new_edges = 2
             NG = nx.barabasi_albert_graph(nodes, new_edges, seed=0)
 
             edges = list(NG.edges)
@@ -178,6 +175,16 @@ class EnvironmentMeanField:
         correction_factor = sum(population_per_neighbourhood) / parameters["number_of_agents"]
         corrected_populations = [round(x / correction_factor) for x in population_per_neighbourhood]
 
+        # TODO this is specific to mean field model
+        corrected_populations_mean_field = []
+        for x in corrected_populations:
+            if (x % 2) == 0:
+                corrected_populations_mean_field.append(x)
+            else:
+                corrected_populations_mean_field.append(x + random.choice([1, -1]))
+
+        corrected_populations = corrected_populations_mean_field
+
         # only count neighbourhoods that then have an amount of people bigger than 0
         indices_big_neighbourhoods = [i for i, x in enumerate(corrected_populations) if x > 0]
         corrected_populations_final = [x for i, x in enumerate(corrected_populations) if x > 0]
@@ -223,16 +230,16 @@ class EnvironmentMeanField:
                 agent_name += 1
 
             # create a random regular graph TODO this is the unique feature of this initialiser
+            # first create a Barabasi Albert graph for the ward and use it to calculate average degree
             nodes = len(district_list)
+            new_edges = 2
+            BA = nx.barabasi_albert_graph(nodes, new_edges, seed=0)
 
-            #degree = 2
-            nodes = len(district_list) #TODO remove?
-            if nodes <= 4:
-                degree = nodes - 1
-            else:
-                degree = 4
+            degree = round(len(BA.edges) / nodes) * 2 #TODO check if this works
 
-            NG = nx.random_regular_graph(degree, nodes, seed=0)
+            NG = nx.random_regular_graph(degree, nodes, seed=0) #len(NG.edges)
+            print('BA edges = ', len(BA.edges))
+            print('NG edges = ', len(NG.edges))
 
             edges = list(NG.edges)
             # reduce the amount of edges in the district depending on its empirical density
