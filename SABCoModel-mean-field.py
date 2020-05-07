@@ -45,7 +45,7 @@ for seed in range(parameters['monte_carlo_runs']):
     environment = EnvironmentMeanField(seed, parameters, neighbourhood_data, age_distribution_per_ward, distance_matrix)
 
     # running the simulation
-    runner_mean_field(environment, seed, data_output=parameters["data_output"], data_folder=data_folder)
+    runner_mean_field(environment, seed, data_output=parameters["data_output"], data_folder=data_folder, verbose=False)
 
     # save network
     if parameters["data_output"] == 'network':
