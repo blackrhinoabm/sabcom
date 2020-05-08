@@ -74,8 +74,8 @@ def runner(environment, seed, data_folder='measurement/',
         for agent in exposed + susceptible + sick_without_symptoms + sick_with_symptoms + critical:
             informality_term = (1 - travel_restrictions_multiplier[agent.age_group]) * agent.informality
             # an agent might travel (multiple times) if it is not in critical state agent.num_travel
-            if np.random.random() < (agent.prob_travel * (
-                    travel_restrictions_multiplier[agent.age_group] + informality_term and agent.status != 'c')): #+ (at_risk_term * reduced_travel_dummy))) and \
+            if (np.random.random() < agent.prob_travel * (
+                    travel_restrictions_multiplier[agent.age_group] + informality_term)) and agent.status != 'c': #+ (at_risk_term * reduced_travel_dummy))) and \
                 for trip in range(min(gathering_max_contacts, agent.num_trips)):
                     # they sample all agents
                     agents_to_travel_to = random.sample(

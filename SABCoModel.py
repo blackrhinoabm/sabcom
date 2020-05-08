@@ -22,8 +22,9 @@ age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
 
 parameters['data_output'] = 'csv_light'
 
+trave_restr_mult = [0.4 for x in range(len(age_groups))]
 parameters["lockdown_days"] = [x for x in range(0, parameters['time'])]
-parameters["physical_distancing_multiplier"] = 0.0
+parameters["travel_restrictions_multiplier"] = {key:value for key, value in zip(age_groups, trave_restr_mult)}
 
 # load neighbourhood data
 with open('parameters/district_data.json') as json_file:
