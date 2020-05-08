@@ -400,9 +400,6 @@ def runner_mean_field(environment, seed, data_folder='measurement/',
             neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
             # let these agents be infected (with random probability
             for neighbour in neighbours_to_infect:
-                #if neighbour.age_group not in environment.parameters["at_risk_groups"]: #TODO add here physical distancing risk groups?
-                #    reduced_travel_dummy = 1.0
-                #else:
                 should_social_distance_dummy = 0.0 #TODo later add for specific groups wether or not they need to do social distancing.
 
                 informality_term = (1 - physical_distancing_multiplier) * agent.informality
