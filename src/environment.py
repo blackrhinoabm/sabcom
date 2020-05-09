@@ -152,7 +152,7 @@ class EnvironmentMeanField:
     (2) the same amount of trips
     """
 
-    def __init__(self, seed, parameters, district_data, age_distribution_per_district, distance_matrix):
+    def __init__(self, seed, parameters, district_data, age_distribution_per_district, distance_matrix, variation=None):
         """
         This method initialises the environment and its properties.
 
@@ -214,6 +214,8 @@ class EnvironmentMeanField:
 
             # add agents to neighbourhood
             for a in range(num_agents):
+                if variation == 'lognormaltravel':
+                    average_travel = round(np.random.lognormal(1))
                 district_list.append(Agent(agent_name, 's',
                                            parameters["probability_transmission"],
                                            parameters["probability_susceptible"],
@@ -238,6 +240,10 @@ class EnvironmentMeanField:
             degree = round(len(BA.edges) / nodes) * 2 #TODO check if this works
 
             NG = nx.random_regular_graph(degree, nodes, seed=0) #len(NG.edges)
+
+            if variation == 'BAsocial':
+                NG = BA
+
             print('BA edges = ', len(BA.edges))
             print('NG edges = ', len(NG.edges))
 
