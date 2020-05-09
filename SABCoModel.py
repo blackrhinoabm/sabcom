@@ -59,7 +59,7 @@ for seed in range(parameters['monte_carlo_runs']):
                 network.nodes[i]['agent'] = network.nodes[i]['agent'].status
 
             idx_string = '{0:04}'.format(idx)
-            nx.write_graphml_lxml(network, "{}seed{}/network_time{}.graphml".format(data_folder, seed, idx_string))
+            nx.write_graphml(network, "{}seed{}/network_time{}.graphml".format(data_folder, seed, idx_string))
     elif parameters["data_output"] == 'csv_light':
         pd.DataFrame(environment.infection_quantities).to_csv('{}seed{}/quantities_state_time.csv'.format(data_folder,
                                                                                                           seed))
