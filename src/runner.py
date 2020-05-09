@@ -74,8 +74,8 @@ def runner(environment, seed, data_folder='measurement/',
         for agent in exposed + susceptible + sick_without_symptoms + sick_with_symptoms + critical:
             informality_term = (1 - travel_restrictions_multiplier[agent.age_group]) * agent.informality
             # an agent might travel (multiple times) if it is not in critical state agent.num_travel
-            if np.random.random() < (agent.prob_travel * (
-                    travel_restrictions_multiplier[agent.age_group] + informality_term and agent.status != 'c')): #+ (at_risk_term * reduced_travel_dummy))) and \
+            if (np.random.random() < agent.prob_travel * (
+                    travel_restrictions_multiplier[agent.age_group] + informality_term)) and agent.status != 'c': #+ (at_risk_term * reduced_travel_dummy))) and \
                 for trip in range(min(gathering_max_contacts, agent.num_trips)):
                     # they sample all agents
                     agents_to_travel_to = random.sample(
@@ -400,9 +400,6 @@ def runner_mean_field(environment, seed, data_folder='measurement/',
             neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
             # let these agents be infected (with random probability
             for neighbour in neighbours_to_infect:
-                #if neighbour.age_group not in environment.parameters["at_risk_groups"]: #TODO add here physical distancing risk groups?
-                #    reduced_travel_dummy = 1.0
-                #else:
                 should_social_distance_dummy = 0.0 #TODo later add for specific groups wether or not they need to do social distancing.
 
                 informality_term = (1 - physical_distancing_multiplier) * agent.informality

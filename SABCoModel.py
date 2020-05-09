@@ -19,11 +19,12 @@ with open('parameters/parameters.json') as json_file:
 age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
               'age_50_60', 'age_60_70', 'age_70_80', 'age_80_plus']
 
-#parameters["lockdown_days"] = [None for x in range(0, 35)], # set to x to switch on, range(start, stop)
-#parameters["informality_dummy"] = 0.0 # setting this parameter at 0 will mean the lockdown is equally effective anywhere, alternative = 1
-#parameters["at_risk_groups"] = age_groups[:] # use list slicing to make this only vulnerable parameters e.g. age_groups[start_idx:stop_idx]
 
-parameters['data_output'] = 'csv'
+parameters['data_output'] = 'csv_light'
+
+trave_restr_mult = [0.4 for x in range(len(age_groups))]
+parameters["lockdown_days"] = [x for x in range(0, parameters['time'])]
+parameters["travel_restrictions_multiplier"] = {key:value for key, value in zip(age_groups, trave_restr_mult)}
 
 # load neighbourhood data
 with open('parameters/district_data.json') as json_file:
@@ -58,7 +59,7 @@ for seed in range(parameters['monte_carlo_runs']):
                 network.nodes[i]['agent'] = network.nodes[i]['agent'].status
 
             idx_string = '{0:04}'.format(idx)
-            nx.write_graphml_lxml(network, "{}seed{}/network_time{}.graphml".format(data_folder, seed, idx_string))
+            nx.write_graphml(network, "{}seed{}/network_time{}.graphml".format(data_folder, seed, idx_string))
     elif parameters["data_output"] == 'csv_light':
         pd.DataFrame(environment.infection_quantities).to_csv('{}seed{}/quantities_state_time.csv'.format(data_folder,
                                                                                                           seed))
