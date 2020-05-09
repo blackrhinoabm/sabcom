@@ -1,4 +1,4 @@
-{"time": 120, "number_of_agents": 1000, "monte_carlo_runs": 1, 
+{"time": 600, "number_of_agents": 1000, "monte_carlo_runs": 1, 
 "data_output": "csv", "share_inital_agents_infected": 0.01, 
 "exposed_days": 4, "asymptom_days": 10, "symptom_days": 10, 
 "critical_days": 8, "health_system_capacity": 0.0021, 
@@ -9,4 +9,4 @@
 "physical_distancing_multiplier": 0.27, 
 "travel_restrictions_multiplier": {"age_0_10": 1.0, "age_10_20": 1.0, "age_20_30": 1.0, "age_30_40": 1.0, "age_40_50": 1.0, "age_50_60": 1.0, "age_60_70": 1.0, "age_70_80": 1.0, "age_80_plus": 1.0}, "visiting_close_contacts_multiplier": 0.8, "likelihood_awareness": 0.2, "self_isolation_multiplier": 0.4, 
 "aware_status": ["i2"], "gathering_max_contacts": 4, 
-"informality_dummy": 0.0}
+"informality_dummy": 1.0}
