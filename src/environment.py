@@ -237,9 +237,7 @@ class EnvironmentMeanField:
             new_edges = 2
             BA = nx.barabasi_albert_graph(nodes, new_edges, seed=0)
 
-            degree = round(len(BA.edges) / nodes) * 2 #TODO check if this works
-
-            NG = nx.random_regular_graph(degree, nodes, seed=0) #len(NG.edges)
+            NG = nx.gnm_random_graph(nodes, len(BA.edges)) #nx.random_regular_graph(degree, nodes, seed=0) #len(NG.edges)
 
             if variation == 'BAsocial':
                 NG = BA
