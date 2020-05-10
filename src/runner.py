@@ -77,10 +77,6 @@ def runner(environment, seed, data_folder='measurement/',
             if (np.random.random() < agent.prob_travel * (
                     travel_restrictions_multiplier[agent.age_group] + informality_term)) and agent.status != 'c': #+ (at_risk_term * reduced_travel_dummy))) and \
                 for trip in range(min(gathering_max_contacts, agent.num_trips)):
-                    # they sample all agents
-                    agents_to_travel_to = random.sample(
-                        environment.agents, int(environment.parameters["travel_sample_size"] * len(environment.agents)))
-
                     if travel_matrix is None:
                         # and include travel time to each of these
                         agents_to_travel_to = {a2.name: environment.distance_matrix[str(agent.district)].loc[a2.district] for a2 in
