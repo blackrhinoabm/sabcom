@@ -73,7 +73,7 @@ class Environment:
                                            parameters["probability_symptomatic"],
                                            parameters['probability_critical'][age_categories[a]],
                                            parameters['probability_to_die'][age_categories[a]],
-                                           round(np.random.lognormal(1)) # TODO debug the amount of trips is drawn from a lognormal distribution
+                                           round(np.random.poisson(4)) # TODO debug the amount of trips is drawn from a poisson distribution
                                            ))
                 agent_name += 1
 
@@ -210,12 +210,12 @@ class EnvironmentMeanField:
                                               replace=True,
                                               p=age_distribution_per_district[district_code].values)
 
-            average_travel = int(round(np.mean([round(np.random.lognormal(1)) for x in range(num_agents)])))
+            average_travel = int(round(np.mean([round(np.random.poisson(4)) for x in range(num_agents)])))
 
             # add agents to neighbourhood
             for a in range(num_agents):
-                if variation == 'lognormaltravel':
-                    average_travel = round(np.random.lognormal(1))
+                if variation == 'poissontravel':
+                    average_travel = round(np.random.poisson(4))
                 district_list.append(Agent(agent_name, 's',
                                            parameters["probability_transmission"],
                                            parameters["probability_susceptible"],
