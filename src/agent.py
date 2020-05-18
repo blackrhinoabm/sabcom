@@ -42,11 +42,13 @@ class Agent:
         self.coordinates = coordinates
         self.district = district
         self.age_group = age_group
+        self.num_trips = num_trips
+
+        # agent specific parameters that depend on other parameters
         self.informality = informality
         self.prob_symptomatic = probability_symptomatic
         self.prob_hospital = probability_critical
         self.prob_death = probability_death
-        self.num_trips = num_trips
 
         # these are technically global parameters because they are not unique in the current implementation of the model
         self.prob_transmission = probability_transmission  # not unique in current implementation
