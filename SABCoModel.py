@@ -46,7 +46,8 @@ for seed in range(parameters['monte_carlo_runs']):
     environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward, distance_matrix)
 
     # running the simulation
-    runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder, travel_matrix=travel_matrix, verbose=False)
+    runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
+           travel_matrix=travel_matrix, verbose=False, calculate_r_naught=True)
 
     # save network
     if parameters["data_output"] == 'network':

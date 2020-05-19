@@ -4,7 +4,7 @@ import geopy.distance
 
 
 def runner(environment, seed, data_folder='measurement/',
-           verbose=False, data_output=False, travel_matrix=None):
+           verbose=False, data_output=False, travel_matrix=None, calculate_r_naught=False):
     """
     This function is used to run / simulate the model.
 
@@ -34,6 +34,7 @@ def runner(environment, seed, data_folder='measurement/',
     for t in range(environment.parameters["time"]):
         # for the first days of the simulation there will be one new agent infected
         if t in environment.parameters['foreign_infection_days']:
+            initial_infected = []
             # select district with probability
             chosen_district = np.random.choice(environment.districts, 1,
                                                environment.probabilities_new_infection_district)[0]
@@ -43,9 +44,13 @@ def runner(environment, seed, data_folder='measurement/',
                     chosen_agent = random.choice(environment.district_agents[chosen_district])
                     chosen_agent.status = 'i1'
                     sick_without_symptoms.append(chosen_agent)
+                    # this list can be used to calculate R0
+                    initial_infected.append(chosen_agent)
             else:
                 chosen_agent = random.choice(environment.district_agents[chosen_district])
                 chosen_agent.status = 'i1'
+                # this list can be used to calculate R0
+                initial_infected.append(chosen_agent)
                 sick_without_symptoms.append(chosen_agent)
 
         if t in environment.parameters["lockdown_days"]:
@@ -123,6 +128,11 @@ def runner(environment, seed, data_folder='measurement/',
                 agent.asymptom_days += 1
                 # these agents all recover after some time
                 if agent.asymptom_days > environment.parameters["asymptom_days"]:
+                    # calculate R0 here
+                    if calculate_r_naught and agent in initial_infected:
+                        print('patient zero recovered or dead with R0 = ', agent.others_infected)
+                        return agent.others_infected
+
                     agent.status = 'r'
                     sick_without_symptoms.remove(agent)
                     recovered.append(agent)
@@ -136,6 +146,10 @@ def runner(environment, seed, data_folder='measurement/',
                         sick_with_symptoms.remove(agent)
                         critical.append(agent)
                     else:
+                        # calculate R0 here
+                        if calculate_r_naught and agent in initial_infected:
+                            print('patient zero recovered or dead with R0 = ', agent.others_infected)
+                            return agent.others_infected
                         agent.status = 'r'
                         sick_with_symptoms.remove(agent)
                         recovered.append(agent)
@@ -144,6 +158,11 @@ def runner(environment, seed, data_folder='measurement/',
                 agent.critical_days += 1
                 # some agents in critical status will die, the rest will recover
                 if agent.critical_days > environment.parameters["critical_days"]:
+                    # calculate R0 here
+                    if calculate_r_naught and agent in initial_infected:
+                        print('patient zero recovered or dead with R0 = ', agent.others_infected)
+                        return agent.others_infected
+
                     if np.random.random() < (agent.prob_death * health_overburdened_multiplier):
                         agent.status = 'd'
                         critical.remove(agent)
