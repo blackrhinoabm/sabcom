@@ -12,7 +12,8 @@ class Environment:
     The environment class contains the agents in a network structure
     """
 
-    def __init__(self, seed, parameters, district_data, age_distribution_per_district, distance_matrix):
+    def __init__(self, seed, parameters, district_data, age_distribution_per_district, distance_matrix,
+                 hh_contact_matrix, other_contact_matrix, HH_size_distribution):
         """
         This method initialises the environment and its properties.
 
@@ -77,15 +78,59 @@ class Environment:
                                            ))
                 agent_name += 1
 
-            # create a Barabasi Albert graph for the ward
-            nodes = len(district_list)
-            new_edges = 2
-            NG = nx.barabasi_albert_graph(nodes, new_edges, seed=0)
+            # create a Barabasi Albert graph for the ward TODO here add new algorithm
 
-            edges = list(NG.edges)
-            # reduce the amount of edges in the district depending on its empirical density
-            for e in edges_to_remove_neighbourhood(edges, density, list(NG.nodes)):
-                NG.remove_edge(e[0], e[1])
+            # 1 get household size list for this Ward and reduce list to max household size = size of ward
+            hh_sizes = HH_size_distribution.loc[district_code][:len(district_list)]
+            # 2 then calculate probabilities of this being of a certain size
+            hh_probability = pd.Series([float(i) / sum(hh_sizes) for i in hh_sizes])
+            hh_probability.index = hh_sizes.index
+            # 3 determine household sizes
+            sizes = []
+            while sum(sizes) <= len(district_list):
+                sizes.append(np.random.choice(hh_probability.index, size=1, p=hh_probability)[0])
+                hh_probability = hh_probability[:len(district_list) - sum(sizes)]
+
+            # To form the household...
+            # (1) pick the household heads and let it form connections with other based on probabilities.
+            # household heads are chosen at random without replacement
+            household_heads = np.random.choice(district_list, size=len(sizes), replace=False)
+            not_household_heads = [x for x in district_list if x not in household_heads]
+            # let the household heads pick n other agents that are not household heads themselves
+            for idx, head in enumerate(household_heads):
+                # pick n other agents based on probability given their age
+                p = [hh_contact_matrix[to.age].loc[head.age] for to in not_household_heads]
+                household_members = np.random.choice(not_household_heads, size=sizes[idx], p=p)
+
+                # remove household members from not_household_heads
+                for h in household_members:
+                    not_household_heads.remove(h)
+
+
+
+
+
+
+            # create edges between all household members.
+
+            # 1 create empty graph
+            NG = nx.Graph()
+            # 2 add nodes as agents
+            NG.add_nodes_from(range(len(district_list)))
+            for idx, agent in district_list:
+                # a check how many connections to form:
+
+                age_categories
+
+
+            # nodes = len(district_list)
+            # new_edges = 2
+            # NG = nx.barabasi_albert_graph(nodes, new_edges, seed=0)
+            #
+            # edges = list(NG.edges)
+            # # reduce the amount of edges in the district depending on its empirical density
+            # for e in edges_to_remove_neighbourhood(edges, density, list(NG.nodes)):
+            #     NG.remove_edge(e[0], e[1])
 
             # add the district agents to the agent list
             agents.append(district_list)
@@ -152,7 +197,8 @@ class EnvironmentMeanField:
     (2) the same amount of trips
     """
 
-    def __init__(self, seed, parameters, district_data, age_distribution_per_district, distance_matrix, variation=None):
+    def __init__(self, seed, parameters, district_data, age_distribution_per_district, distance_matrix,
+                 hh_contact_matrix, other_contact_matrix, HH_size_distribution, variation=None):
         """
         This method initialises the environment and its properties.
 
