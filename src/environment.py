@@ -67,7 +67,7 @@ class Environment:
                 district_list.append(Agent(agent_name, 's',
                                            parameters["probability_transmission"],
                                            parameters["probability_susceptible"],
-                                           parameters["probability_to_travel"],
+                                           1.0,
                                            coordinates,
                                            district_code,
                                            age_categories[a],
