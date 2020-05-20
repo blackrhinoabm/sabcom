@@ -27,6 +27,7 @@ class Environment:
         random.seed(seed)
 
         self.parameters = parameters
+        self.other_contact_matrix = other_contact_matrix # store the contact matrix for use in the runner
 
         # sort data
         nbd_values = [x[1] for x in district_data]
@@ -74,7 +75,8 @@ class Environment:
                                            parameters["probability_symptomatic"],
                                            parameters['probability_critical'][age_categories[a]],
                                            parameters['probability_to_die'][age_categories[a]],
-                                           round(np.random.poisson(4)) # TODO debug the amount of trips is drawn from a poisson distribution
+                                           int(round(other_contact_matrix.loc[age_categories[a]].sum()))
+                                           #round(np.random.poisson(4)) # TODO change this to draw number of trips from other_contact_matrix
                                            ))
                 agent_name += 1
 
@@ -87,9 +89,12 @@ class Environment:
             hh_probability.index = hh_sizes.index
             # 3 determine household sizes
             sizes = []
-            while sum(sizes) <= len(district_list):
-                sizes.append(np.random.choice(hh_probability.index, size=1, p=hh_probability)[0])
+            while sum(sizes) < len(district_list):
+                sizes.append(int(np.random.choice(hh_probability.index, size=1, p=hh_probability)[0]))
                 hh_probability = hh_probability[:len(district_list) - sum(sizes)]
+                # recalculate probabilities
+                hh_probability = pd.Series([float(i) / sum(hh_probability) for i in hh_probability])
+                hh_probability.index = hh_sizes.index[:len(district_list) - sum(sizes)]
 
             # To form the household...
             # (1) pick the household heads and let it form connections with other based on probabilities.
@@ -98,30 +103,35 @@ class Environment:
             not_household_heads = [x for x in district_list if x not in household_heads]
             # let the household heads pick n other agents that are not household heads themselves
             for idx, head in enumerate(household_heads):
-                # pick n other agents based on probability given their age
-                p = [hh_contact_matrix[to.age].loc[head.age] for to in not_household_heads]
-                household_members = np.random.choice(not_household_heads, size=sizes[idx], p=p)
+                if sizes[idx] > 1:
+                    # pick n other agents based on probability given their age
+                    p = [hh_contact_matrix[to.age_group].loc[head.age_group] for to in not_household_heads]
+                    # normalize p
+                    p = [float(i) / sum(p) for i in p]
+                    household_members = list(np.random.choice(not_household_heads, size=sizes[idx]-1, replace=False, p=p))
 
-                # remove household members from not_household_heads
-                for h in household_members:
-                    not_household_heads.remove(h)
+                    # remove household members from not_household_heads
+                    for h in household_members:
+                        not_household_heads.remove(h)
 
+                    # add head to household members:
+                    household_members.append(head)
+                else:
+                    household_members = [head]
 
+                # create graph for household
+                HG = nx.Graph()
+                HG.add_nodes_from(range(len(household_members)))
 
+                # create edges between all household members
+                edges = nx.complete_graph(len(household_members)).edges()
+                HG.add_edges_from(edges)
 
+                # add household members to the agent list
+                agents.append(household_members)
 
-
-            # create edges between all household members.
-
-            # 1 create empty graph
-            NG = nx.Graph()
-            # 2 add nodes as agents
-            NG.add_nodes_from(range(len(district_list)))
-            for idx, agent in district_list:
-                # a check how many connections to form:
-
-                age_categories
-
+                # add network to city graph
+                city_graph = nx.disjoint_union(city_graph, HG)
 
             # nodes = len(district_list)
             # new_edges = 2
@@ -133,10 +143,10 @@ class Environment:
             #     NG.remove_edge(e[0], e[1])
 
             # add the district agents to the agent list
-            agents.append(district_list)
+            #agents.append(district_list)
 
             # add network to city graph
-            city_graph = nx.disjoint_union(city_graph, NG)
+            #city_graph = nx.disjoint_union(city_graph, NG)
 
         self.network = city_graph
         self.distance_matrix = distance_matrix
@@ -144,6 +154,10 @@ class Environment:
 
         self.district_agents = {d: a for d, a in zip(self.districts, agents)}
         self.agents = [y for x in agents for y in x]
+
+        # rename agents to reflect their new position
+        for idx, agent in enumerate(self.agents):
+            agent.name = idx
 
         # Initialize the probability that a new infected agent appears in every district
         cases = [x[1]['Cases_With_Subdistricts'] for x in district_data]
@@ -193,6 +207,7 @@ class Environment:
 
 class EnvironmentMeanField:
     """
+    Currently depreciated.
     The environment class contains the agents in (1) a random network structure, furthermore, agents all make
     (2) the same amount of trips
     """
@@ -256,7 +271,8 @@ class EnvironmentMeanField:
                                               replace=True,
                                               p=age_distribution_per_district[district_code].values)
 
-            average_travel = int(round(np.mean([round(np.random.poisson(4)) for x in range(num_agents)])))
+            # this is specific to the meanfield version of the model
+            average_travel = int(round(other_contact_matrix.sum().mean()))
 
             # add agents to neighbourhood
             for a in range(num_agents):
@@ -277,30 +293,80 @@ class EnvironmentMeanField:
                                            ))
                 agent_name += 1
 
-            # create a random regular graph TODO this is the unique feature of this initialiser
+            # create a household graph with equally distributed household sizes TODO this is the unique feature of this initialiser
+            # 1 get household size list for this Ward and reduce list to max household size = size of ward
+            hh_sizes = HH_size_distribution.loc[district_code][:len(district_list)]
+            # 2 then calculate probabilities of this being of a certain size
+            hh_probability = pd.Series([float(i) / sum(hh_sizes) for i in hh_sizes])
+            hh_probability.index = hh_sizes.index
+            # 3 determine household sizes
+            sizes = []
+            while sum(sizes) < len(district_list):
+                sizes.append(int(np.random.choice(hh_probability.index, size=1, p=hh_probability)[0]))
+                hh_probability = hh_probability[:len(district_list) - sum(sizes)]
+                # recalculate probabilities
+                hh_probability = pd.Series([float(i) / sum(hh_probability) for i in hh_probability])
+                hh_probability.index = hh_sizes.index[:len(district_list) - sum(sizes)]
+
+            # To form the household...
+            # (1) pick the household heads and let it form connections with other based on probabilities.
+            # household heads are chosen at random without replacement
+            household_heads = np.random.choice(district_list, size=len(sizes), replace=False)
+            not_household_heads = [x for x in district_list if x not in household_heads]
+            # let the household heads pick n other agents that are not household heads themselves
+            for idx, head in enumerate(household_heads):
+                if sizes[idx] > 1:
+                    # pick n other agents based on probability given their age
+                    p = [hh_contact_matrix[to.age_group].loc[head.age_group] for to in not_household_heads]
+                    # normalize p
+                    p = [float(i) / sum(p) for i in p]
+                    household_members = list(np.random.choice(not_household_heads, size=sizes[idx]-1, replace=False, p=p))
+
+                    # remove household members from not_household_heads
+                    for h in household_members:
+                        not_household_heads.remove(h)
+
+                    # add head to household members:
+                    household_members.append(head)
+                else:
+                    household_members = [head]
+
+                # create graph for household
+                HG = nx.Graph()
+                HG.add_nodes_from(range(len(household_members)))
+
+                # create edges between all household members
+                edges = nx.complete_graph(len(household_members)).edges()
+                HG.add_edges_from(edges)
+
+                # add household members to the agent list
+                agents.append(household_members)
+
+                # add network to city graph
+                city_graph = nx.disjoint_union(city_graph, HG)
             # first create a Barabasi Albert graph for the ward and use it to calculate average degree
-            nodes = len(district_list)
-            new_edges = 2
-            BA = nx.barabasi_albert_graph(nodes, new_edges, seed=0)
-
-            NG = nx.gnm_random_graph(nodes, len(BA.edges)) #nx.random_regular_graph(degree, nodes, seed=0) #len(NG.edges)
-
-            if variation == 'BAsocial':
-                NG = BA
-
-            print('BA edges = ', len(BA.edges))
-            print('NG edges = ', len(NG.edges))
-
-            edges = list(NG.edges)
-            # reduce the amount of edges in the district depending on its empirical density
-            for e in edges_to_remove_neighbourhood(edges, density, list(NG.nodes)):
-                NG.remove_edge(e[0], e[1])
-
-            # add the district agents to the agent list
-            agents.append(district_list)
-
-            # add network to city graph
-            city_graph = nx.disjoint_union(city_graph, NG)
+            # nodes = len(district_list)
+            # new_edges = 2
+            # BA = nx.barabasi_albert_graph(nodes, new_edges, seed=0)
+            #
+            # NG = nx.gnm_random_graph(nodes, len(BA.edges)) #nx.random_regular_graph(degree, nodes, seed=0) #len(NG.edges)
+            #
+            # if variation == 'BAsocial':
+            #     NG = BA
+            #
+            # print('BA edges = ', len(BA.edges))
+            # print('NG edges = ', len(NG.edges))
+            #
+            # edges = list(NG.edges)
+            # # reduce the amount of edges in the district depending on its empirical density
+            # for e in edges_to_remove_neighbourhood(edges, density, list(NG.nodes)):
+            #     NG.remove_edge(e[0], e[1])
+            #
+            # # add the district agents to the agent list
+            # agents.append(district_list)
+            #
+            # # add network to city graph
+            # city_graph = nx.disjoint_union(city_graph, NG)
 
         self.network = city_graph
         self.distance_matrix = distance_matrix

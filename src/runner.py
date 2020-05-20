@@ -61,7 +61,7 @@ def runner(environment, seed, data_folder='measurement/',
             general_isolation_multiplier = environment.parameters['self_isolation_multiplier']
 
             # Furthermore, a set of close contact edges may be removed
-            original_edges = environment.network.edges  # TODO debug and move to lockdown days
+            original_edges = environment.network.edges  # TODO should this be removed?
             k = int(round(len(original_edges) * (1 - environment.parameters['visiting_close_contacts_multiplier'])))
             to_be_removed_edges = random.sample(original_edges, k)
             # remove some of the original edges
@@ -103,7 +103,12 @@ def runner(environment, seed, data_folder='measurement/',
                             # select the agent with shortest travel time
                             location_closest_agent = min(agents_to_travel_to, key=agents_to_travel_to.get)
                         else:
-                            location_closest_agent = random.choice(agents_to_travel_to).name
+                            # select the agent which it is most likely to have contact with based on the travel matrix
+                            p = [environment.other_contact_matrix[a.age_group].loc[agent.age_group] for a in agents_to_travel_to]
+                            # normalize p
+                            p = [float(i) / sum(p) for i in p]
+                            location_closest_agent = np.random.choice(agents_to_travel_to, size=1, p=p)[0].name
+                            ##location_closest_agent = random.choice(agents_to_travel_to).name
 
                         # create edge to that agent
                         edge = (agent.name, location_closest_agent)  # own network location to other network location
