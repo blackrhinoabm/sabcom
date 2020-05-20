@@ -34,7 +34,30 @@ age_distribution = pd.read_csv('input_data/age_dist.csv', sep=';', index_col=0)
 age_distribution_per_ward = dict(age_distribution.transpose())
 
 # load distance_matrix
-distance_matrix = pd.read_csv('parameters/distance_matrix.csv', index_col=0)
+distance_matrix = pd.read_csv('input_data/distance_matrix.csv', index_col=0)
+
+# load household contact matrix
+hh_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
+# add a col & row for 80 plus. Rename columns to mathc our age categories
+hh_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
+hh_contact_matrix['80plus'] = hh_contact_matrix['70_80']
+row = hh_contact_matrix.xs('70_80')
+row.name = '80plus'
+hh_contact_matrix = hh_contact_matrix.append(row)
+hh_contact_matrix.columns = age_groups
+hh_contact_matrix.index = age_groups
+
+# load other contact matrix
+other_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="OutsideOfHome", index_col=0)
+other_contact_matrix['80plus'] = other_contact_matrix['70_80']
+row = other_contact_matrix.xs('70_80')
+row.name = '80plus'
+other_contact_matrix = other_contact_matrix.append(row)
+other_contact_matrix.columns = age_groups
+other_contact_matrix.index = age_groups
+
+# load household size distribution data
+HH_size_distribution = pd.read_excel('input_data/HH_Size_Distribution.xlsx', index_col=0)
 
 # Monte Carlo simulations
 for seed in range(parameters['monte_carlo_runs']):
@@ -43,10 +66,12 @@ for seed in range(parameters['monte_carlo_runs']):
         os.makedirs('{}seed{}'.format(data_folder, seed))
 
     # initialization
-    environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward, distance_matrix)
+    environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward, distance_matrix,
+                              hh_contact_matrix, other_contact_matrix, HH_size_distribution)
 
     # running the simulation
-    runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder, travel_matrix=travel_matrix, verbose=False)
+    runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
+           travel_matrix=travel_matrix, verbose=False, calculate_r_naught=False)
 
     # save network
     if parameters["data_output"] == 'network':

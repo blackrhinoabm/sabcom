@@ -4,7 +4,7 @@ import geopy.distance
 
 
 def runner(environment, seed, data_folder='measurement/',
-           verbose=False, data_output=False, travel_matrix=None):
+           verbose=False, data_output=False, travel_matrix=None, calculate_r_naught=False):
     """
     This function is used to run / simulate the model.
 
@@ -34,6 +34,7 @@ def runner(environment, seed, data_folder='measurement/',
     for t in range(environment.parameters["time"]):
         # for the first days of the simulation there will be one new agent infected
         if t in environment.parameters['foreign_infection_days']:
+            initial_infected = []
             # select district with probability
             chosen_district = np.random.choice(environment.districts, 1,
                                                environment.probabilities_new_infection_district)[0]
@@ -43,9 +44,13 @@ def runner(environment, seed, data_folder='measurement/',
                     chosen_agent = random.choice(environment.district_agents[chosen_district])
                     chosen_agent.status = 'i1'
                     sick_without_symptoms.append(chosen_agent)
+                    # this list can be used to calculate R0
+                    initial_infected.append(chosen_agent)
             else:
                 chosen_agent = random.choice(environment.district_agents[chosen_district])
                 chosen_agent.status = 'i1'
+                # this list can be used to calculate R0
+                initial_infected.append(chosen_agent)
                 sick_without_symptoms.append(chosen_agent)
 
         if t in environment.parameters["lockdown_days"]:
@@ -56,7 +61,7 @@ def runner(environment, seed, data_folder='measurement/',
             general_isolation_multiplier = environment.parameters['self_isolation_multiplier']
 
             # Furthermore, a set of close contact edges may be removed
-            original_edges = environment.network.edges  # TODO debug and move to lockdown days
+            original_edges = environment.network.edges  # TODO should this be removed?
             k = int(round(len(original_edges) * (1 - environment.parameters['visiting_close_contacts_multiplier'])))
             to_be_removed_edges = random.sample(original_edges, k)
             # remove some of the original edges
@@ -98,7 +103,12 @@ def runner(environment, seed, data_folder='measurement/',
                             # select the agent with shortest travel time
                             location_closest_agent = min(agents_to_travel_to, key=agents_to_travel_to.get)
                         else:
-                            location_closest_agent = random.choice(agents_to_travel_to).name
+                            # select the agent which it is most likely to have contact with based on the travel matrix
+                            p = [environment.other_contact_matrix[a.age_group].loc[agent.age_group] for a in agents_to_travel_to]
+                            # normalize p
+                            p = [float(i) / sum(p) for i in p]
+                            location_closest_agent = np.random.choice(agents_to_travel_to, size=1, p=p)[0].name
+                            ##location_closest_agent = random.choice(agents_to_travel_to).name
 
                         # create edge to that agent
                         edge = (agent.name, location_closest_agent)  # own network location to other network location
@@ -123,6 +133,11 @@ def runner(environment, seed, data_folder='measurement/',
                 agent.asymptom_days += 1
                 # these agents all recover after some time
                 if agent.asymptom_days > environment.parameters["asymptom_days"]:
+                    # calculate R0 here
+                    if calculate_r_naught and agent in initial_infected:
+                        print('patient zero recovered or dead with R0 = ', agent.others_infected)
+                        return agent.others_infected
+
                     agent.status = 'r'
                     sick_without_symptoms.remove(agent)
                     recovered.append(agent)
@@ -136,6 +151,10 @@ def runner(environment, seed, data_folder='measurement/',
                         sick_with_symptoms.remove(agent)
                         critical.append(agent)
                     else:
+                        # calculate R0 here
+                        if calculate_r_naught and agent in initial_infected:
+                            print('patient zero recovered or dead with R0 = ', agent.others_infected)
+                            return agent.others_infected
                         agent.status = 'r'
                         sick_with_symptoms.remove(agent)
                         recovered.append(agent)
@@ -144,6 +163,11 @@ def runner(environment, seed, data_folder='measurement/',
                 agent.critical_days += 1
                 # some agents in critical status will die, the rest will recover
                 if agent.critical_days > environment.parameters["critical_days"]:
+                    # calculate R0 here
+                    if calculate_r_naught and agent in initial_infected:
+                        print('patient zero recovered or dead with R0 = ', agent.others_infected)
+                        return agent.others_infected
+
                     if np.random.random() < (agent.prob_death * health_overburdened_multiplier):
                         agent.status = 'd'
                         critical.remove(agent)
