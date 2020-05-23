@@ -39,7 +39,6 @@ distance_matrix = pd.read_csv('input_data/distance_matrix.csv', index_col=0)
 # load household contact matrix
 hh_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
 # add a col & row for 80 plus. Rename columns to mathc our age categories
-hh_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
 hh_contact_matrix['80plus'] = hh_contact_matrix['70_80']
 row = hh_contact_matrix.xs('70_80')
 row.name = '80plus'
@@ -67,7 +66,7 @@ for seed in range(parameters['monte_carlo_runs']):
 
     # initialization
     environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward, distance_matrix,
-                              hh_contact_matrix, other_contact_matrix, HH_size_distribution)
+                              hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
     # running the simulation
     runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
