@@ -70,7 +70,7 @@ for seed in range(parameters['monte_carlo_runs']):
 
     # running the simulation
     runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
-           travel_matrix=travel_matrix, verbose=False, calculate_r_naught=False)
+           travel_matrix=travel_matrix, verbose=False, calculate_r_naught=True)
 
     # save network
     if parameters["data_output"] == 'network':
