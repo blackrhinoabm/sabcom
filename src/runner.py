@@ -147,8 +147,8 @@ def runner(environment, seed, data_folder='measurement/',
                 if agent.asymptom_days > environment.parameters["asymptom_days"]:
                     # calculate R0 here
                     if calculate_r_naught and agent in initial_infected:
-                        print(t, ' patient zero recovered or dead with R0 = ', agent.others_infected)
-                        return agent.others_infected
+                        print(t, ' patient zero recovered or dead with R0 = ', agent.others_infects_total)
+                        return agent.others_infects_total
 
                     agent.status = 'r'
                     sick_without_symptoms.remove(agent)
@@ -165,8 +165,8 @@ def runner(environment, seed, data_folder='measurement/',
                     else:
                         # calculate R0 here
                         if calculate_r_naught and agent in initial_infected:
-                            print(t, ' patient zero recovered or dead with R0 = ', agent.others_infected)
-                            return agent.others_infected
+                            print(t, ' patient zero recovered or dead with R0 = ', agent.others_infects_total)
+                            return agent.others_infects_total
                         agent.status = 'r'
                         sick_with_symptoms.remove(agent)
                         recovered.append(agent)
@@ -177,8 +177,8 @@ def runner(environment, seed, data_folder='measurement/',
                 if agent.critical_days > environment.parameters["critical_days"]:
                     # calculate R0 here
                     if calculate_r_naught and agent in initial_infected:
-                        print(t, ' patient zero recovered or dead with R0 = ', agent.others_infected)
-                        return agent.others_infected
+                        print(t, ' patient zero recovered or dead with R0 = ', agent.others_infects_total)
+                        return agent.others_infects_total
 
                     if np.random.random() < (agent.prob_death * health_overburdened_multiplier):
                         agent.status = 'd'
@@ -239,6 +239,7 @@ def runner(environment, seed, data_folder='measurement/',
                     susceptible.remove(neighbour)
                     exposed.append(neighbour)
                     agent.others_infected += 1
+                    agent.others_infects_total += 1
 
         if data_output == 'network':
             environment.infection_states.append(environment.store_network())

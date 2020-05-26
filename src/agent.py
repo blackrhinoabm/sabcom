@@ -35,6 +35,7 @@ class Agent:
         self.days_recovered = 0
         self.status = status
         self.others_infected = 0
+        self.others_infects_total = 0
         self.travel_neighbours = []
 
         # agent specific parameters
