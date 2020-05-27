@@ -214,7 +214,7 @@ def runner(environment, seed, data_folder='measurement/',
                 at_risk_term = 1 - physical_distancing_multiplier - informality_term
 
                 if neighbour.status == 's' and np.random.random() < (
-                        agent.prob_transmission * (
+                        environment.parameters['probability_transmission'] * (
                         physical_distancing_multiplier + informality_term + (at_risk_term * should_social_distance_dummy))):
                     neighbour.status = 'e'
                     susceptible.remove(neighbour)
