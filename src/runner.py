@@ -40,31 +40,23 @@ def runner(environment, seed, data_folder='measurement/',
         initial_infected.append(chosen_agent)
         exposed.append(chosen_agent)
         susceptible.remove(chosen_agent)
+    # else infect a set of agents and
+    else:
+        # select districts with probability
+        chosen_districts = list(np.random.choice(environment.districts, len(environment.parameters['foreign_infection_days']), #  TODO change name of parameter
+                                            environment.probabilities_new_infection_district))
+        # count how often a district is in that list
+        chosen_districts = {distr: chosen_districts.count(distr) for distr in chosen_districts}
 
-    for t in range(environment.parameters["time"]):
-        # for the first days of the simulation there will be one new agent infected
-        if t in environment.parameters['foreign_infection_days'] and not calculate_r_naught:
-            initial_infected = []
-            # select district with probability
-            chosen_district = np.random.choice(environment.districts, 1,
-                                               environment.probabilities_new_infection_district)[0]
-            # select random agent in that ward
-            if t == 0:
-                for x in range(1):
-                    chosen_agent = random.choice(environment.district_agents[chosen_district])
-                    chosen_agent.status = 'e'
-                    exposed.append(chosen_agent)
-                    susceptible.remove(chosen_agent)
-                    # this list can be used to calculate R0
-                    initial_infected.append(chosen_agent)
-            else:
-                chosen_agent = random.choice(environment.district_agents[chosen_district])
+        for district in chosen_districts:
+            # infect x random agents
+            chosen_agents = np.random.choice(environment.district_agents[district], chosen_districts[district], replace=False)
+            for chosen_agent in chosen_agents:
                 chosen_agent.status = 'e'
-                # this list can be used to calculate R0
                 exposed.append(chosen_agent)
-                sick_without_symptoms.append(chosen_agent)
                 susceptible.remove(chosen_agent)
 
+    for t in range(environment.parameters["time"]):
         if t in environment.parameters["lockdown_days"]:
             # During lockdown days the probability that others are infected and that there is travel will be reduced
             physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
