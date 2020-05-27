@@ -12,7 +12,7 @@ class Environment:
     The environment class contains the agents in a network structure
     """
 
-    def __init__(self, seed, parameters, district_data, age_distribution_per_district, distance_matrix,
+    def __init__(self, seed, parameters, district_data, age_distribution_per_district,
                  hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix):
         """
         This method initialises the environment and its properties.
@@ -156,7 +156,6 @@ class Environment:
                     city_graph.add_edge(agent.name, location_closest_agent)
 
         self.network = city_graph
-        self.distance_matrix = distance_matrix
 
         # rename agents to reflect their new position
         for idx, agent in enumerate(self.agents):
@@ -215,7 +214,7 @@ class EnvironmentMeanField:
     (2) the same amount of trips
     """
 
-    def __init__(self, seed, parameters, district_data, age_distribution_per_district, distance_matrix,
+    def __init__(self, seed, parameters, district_data, age_distribution_per_district,
                  hh_contact_matrix, other_contact_matrix, HH_size_distribution, variation=None):
         """
         This method initialises the environment and its properties.
@@ -347,32 +346,8 @@ class EnvironmentMeanField:
 
                 # add network to city graph
                 city_graph = nx.disjoint_union(city_graph, HG)
-            # first create a Barabasi Albert graph for the ward and use it to calculate average degree
-            # nodes = len(district_list)
-            # new_edges = 2
-            # BA = nx.barabasi_albert_graph(nodes, new_edges, seed=0)
-            #
-            # NG = nx.gnm_random_graph(nodes, len(BA.edges)) #nx.random_regular_graph(degree, nodes, seed=0) #len(NG.edges)
-            #
-            # if variation == 'BAsocial':
-            #     NG = BA
-            #
-            # print('BA edges = ', len(BA.edges))
-            # print('NG edges = ', len(NG.edges))
-            #
-            # edges = list(NG.edges)
-            # # reduce the amount of edges in the district depending on its empirical density
-            # for e in edges_to_remove_neighbourhood(edges, density, list(NG.nodes)):
-            #     NG.remove_edge(e[0], e[1])
-            #
-            # # add the district agents to the agent list
-            # agents.append(district_list)
-            #
-            # # add network to city graph
-            # city_graph = nx.disjoint_union(city_graph, NG)
 
         self.network = city_graph
-        self.distance_matrix = distance_matrix
         self.districts = [x[0] for x in district_data]
 
         self.district_agents = {d: a for d, a in zip(self.districts, agents)}

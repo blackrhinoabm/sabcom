@@ -34,7 +34,7 @@ age_distribution = pd.read_csv('input_data/age_dist.csv', sep=';', index_col=0)
 age_distribution_per_ward = dict(age_distribution.transpose())
 
 # load distance_matrix
-distance_matrix = pd.read_csv('input_data/distance_matrix.csv', index_col=0)
+#distance_matrix = pd.read_csv('input_data/distance_matrix.csv', index_col=0)
 
 # load household contact matrix
 hh_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
@@ -65,7 +65,7 @@ for seed in range(parameters['monte_carlo_runs']):
         os.makedirs('{}seed{}'.format(data_folder, seed))
 
     # initialization
-    environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward, distance_matrix,
+    environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward,
                               hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
     # running the simulation

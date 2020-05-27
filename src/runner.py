@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import geopy.distance
 
 
 def runner(environment, seed, data_folder='measurement/',
@@ -67,7 +66,7 @@ def runner(environment, seed, data_folder='measurement/',
 
             # Furthermore, a set of close contact edges may be removed
             original_edges = environment.network.edges  # TODO should this be removed?
-            k = int(round(len(original_edges) * (1 - environment.parameters['visiting_close_contacts_multiplier'])))
+            k = int(round(len(original_edges) * (1 - environment.parameters['visiting_recurring_contacts_multiplier'])))
             to_be_removed_edges = random.sample(original_edges, k)
             # remove some of the original edges
             environment.network.remove_edges_from(to_be_removed_edges)
@@ -87,20 +86,10 @@ def runner(environment, seed, data_folder='measurement/',
             if (np.random.random() < agent.prob_travel * (
                     travel_restrictions_multiplier[agent.age_group] + informality_term)) and agent.status != 'c': #+ (at_risk_term * reduced_travel_dummy))) and \
                 for trip in range(min(gathering_max_contacts, agent.num_trips)):
-                    if travel_matrix is None:
-                        # they sample all agents
-                        agents_to_travel_to = random.sample(
-                            environment.agents,
-                            int(environment.parameters["travel_sample_size"] * len(environment.agents)))
-                        # and include travel time to each of these
-                        agents_to_travel_to = {a2.name: environment.distance_matrix[str(agent.district)].loc[a2.district] for a2 in
-                                               agents_to_travel_to if
-                                               environment.distance_matrix[str(agent.district)].loc[a2.district] > 0.0}
-                    else:
-                        probabilities = list(travel_matrix.loc[agent.district])
+                    probabilities = list(travel_matrix.loc[agent.district])
 
-                        district_to_travel_to = np.random.choice(environment.districts, size=1, p=probabilities)[0]
-                        agents_to_travel_to = environment.district_agents[district_to_travel_to]
+                    district_to_travel_to = np.random.choice(environment.districts, size=1, p=probabilities)[0]
+                    agents_to_travel_to = environment.district_agents[district_to_travel_to]
 
                     # consider there are no viable options to travel to ... travel to multiple agents
                     if agents_to_travel_to:
@@ -113,7 +102,6 @@ def runner(environment, seed, data_folder='measurement/',
                             # normalize p
                             p = [float(i) / sum(p) for i in p]
                             location_closest_agent = np.random.choice(agents_to_travel_to, size=1, p=p)[0].name
-                            ##location_closest_agent = random.choice(agents_to_travel_to).name
 
                         # create edge to that agent
                         edge = (agent.name, location_closest_agent)  # own network location to other network location
