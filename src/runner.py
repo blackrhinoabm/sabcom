@@ -46,7 +46,8 @@ def runner(environment, seed, data_folder='measurement/',
         chosen_districts = list(np.random.choice(environment.districts, len(environment.parameters['foreign_infection_days']), #  TODO change name of parameter
                                             environment.probabilities_new_infection_district))
         # count how often a district is in that list
-        chosen_districts = {distr: chosen_districts.count(distr) for distr in chosen_districts}
+
+        chosen_districts = {distr: min(len(environment.district_agents[distr]), chosen_districts.count(distr)) for distr in chosen_districts}
 
         for district in chosen_districts:
             # infect x random agents
