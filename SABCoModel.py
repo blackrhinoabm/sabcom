@@ -33,9 +33,6 @@ travel_matrix = pd.read_csv('input_data/Travel_Probability_Matrix.csv', index_co
 age_distribution = pd.read_csv('input_data/age_dist.csv', sep=';', index_col=0)
 age_distribution_per_ward = dict(age_distribution.transpose())
 
-# load distance_matrix
-#distance_matrix = pd.read_csv('input_data/distance_matrix.csv', index_col=0)
-
 # load household contact matrix
 hh_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
 # add a col & row for 80 plus. Rename columns to mathc our age categories
@@ -69,8 +66,8 @@ for seed in range(parameters['monte_carlo_runs']):
                               hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
     # running the simulation
-    runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
-           travel_matrix=travel_matrix, verbose=False, calculate_r_naught=False)
+    environment = runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
+                         travel_matrix=travel_matrix, calculate_r_naught=False)
 
     # save network
     if parameters["data_output"] == 'network':
