@@ -5,7 +5,7 @@ class DisplayablePath(object):
     display_parent_prefix_last = '│   '
 
     def __init__(self, path, parent_path, is_last):
-        self.path = Path(str(path))
+        self.path = str(path) #Path(str(path)) TODO fix this error
         self.parent = parent_path
         self.is_last = is_last
         if self.parent:
@@ -21,7 +21,7 @@ class DisplayablePath(object):
 
     @classmethod
     def make_tree(cls, root, parent=None, is_last=False, criteria=None):
-        root = Path(str(root))
+        root = str(root)# Path(str(root)) TODO fix this error
         criteria = criteria or cls._default_criteria
 
         displayable_root = cls(root, parent, is_last)
