@@ -2,7 +2,7 @@
 class Agent:
     def __init__(self, name, status, probability_transmission, probability_susceptible, probability_travel,
                  coordinates, district, age_group, informality, probability_symptomatic,
-                 probability_critical, probability_death, num_trips):
+                 probability_critical, probability_death, number_contacts):
         """
         This method initialises an agent and its properties.
 
@@ -24,11 +24,11 @@ class Agent:
         :param informality: a percentage indicating how 'informal' the district the agent lives in is, float (0,1)
         :param probability_critical: the probability that the agent moves from the i2 state to a critical state, float (0,1)
         :param probability_death: the probability that the agent moves from the c state to a dead state, float (0,1)
-        :param num_travel: the amount of trips the agent will undertake on a daily basis
+        :param number_contacts: the amount of trips the agent will undertake on a daily basis
         """
         # state variables
         self.sick_days = 0
-        self.asymptom_days = 0
+        self.asymptomatic_days = 0
         self.incubation_days = 0
         self.critical_days = 0
         self.exposed_days = 0
@@ -43,7 +43,7 @@ class Agent:
         self.coordinates = coordinates
         self.district = district
         self.age_group = age_group
-        self.num_trips = num_trips
+        self.num_trips = number_contacts
 
         # agent specific parameters that depend on other parameters
         self.informality = informality
