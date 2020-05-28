@@ -1,6 +1,6 @@
 
 class Agent:
-    def __init__(self, name, status, probability_transmission, probability_susceptible, probability_travel,
+    def __init__(self, name, status, probability_transmission, probability_susceptible,
                  coordinates, district, age_group, informality, probability_symptomatic,
                  probability_critical, probability_death, number_contacts):
         """
@@ -54,7 +54,6 @@ class Agent:
         # these are technically global parameters because they are not unique in the current implementation of the model
         self.prob_transmission = probability_transmission  # not unique in current implementation
         self.prob_susceptible = probability_susceptible  # not unique in current implementation
-        self.prob_travel = probability_travel  # not unique in current implementation
 
     def __repr__(self):
         """

@@ -44,12 +44,6 @@ class Environment:
         indices_big_neighbourhoods = [i for i, x in enumerate(corrected_populations) if x > 0]
         corrected_populations_final = [x for i, x in enumerate(corrected_populations) if x > 0]
 
-        # calculate correct density per district
-        corrected_density_per_neighbourhood = [x['Density'] for i, x in enumerate(nbd_values) if
-                                               i in indices_big_neighbourhoods]
-        corrected_density_per_neighbourhood = [(float(i) / max(corrected_density_per_neighbourhood)) for i in
-                                               corrected_density_per_neighbourhood]
-
         agents = []
         city_graph = nx.Graph()
         agent_name = 0
@@ -58,7 +52,6 @@ class Environment:
             district_code = district_data[idx][0]
             coordinates = what_coordinates(district_code, district_data)
             informality = what_informality(district_code, district_data) * parameters["informality_dummy"]
-            density = corrected_density_per_neighbourhood[idx]
 
             age_categories = np.random.choice(age_distribution_per_district[district_code].index,
                                               size=num_agents,
@@ -70,7 +63,6 @@ class Environment:
                 district_list.append(Agent(agent_name, 's',
                                            parameters["probability_transmission"],
                                            parameters["probability_susceptible"],
-                                           1.0 - parameters['percentage_contacts_recurring'],
                                            coordinates,
                                            district_code,
                                            age_categories[a],
@@ -141,7 +133,7 @@ class Environment:
 
         # Next, we create the a city wide network structure of recurring contacts
         for agent in self.agents:
-            for contact in range(round(agent.num_trips * parameters['percentage_contacts_recurring'])):
+            for contact in range(agent.num_trips):
                 probabilities = list(travel_matrix.loc[agent.district])
                 district_to_travel_to = np.random.choice(self.districts, size=1, p=probabilities)[0]
                 agents_to_travel_to = self.district_agents[district_to_travel_to]

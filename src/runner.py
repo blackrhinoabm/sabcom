@@ -64,52 +64,23 @@ def runner(environment, seed, data_folder='measurement/',
         if t in environment.parameters["lockdown_days"]:
             # During lockdown days the probability that others are infected and that there is travel will be reduced
             physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
-            travel_restrictions_multiplier = environment.parameters["travel_restrictions_multiplier"]
             gathering_max_contacts = environment.parameters['gathering_max_contacts']
             general_isolation_multiplier = environment.parameters['self_isolation_multiplier']
 
             # Furthermore, a set of close contact edges may be removed
-            original_edges = environment.network.edges  # TODO should this be removed?
-            k = int(round(len(original_edges) * (1 - environment.parameters['visiting_recurring_contacts_multiplier'])))
+            original_edges = environment.network.edges
+            k = int(round(len(original_edges) * (environment.parameters["visiting_recurring_contacts_multiplier"])))
             to_be_removed_edges = random.sample(original_edges, k)
             # remove some of the original edges
             environment.network.remove_edges_from(to_be_removed_edges)
         else:
             general_isolation_multiplier = 1.0
             physical_distancing_multiplier = 1.0
-            travel_restrictions_multiplier = dict.fromkeys(environment.parameters["travel_restrictions_multiplier"],
-                                                           1.0)
             gathering_max_contacts = float('inf')
             to_be_removed_edges = []
 
-        # create empty list of travel edges
-        travel_edges = []
-
+        # update infection status of all agents
         for agent in exposed + susceptible + sick_without_symptoms + sick_with_symptoms + critical:
-            informality_term = (1 - travel_restrictions_multiplier[agent.age_group]) * agent.informality
-            # an agent might travel (multiple times) if it is not in critical state agent.num_travel
-            if (np.random.random() < agent.prob_travel * (
-                    travel_restrictions_multiplier[agent.age_group] + informality_term)) and agent.status != 'c':
-                for trip in range(min(gathering_max_contacts, agent.num_trips)):
-                    probabilities = list(travel_matrix.loc[agent.district])
-
-                    district_to_travel_to = np.random.choice(environment.districts, size=1, p=probabilities)[0]
-                    agents_to_travel_to = environment.district_agents[district_to_travel_to]
-
-                    # consider there are no viable options to travel to ... travel to multiple agents
-                    if agents_to_travel_to:
-                        # select the agent which it is most likely to have contact with based on the travel matrix
-                        p = [environment.other_contact_matrix[a.age_group].loc[agent.age_group] for a in agents_to_travel_to]
-                        # normalize p
-                        p = [float(i) / sum(p) for i in p]
-                        location_closest_agent = np.random.choice(agents_to_travel_to, size=1, p=p)[0].name
-
-                        # create edge to that agent
-                        edge = (agent.name, location_closest_agent)  # own network location to other network location
-
-                        # and store that edge
-                        travel_edges.append(edge)
-
             if agent.status == 'e':
                 agent.exposed_days += 1
                 # some agents will become infectious but do not show agents while others will show symptoms
@@ -184,9 +155,7 @@ def runner(environment, seed, data_folder='measurement/',
         else:
             health_overburdened_multiplier = 1.0
 
-        # create travel edges
-        environment.network.add_edges_from(travel_edges)
-
+        # sick agents will infect other agents
         for agent in sick_without_symptoms + sick_with_symptoms:
             if agent.status in environment.parameters['aware_status'] and \
                     np.random.random() < environment.parameters['likelihood_awareness']:
@@ -197,8 +166,14 @@ def runner(environment, seed, data_folder='measurement/',
             agent.others_infected = 0
             # find indices from neighbour agents
             neighbours_from_graph = [x for x in environment.network.neighbors(agent.name)]
-            k = int(round(len(neighbours_from_graph) * self_isolation_multiplier))
-            neighbours_from_graph = random.sample(neighbours_from_graph, k)
+
+            # depending on lockdown policies, the amount of contacts an agent can visit is limited by the self
+            # isolation multiplier and gathering max contacts
+            k = int(round(len(neighbours_from_graph) * self_isolation_multiplier)) #TODO debug
+            if k > gathering_max_contacts:
+                neighbours_from_graph = random.sample(neighbours_from_graph, gathering_max_contacts)
+            else:
+                neighbours_from_graph = random.sample(neighbours_from_graph, k)
 
             # find the corresponding agents
             neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
@@ -225,9 +200,6 @@ def runner(environment, seed, data_folder='measurement/',
                                                                              sick_without_symptoms, sick_with_symptoms,
                                                                              critical, recovered, dead]):
                 environment.infection_quantities[key].append(len(quantity))
-
-        # delete travel edges
-        environment.network.remove_edges_from(travel_edges)
 
         # add social network edges that were removed in lockdown
         environment.network.add_edges_from(to_be_removed_edges)
