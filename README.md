@@ -1,3 +1,6 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status - GitHub](https://github.com/4oh4/pytesting/workflows/pytesting/badge.svg)](https://github.com/4OH4/pytesting/actions?query=workflow%3Apytesting)
+
 <img src="https://cogeorg.github.io/images/black_rhino_logo.jpg" alt="Snow" style="height:64px">
 <img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png" height="64px"/>
 
