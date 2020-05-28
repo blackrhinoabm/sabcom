@@ -2,7 +2,9 @@
 ![Python application](https://github.com/blackrhinoabm/sabcom/workflows/Python%20application/badge.svg)
 
 ![](https://cogeorg.github.io/images/black_rhino_logo.jpg)
-<img src="https://cogeorg.github.io/images/black_rhino_logo.jpg" alt="Snow" style="height:64px">
+![](https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png)
+
+
 <img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png" height="64px"/>
 
 [comment]: <> (One paragraph overview of the project, TODO add link to blog?)
