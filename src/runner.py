@@ -80,7 +80,7 @@ def runner(environment, seed, data_folder='measurement/',
             to_be_removed_edges = []
 
         # update infection status of all agents
-        for agent in exposed + susceptible + sick_without_symptoms + sick_with_symptoms + critical:
+        for agent in exposed + sick_without_symptoms + sick_with_symptoms + critical:  # + recovered if SEIRS model
             if agent.status == 'e':
                 agent.exposed_days += 1
                 # some agents will become infectious but do not show agents while others will show symptoms
