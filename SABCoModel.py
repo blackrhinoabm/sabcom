@@ -7,6 +7,9 @@ from src.environment import Environment
 from src.runner import runner
 import time
 
+# set scenario using the following parameter:
+scenarios = ['baseline', 'lockdown', 'ineffective_lockdown']
+scenario = scenarios[2]  # set scenario here
 
 start = time.time()
 data_folder = 'measurement/baseline/'
@@ -15,14 +18,23 @@ data_folder = 'measurement/baseline/'
 with open('parameters/parameters.json') as json_file:
     parameters = json.load(json_file)
 
-parameters["lockdown_days"] = [None for x in range(len(parameters['lockdown_days']))]
-parameters['probability_transmission'] = 0.01
-parameters['monte_carlo_runs'] = 5
+# 1.1 optionally set monte carlo runs quickly here
+#parameters['monte_carlo_runs'] = 5
+
+# 1.2 set scenario specific parameters
+if scenario == 'baseline':
+    parameters["lockdown_days"] = [None for x in range(len(parameters['lockdown_days']))]
+elif scenario == 'lockdown':
+    parameters['informality_dummy'] = 0.0
+    parameters["lockdown_days"] = [x for x in range(len(parameters['lockdown_days']))]
+elif scenario == 'ineffective_lockdown':
+    parameters['informality_dummy'] = 1.0
+    parameters["lockdown_days"] = [x for x in range(len(parameters['lockdown_days']))]
+
 
 # Change parameters depending on experiment
 age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
               'age_50_60', 'age_60_70', 'age_70_80', 'age_80_plus']
-
 
 parameters['data_output'] = 'csv_light'
 
