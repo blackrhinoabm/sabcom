@@ -71,4 +71,4 @@ def test_model():
 
         # running the simulation
         environment = runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
-                             travel_matrix=travel_matrix, calculate_r_naught=False)
+                             calculate_r_naught=False)
