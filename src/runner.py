@@ -3,7 +3,7 @@ import random
 
 
 def runner(environment, seed, data_folder='measurement/',
-           data_output=False, travel_matrix=None, calculate_r_naught=False):
+           data_output=False, calculate_r_naught=False):
     """
     This function is used to run / simulate the model.
 
@@ -44,7 +44,7 @@ def runner(environment, seed, data_folder='measurement/',
         initial_infected = []
         # select districts with probability
         chosen_districts = list(np.random.choice(environment.districts,
-                                                 len(environment.parameters['foreign_infection_days']), #  TODO change name of parameter
+                                                 len(environment.parameters['total_initial_infections']),
                                                  environment.probabilities_new_infection_district))
         # count how often a district is in that list
 
@@ -61,25 +61,21 @@ def runner(environment, seed, data_folder='measurement/',
                 susceptible.remove(chosen_agent)
 
     for t in range(environment.parameters["time"]):
+        # PHASE 1 LOCKDOWN
         if t in environment.parameters["lockdown_days"]:
             # During lockdown days the probability that others are infected and that there is travel will be reduced
             physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
             gathering_max_contacts = environment.parameters['gathering_max_contacts']
             general_isolation_multiplier = environment.parameters['self_isolation_multiplier']
+            visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"]
 
-            # Furthermore, a set of close contact edges may be removed
-            original_edges = environment.network.edges
-            k = int(round(len(original_edges) * (environment.parameters["visiting_recurring_contacts_multiplier"])))
-            to_be_removed_edges = random.sample(original_edges, k)
-            # remove some of the original edges
-            environment.network.remove_edges_from(to_be_removed_edges)
         else:
             general_isolation_multiplier = 1.0
             physical_distancing_multiplier = 1.0
             gathering_max_contacts = float('inf')
-            to_be_removed_edges = []
+            visiting_r_contacts_multiplier = 1.0
 
-        # update infection status of all agents
+        # PHASE 2 STATUS UPDATE update infection status of all agents
         for agent in exposed + sick_without_symptoms + sick_with_symptoms + critical:  # + recovered if SEIRS model
             if agent.status == 'e':
                 agent.exposed_days += 1
@@ -149,13 +145,13 @@ def runner(environment, seed, data_folder='measurement/',
                     agent.status = 's'
                     susceptible.append(agent)
 
-        # if the health system is overburdened the multiplier for the death rate is higher than otherwise
+        # PHASE 3 HEALTHSYSTEM check if health system is not overburdened
         if len(critical) / len(environment.agents) > environment.parameters["health_system_capacity"]:
             health_overburdened_multiplier = environment.parameters["no_hospital_multiplier"]
         else:
             health_overburdened_multiplier = 1.0
 
-        # sick agents will infect other agents
+        # PHASE 4 INFEDCTIONS
         for agent in sick_without_symptoms + sick_with_symptoms:
             if agent.status in environment.parameters['aware_status'] and \
                     np.random.random() < environment.parameters['likelihood_awareness']:
@@ -167,11 +163,22 @@ def runner(environment, seed, data_folder='measurement/',
             # find indices from neighbour agents
             neighbours_from_graph = [x for x in environment.network.neighbors(agent.name)]
 
-            # depending on lockdown policies, the amount of contacts an agent can visit is limited by the self
-            # isolation multiplier and gathering max contacts
-            k = int(round(len(neighbours_from_graph) * self_isolation_multiplier)) #TODO debug
-            if k > gathering_max_contacts:
-                neighbours_from_graph = random.sample(neighbours_from_graph, gathering_max_contacts)
+            # depending on lockdown policies, the amount of contacts an agent can visit is reduced by general lockdown,
+            # then by the self isolation multiplier and finally by gathering max contacts
+            informality_term_contacts = (1 - visiting_r_contacts_multiplier) * agent.informality
+            informality_term_isolation = (1 - self_isolation_multiplier) * agent.informality
+
+            k = int(round(len(neighbours_from_graph
+                              ) * (visiting_r_contacts_multiplier + informality_term_contacts
+                                   ) * self_isolation_multiplier + informality_term_isolation))
+
+            if t in environment.parameters["lockdown_days"]:
+                individual_max_contacts = int(round(gathering_max_contacts * (1 + agent.informality)))
+            else:
+                individual_max_contacts = gathering_max_contacts
+
+            if k > individual_max_contacts:
+                neighbours_from_graph = random.sample(neighbours_from_graph, individual_max_contacts)
             else:
                 neighbours_from_graph = random.sample(neighbours_from_graph, k)
 
@@ -179,11 +186,11 @@ def runner(environment, seed, data_folder='measurement/',
             neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
             # let these agents be infected (with random probability
             for neighbour in neighbours_to_infect:
-                informality_term = (1 - physical_distancing_multiplier) * agent.informality
+                informality_term_phys_dis = (1 - physical_distancing_multiplier) * agent.informality
 
                 if neighbour.status == 's' and np.random.random() < (
                         environment.parameters['probability_transmission'] * (
-                        physical_distancing_multiplier + informality_term)):
+                        physical_distancing_multiplier + informality_term_phys_dis)):
                     neighbour.status = 'e'
                     susceptible.remove(neighbour)
                     exposed.append(neighbour)
@@ -200,8 +207,5 @@ def runner(environment, seed, data_folder='measurement/',
                                                                              sick_without_symptoms, sick_with_symptoms,
                                                                              critical, recovered, dead]):
                 environment.infection_quantities[key].append(len(quantity))
-
-        # add social network edges that were removed in lockdown
-        environment.network.add_edges_from(to_be_removed_edges)
 
     return environment

@@ -7,33 +7,54 @@ from src.environment import Environment
 from src.runner import runner
 import time
 
+# set scenario using the following parameter:
+scenarios = ['baseline', 'lockdown', 'ineffective_lockdown']
+scenario = scenarios[2]  # set scenario here
 
 start = time.time()
 data_folder = 'measurement/baseline/'
 
-# load parameters
+# 1 load general the parameters
 with open('parameters/parameters.json') as json_file:
     parameters = json.load(json_file)
+
+# 1.1 optionally set monte carlo runs quickly here
+#parameters['monte_carlo_runs'] = 5
+
+# 1.2 set scenario specific parameters
+if scenario == 'baseline':
+    parameters["lockdown_days"] = [None for x in range(len(parameters['lockdown_days']))]
+elif scenario == 'lockdown':
+    parameters['informality_dummy'] = 0.0
+    parameters["lockdown_days"] = [x for x in range(len(parameters['lockdown_days']))]
+elif scenario == 'ineffective_lockdown':
+    parameters['informality_dummy'] = 1.0
+    parameters["lockdown_days"] = [x for x in range(len(parameters['lockdown_days']))]
+
 
 # Change parameters depending on experiment
 age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
               'age_50_60', 'age_60_70', 'age_70_80', 'age_80_plus']
 
-
 parameters['data_output'] = 'csv_light'
 
-# load neighbourhood data
+# 2 load district data
+# 2.1 general neighbourhood data
 with open('parameters/district_data.json') as json_file:
     neighbourhood_data = json.load(json_file)
 
-# load travel matrix
-travel_matrix = pd.read_csv('input_data/Travel_Probability_Matrix.csv', index_col=0)
-
-# load age data
+# 2.2 age data
 age_distribution = pd.read_csv('input_data/age_dist.csv', sep=';', index_col=0)
 age_distribution_per_ward = dict(age_distribution.transpose())
 
-# load household contact matrix
+# 2.3 household size distribution
+HH_size_distribution = pd.read_excel('input_data/HH_Size_Distribution.xlsx', index_col=0)
+
+# 3 load travel matrix
+travel_matrix = pd.read_csv('input_data/Travel_Probability_Matrix.csv', index_col=0)
+
+# 4 load contact matrices
+# 4.1 load household contact matrix
 hh_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
 # add a col & row for 80 plus. Rename columns to mathc our age categories
 hh_contact_matrix['80plus'] = hh_contact_matrix['70_80']
@@ -43,7 +64,7 @@ hh_contact_matrix = hh_contact_matrix.append(row)
 hh_contact_matrix.columns = age_groups
 hh_contact_matrix.index = age_groups
 
-# load other contact matrix
+# 4.2 load other contact matrix
 other_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="OutsideOfHome", index_col=0)
 other_contact_matrix['80plus'] = other_contact_matrix['70_80']
 row = other_contact_matrix.xs('70_80')
@@ -52,8 +73,6 @@ other_contact_matrix = other_contact_matrix.append(row)
 other_contact_matrix.columns = age_groups
 other_contact_matrix.index = age_groups
 
-# load household size distribution data
-HH_size_distribution = pd.read_excel('input_data/HH_Size_Distribution.xlsx', index_col=0)
 
 # Monte Carlo simulations
 for seed in range(parameters['monte_carlo_runs']):
@@ -67,7 +86,7 @@ for seed in range(parameters['monte_carlo_runs']):
 
     # running the simulation
     environment = runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
-                         travel_matrix=travel_matrix, calculate_r_naught=False)
+                         calculate_r_naught=False)
 
     # save network
     if parameters["data_output"] == 'network':
