@@ -32,18 +32,20 @@ class Environment:
         self.parameters = parameters
         self.other_contact_matrix = other_contact_matrix
 
-        # sort data
+        # 1 initialise city districts
+        # 1.1 retrieve population data
         nbd_values = [x[1] for x in district_data]
         population_per_neighbourhood = [x['Population'] for x in nbd_values]
 
-        # correct the population in neighbourhoods to be proportional to number of agents
+        # 1.2 correct the population in districts to be proportional to number of agents
         correction_factor = sum(population_per_neighbourhood) / parameters["number_of_agents"]
         corrected_populations = [round(x / correction_factor) for x in population_per_neighbourhood]
 
-        # only count neighbourhoods that then have an amount of people bigger than 0
+        # 1.3 only count districts that then have an amount of people bigger than 0
         indices_big_neighbourhoods = [i for i, x in enumerate(corrected_populations) if x > 0]
         corrected_populations_final = [x for i, x in enumerate(corrected_populations) if x > 0]
 
+        # 2 fill up the districts with agents
         agents = []
         city_graph = nx.Graph()
         agent_name = 0
@@ -74,14 +76,14 @@ class Environment:
                                            ))
                 agent_name += 1
 
-            # Create the household network structure
-            # 1 get household size list for this Ward and reduce list to max household size = size of ward
+            # 3 Create the household network structure
+            # 3.1 get household size list for this Ward and reduce list to max household size = size of ward
             max_district_household = min(len(district_list), len(household_size_distribution.columns) - 1)
             hh_sizes = household_size_distribution.loc[district_code][:max_district_household]
-            # 2 then calculate probabilities of this being of a certain size
+            # 3.2 then calculate probabilities of this being of a certain size
             hh_probability = pd.Series([float(i) / sum(hh_sizes) for i in hh_sizes])
             hh_probability.index = hh_sizes.index
-            # 3 determine household sizes
+            # 3.3 determine household sizes
             sizes = []
             while sum(sizes) < len(district_list):
                 sizes.append(int(np.random.choice(hh_probability.index, size=1, p=hh_probability)[0]))
@@ -90,12 +92,12 @@ class Environment:
                 hh_probability = pd.Series([float(i) / sum(hh_probability) for i in hh_probability])
                 hh_probability.index = hh_sizes.index[:len(district_list) - sum(sizes)]
 
-            # To form the household...
-            # (1) pick the household heads and let it form connections with other based on probabilities.
+            # 3.4 Distribute agents over households
+            # 3.4.1 pick the household heads and let it form connections with other based on probabilities.
             # household heads are chosen at random without replacement
             household_heads = np.random.choice(district_list, size=len(sizes), replace=False)
             not_household_heads = [x for x in district_list if x not in household_heads]
-            # let the household heads pick n other agents that are not household heads themselves
+            # 3.4.2 let the household heads pick n other agents that are not household heads themselves
             for i, head in enumerate(household_heads):
                 if sizes[i] > 1:
                     # pick n other agents based on probability given their age
@@ -113,7 +115,7 @@ class Environment:
                 else:
                     household_members = [head]
 
-                # create graph for household
+                # 3.4.3 create graph for household
                 household_graph = nx.Graph()
                 household_graph.add_nodes_from(range(len(household_members)))
 
@@ -124,14 +126,14 @@ class Environment:
                 # add household members to the agent list
                 agents.append(household_members)
 
-                # add network to city graph
+                # 3.4.4 add network to city graph
                 city_graph = nx.disjoint_union(city_graph, household_graph)
 
         self.districts = [x[0] for x in district_data]
         self.district_agents = {d: a for d, a in zip(self.districts, agents)}
         self.agents = [y for x in agents for y in x]
 
-        # Next, we create the a city wide network structure of recurring contacts
+        # 4 Next, we create the a city wide network structure of recurring contacts
         for agent in self.agents:
             for contact in range(agent.num_trips):
                 probabilities = list(travel_matrix.loc[agent.district])
@@ -155,7 +157,7 @@ class Environment:
         for idx, agent in enumerate(self.agents):
             agent.name = idx
 
-        # Initialize the probability that a new infected agent appears in every district
+        # 5 Initialize the probability that a new infected agent appears in every district
         cases = [x[1]['Cases_With_Subdistricts'] for x in district_data]
         self.probabilities_new_infection_district = [float(i) / sum(cases) for i in cases]
 
