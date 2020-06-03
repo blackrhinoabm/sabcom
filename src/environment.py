@@ -144,7 +144,7 @@ class Environment:
 
         # 4 Next, we create the a city wide network structure of recurring contacts
         for agent in self.agents:
-            agents_to_travel_to = all_travel_districts[agent.district_to_travel_to]  # TODO debug!!
+            agents_to_travel_to = all_travel_districts[agent.district_to_travel_to]
             agents_to_travel_to.remove(agent)  # remove the agent itself
 
             if agents_to_travel_to:
