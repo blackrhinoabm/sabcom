@@ -2,7 +2,7 @@
 class Agent:
     def __init__(self, name, status, probability_transmission, probability_susceptible,
                  coordinates, district, age_group, informality, probability_symptomatic,
-                 probability_critical, probability_death, number_contacts):
+                 probability_critical, probability_death, number_contacts, district_to_travel_to):
         """
         This method initialises an agent and its properties.
 
@@ -43,9 +43,10 @@ class Agent:
         self.coordinates = coordinates
         self.district = district
         self.age_group = age_group
-        self.num_contacts= number_contacts
+        self.num_contacts = number_contacts
 
         # agent specific parameters that depend on other parameters
+        self.district_to_travel_to = district_to_travel_to
         self.informality = informality
         self.prob_symptomatic = probability_symptomatic
         self.prob_hospital = probability_critical

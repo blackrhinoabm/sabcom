@@ -49,6 +49,7 @@ class Environment:
         agents = []
         city_graph = nx.Graph()
         agent_name = 0
+        all_travel_districts = {district_data[idx][0]: [] for idx in indices_big_neighbourhoods}
         for num_agents, idx in zip(corrected_populations_final, indices_big_neighbourhoods):
             district_list = []
             district_code = district_data[idx][0]
@@ -60,20 +61,28 @@ class Environment:
                                               replace=True,
                                               p=age_distribution_per_district[district_code].values)
 
+            # determine district to travel to
+            available_districts = list(all_travel_districts.keys())
+            probabilities = list(travel_matrix[[str(x) for x in available_districts]].loc[district_code])
+            district_to_travel_to = np.random.choice(available_districts, size=1, p=probabilities)[0]
+
             # add agents to neighbourhood
             for a in range(num_agents):
-                district_list.append(Agent(agent_name, 's',
-                                           parameters["probability_transmission"],
-                                           parameters["probability_susceptible"],
-                                           coordinates,
-                                           district_code,
-                                           age_categories[a],
-                                           informality,
-                                           parameters["probability_symptomatic"],
-                                           parameters['probability_critical'][age_categories[a]],
-                                           parameters['probability_to_die'][age_categories[a]],
-                                           int(round(other_contact_matrix.loc[age_categories[a]].sum()))
-                                           ))
+                agent = Agent(agent_name, 's',
+                              parameters["probability_transmission"],
+                              parameters["probability_susceptible"],
+                              coordinates,
+                              district_code,
+                              age_categories[a],
+                              informality,
+                              parameters["probability_symptomatic"],
+                              parameters['probability_critical'][age_categories[a]],
+                              parameters['probability_to_die'][age_categories[a]],
+                              int(round(other_contact_matrix.loc[age_categories[a]].sum())),
+                              district_to_travel_to
+                              )
+                district_list.append(agent)
+                all_travel_districts[district_to_travel_to].append(agent)
                 agent_name += 1
 
             # 3 Create the household network structure
@@ -135,21 +144,22 @@ class Environment:
 
         # 4 Next, we create the a city wide network structure of recurring contacts
         for agent in self.agents:
-            for contact in range(agent.num_contacts):
-                probabilities = list(travel_matrix.loc[agent.district])
-                district_to_travel_to = np.random.choice(self.districts, size=1, p=probabilities)[0]
-                agents_to_travel_to = self.district_agents[district_to_travel_to]
+            agents_to_travel_to = all_travel_districts[agent.district_to_travel_to]  # TODO debug!!
+            agents_to_travel_to.remove(agent)  # remove the agent itself
 
-                # consider there are no viable options to travel to ... travel to multiple agents
-                if agents_to_travel_to:
-                    # select the agent which it is most likely to have contact with based on the travel matrix
-                    p = [other_contact_matrix[a.age_group].loc[agent.age_group] for a in agents_to_travel_to]
-                    # normalize p
-                    p = [float(i) / sum(p) for i in p]
-                    location_closest_agent = np.random.choice(agents_to_travel_to, size=1, p=p)[0].name
+            if agents_to_travel_to:
+                # select the agents which it is most likely to have contact with based on the travel matrix
+                p = [other_contact_matrix[a.age_group].loc[agent.age_group] for a in agents_to_travel_to]
+                # normalize p
+                p = [float(i) / sum(p) for i in p]
 
-                    # create edge to that agent and store that edge in the city graph
-                    city_graph.add_edge(agent.name, location_closest_agent)
+                location_closest_agents = np.random.choice(agents_to_travel_to,
+                                                           size=min(agent.num_contacts, len(agents_to_travel_to)),
+                                                           replace=False,
+                                                           p=p)
+
+                for ca in location_closest_agents:
+                    city_graph.add_edge(agent.name, ca.name)
 
         self.network = city_graph
 
