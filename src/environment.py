@@ -135,7 +135,7 @@ class Environment:
 
         # 4 Next, we create the a city wide network structure of recurring contacts
         for agent in self.agents:
-            for contact in range(agent.num_trips):
+            for contact in range(agent.num_contacts):
                 probabilities = list(travel_matrix.loc[agent.district])
                 district_to_travel_to = np.random.choice(self.districts, size=1, p=probabilities)[0]
                 agents_to_travel_to = self.district_agents[district_to_travel_to]

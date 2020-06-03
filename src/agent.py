@@ -43,7 +43,7 @@ class Agent:
         self.coordinates = coordinates
         self.district = district
         self.age_group = age_group
-        self.num_trips = number_contacts
+        self.num_contacts= number_contacts
 
         # agent specific parameters that depend on other parameters
         self.informality = informality
