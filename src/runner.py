@@ -30,6 +30,7 @@ def runner(environment, seed, data_folder='measurement/',
     susceptible = [agent for agent in environment.agents]
     health_overburdened_multiplier = 1
 
+    # PHASE 5.2 of the initialisation happens in the runner to allow for cluster computing of calc R_naught
     # here a fixed initial agent can be infected once to calculate R0
     if calculate_r_naught:
         initial_infected = []
@@ -68,7 +69,6 @@ def runner(environment, seed, data_folder='measurement/',
             gathering_max_contacts = environment.parameters['gathering_max_contacts']
             general_isolation_multiplier = environment.parameters['self_isolation_multiplier']
             visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"]
-
         else:
             general_isolation_multiplier = 1.0
             physical_distancing_multiplier = 1.0
