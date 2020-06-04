@@ -24,7 +24,7 @@ class Environment:
         :param household_contact_matrix: contains number and age groups for household contacts, Pandas DataFrame
         :param other_contact_matrix: contains number and age groups for all other contacts, Pandas DataFrame
         :param household_size_distribution: contains distribution of household size for all districts, Pandas DataFrame
-        :param other_contact_matrix: contains number and age groups for all other contacts, Pandas DataFrame
+        :param travel_matrix: contains number and age groups for all other contacts, Pandas DataFrame
         """
         np.random.seed(seed)
         random.seed(seed)
@@ -65,10 +65,10 @@ class Environment:
             # 2.2 determine district to travel to
             available_districts = list(all_travel_districts.keys())
             probabilities = list(travel_matrix[[str(x) for x in available_districts]].loc[district_code])
-            district_to_travel_to = np.random.choice(available_districts, size=1, p=probabilities)[0]
 
             # 2.3 add agents to neighbourhood
             for a in range(num_agents):
+                district_to_travel_to = np.random.choice(available_districts, size=1, p=probabilities)[0]
                 agent = Agent(agent_name, 's',
                               parameters["probability_transmission"],
                               parameters["probability_susceptible"],
