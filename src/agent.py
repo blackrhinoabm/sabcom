@@ -40,6 +40,7 @@ class Agent:
 
         # agent specific parameters
         self.name = name
+        self.household_number = None
         self.coordinates = coordinates
         self.district = district
         self.age_group = age_group

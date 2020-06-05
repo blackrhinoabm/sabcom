@@ -109,6 +109,7 @@ class Environment:
             not_household_heads = [x for x in district_list if x not in household_heads]
             # 3.4.2 let the household heads pick n other agents that are not household heads themselves
             for i, head in enumerate(household_heads):
+                head.household_number = i
                 if sizes[i] > 1:
                     # pick n other agents based on probability given their age
                     p = [household_contact_matrix[to.age_group].loc[head.age_group] for to in not_household_heads]
@@ -118,6 +119,7 @@ class Environment:
 
                     # remove household members from not_household_heads
                     for h in household_members:
+                        h.household_number = i
                         not_household_heads.remove(h)
 
                     # add head to household members:
