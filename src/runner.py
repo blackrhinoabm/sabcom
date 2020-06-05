@@ -67,10 +67,10 @@ def runner(environment, seed, data_folder='measurement/',
             # During lockdown days the probability that others are infected and that there is travel will be reduced
             physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
             gathering_max_contacts = environment.parameters['gathering_max_contacts']
-            general_isolation_multiplier = environment.parameters['self_isolation_multiplier']
+            likelihood_awareness = environment.parameters['likelihood_awareness']
             visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"]
         else:
-            general_isolation_multiplier = 1.0
+            likelihood_awareness = 0.0
             physical_distancing_multiplier = 1.0
             gathering_max_contacts = float('inf')
             visiting_r_contacts_multiplier = 1.0
@@ -153,12 +153,6 @@ def runner(environment, seed, data_folder='measurement/',
 
         # PHASE 4 INFEDCTIONS
         for agent in sick_without_symptoms + sick_with_symptoms:
-            if agent.status in environment.parameters['aware_status'] and \
-                    np.random.random() < environment.parameters['likelihood_awareness']:
-                self_isolation_multiplier = general_isolation_multiplier
-            else:
-                self_isolation_multiplier = 1.0
-            # set the number of other agents infected this period 0
             agent.others_infected = 0
             # find indices from neighbour agents
             neighbours_from_graph = [x for x in environment.network.neighbors(agent.name)]
@@ -166,24 +160,32 @@ def runner(environment, seed, data_folder='measurement/',
             # depending on lockdown policies, the amount of contacts an agent can visit is reduced by general lockdown,
             # then by the self isolation multiplier and finally by gathering max contacts
             informality_term_contacts = (1 - visiting_r_contacts_multiplier) * agent.informality
-            informality_term_isolation = (1 - self_isolation_multiplier) * agent.informality
 
-            k = int(round(len(neighbours_from_graph
+            planned_contacts = int(round(len(neighbours_from_graph
                               ) * (visiting_r_contacts_multiplier + informality_term_contacts
-                                   ) * self_isolation_multiplier + informality_term_isolation))
+                                   )))
 
             if t in environment.parameters["lockdown_days"]:
                 individual_max_contacts = int(round(gathering_max_contacts * (1 + agent.informality)))
             else:
                 individual_max_contacts = gathering_max_contacts
 
-            if k > individual_max_contacts:
+            if planned_contacts > individual_max_contacts:
                 neighbours_from_graph = random.sample(neighbours_from_graph, individual_max_contacts)
             else:
-                neighbours_from_graph = random.sample(neighbours_from_graph, k)
+                neighbours_from_graph = random.sample(neighbours_from_graph, planned_contacts)
 
             # find the corresponding agents
-            neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
+            if agent.status in environment.parameters['aware_status'] and \
+                    np.random.random() < likelihood_awareness * (1 - agent.informality):
+                neighbours_to_infect = []
+                for idx in neighbours_from_graph:
+                    if environment.agents[idx].household_number == agent.household_number and \
+                            environment.agents[idx].district == agent.district:
+                        neighbours_to_infect.append(environment.agents[idx])
+            else:
+                neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
+
             # let these agents be infected (with random probability
             for neighbour in neighbours_to_infect:
                 informality_term_phys_dis = (1 - physical_distancing_multiplier) * agent.informality
