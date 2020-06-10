@@ -1,7 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Python application](https://github.com/blackrhinoabm/sabcom/workflows/Python%20application/badge.svg)
 
-<img src="https://pbs.twimg.com/profile_images/1270246832015314953/CW4YcWdd_400x400.jpg" width="75">
+<img src="https://pbs.twimg.com/profile_images/1270246832015314953/CW4YcWdd_400x400.jpg" width="125">
 
 ![](https://cogeorg.github.io/images/black_rhino_logo.jpg)
 ![](https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png)
