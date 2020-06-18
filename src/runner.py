@@ -74,7 +74,7 @@ def runner(environment, seed, data_folder='measurement/',
                 agent.exposed_days += 1
                 # some agents will become infectious but do not show agents while others will show symptoms
                 if agent.exposed_days > environment.parameters["exposed_days"]:
-                    if np.random.random() < agent.prob_symptomatic:
+                    if np.random.random() < environment.parameters["probability_symptomatic"]:  # agent.prob_symptomatic:
                         agent.status = 'i2'
                         exposed.remove(agent)
                         sick_with_symptoms.append(agent)
@@ -100,7 +100,7 @@ def runner(environment, seed, data_folder='measurement/',
                 agent.sick_days += 1
                 # some agents recover
                 if agent.sick_days > environment.parameters["symptom_days"]:
-                    if np.random.random() < agent.prob_hospital:
+                    if np.random.random() < environment.parameters["probability_critical"][agent.age_group]:   #agent.prob_hospital:
                         agent.status = 'c'
                         sick_with_symptoms.remove(agent)
                         critical.append(agent)
@@ -122,7 +122,8 @@ def runner(environment, seed, data_folder='measurement/',
                         print(t, ' patient zero recovered or dead with R0 = ', agent.others_infects_total)
                         return agent.others_infects_total
 
-                    if np.random.random() < (agent.prob_death * health_overburdened_multiplier):
+                    if np.random.random() < (environment.parameters["probability_to_die"][
+                                agent.age_group] * health_overburdened_multiplier):
                         agent.status = 'd'
                         critical.remove(agent)
                         dead.append(agent)
@@ -133,7 +134,7 @@ def runner(environment, seed, data_folder='measurement/',
 
             elif agent.status == 'r':
                 agent.days_recovered += 1
-                if np.random.random() < (agent.prob_susceptible * agent.days_recovered):
+                if np.random.random() < (environment.parameters["probability_susceptible"] * agent.days_recovered):
                     recovered.remove(agent)
                     agent.status = 's'
                     susceptible.append(agent)
