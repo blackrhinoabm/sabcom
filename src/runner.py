@@ -62,18 +62,11 @@ def runner(environment, seed, data_folder='measurement/',
                 susceptible.remove(chosen_agent)
 
     for t in range(environment.parameters["time"]):
-        # PHASE 1 LOCKDOWN
-        if t in environment.parameters["lockdown_days"]:
-            # During lockdown days the probability that others are infected and that there is travel will be reduced
-            physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
-            gathering_max_contacts = environment.parameters['gathering_max_contacts']
-            likelihood_awareness = environment.parameters['likelihood_awareness']
-            visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"]
+        # PHASE 1 HEALTH SYSTEM check if it is not overburdened
+        if len(critical) / len(environment.agents) > environment.parameters["health_system_capacity"]:
+            health_overburdened_multiplier = environment.parameters["no_hospital_multiplier"]
         else:
-            likelihood_awareness = 0.0
-            physical_distancing_multiplier = 1.0
-            gathering_max_contacts = float('inf')
-            visiting_r_contacts_multiplier = 1.0
+            health_overburdened_multiplier = 1.0
 
         # PHASE 2 STATUS UPDATE update infection status of all agents
         for agent in exposed + sick_without_symptoms + sick_with_symptoms + critical:  # + recovered if SEIRS model
@@ -81,7 +74,7 @@ def runner(environment, seed, data_folder='measurement/',
                 agent.exposed_days += 1
                 # some agents will become infectious but do not show agents while others will show symptoms
                 if agent.exposed_days > environment.parameters["exposed_days"]:
-                    if np.random.random() < agent.prob_symptomatic:
+                    if np.random.random() < environment.parameters["probability_symptomatic"]:  # agent.prob_symptomatic:
                         agent.status = 'i2'
                         exposed.remove(agent)
                         sick_with_symptoms.append(agent)
@@ -107,7 +100,7 @@ def runner(environment, seed, data_folder='measurement/',
                 agent.sick_days += 1
                 # some agents recover
                 if agent.sick_days > environment.parameters["symptom_days"]:
-                    if np.random.random() < agent.prob_hospital:
+                    if np.random.random() < environment.parameters["probability_critical"][agent.age_group]:   #agent.prob_hospital:
                         agent.status = 'c'
                         sick_with_symptoms.remove(agent)
                         critical.append(agent)
@@ -129,7 +122,8 @@ def runner(environment, seed, data_folder='measurement/',
                         print(t, ' patient zero recovered or dead with R0 = ', agent.others_infects_total)
                         return agent.others_infects_total
 
-                    if np.random.random() < (agent.prob_death * health_overburdened_multiplier):
+                    if np.random.random() < (environment.parameters["probability_to_die"][
+                                agent.age_group] * health_overburdened_multiplier):
                         agent.status = 'd'
                         critical.remove(agent)
                         dead.append(agent)
@@ -140,30 +134,38 @@ def runner(environment, seed, data_folder='measurement/',
 
             elif agent.status == 'r':
                 agent.days_recovered += 1
-                if np.random.random() < (agent.prob_susceptible * agent.days_recovered):
+                if np.random.random() < (environment.parameters["probability_susceptible"] * agent.days_recovered):
                     recovered.remove(agent)
                     agent.status = 's'
                     susceptible.append(agent)
 
-        # PHASE 3 HEALTHSYSTEM check if health system is not overburdened
-        if len(critical) / len(environment.agents) > environment.parameters["health_system_capacity"]:
-            health_overburdened_multiplier = environment.parameters["no_hospital_multiplier"]
+        # PHASE 3 LOCKDOWN
+        if t in environment.parameters["lockdown_days"]:
+            # During lockdown days the probability that others are infected and that there is travel will be reduced
+            physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
+            gathering_max_contacts = environment.parameters['gathering_max_contacts']
+            likelihood_awareness = environment.parameters['likelihood_awareness']
+            visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"]
         else:
-            health_overburdened_multiplier = 1.0
+            likelihood_awareness = 0.0
+            physical_distancing_multiplier = 1.0
+            gathering_max_contacts = float('inf')
+            visiting_r_contacts_multiplier = 1.0
 
-        # PHASE 4 INFEDCTIONS
+        # PHASE 4 INFECTIONS
         for agent in sick_without_symptoms + sick_with_symptoms:
             agent.others_infected = 0
+
             # find indices from neighbour agents
             neighbours_from_graph = [x for x in environment.network.neighbors(agent.name)]
 
             # depending on lockdown policies, the amount of contacts an agent can visit is reduced by general lockdown,
             # then by the self isolation multiplier and finally by gathering max contacts
+
             informality_term_contacts = (1 - visiting_r_contacts_multiplier) * agent.informality
 
             planned_contacts = int(round(len(neighbours_from_graph
-                              ) * (visiting_r_contacts_multiplier + informality_term_contacts
-                                   )))
+                                             ) * (visiting_r_contacts_multiplier + informality_term_contacts)))
 
             if t in environment.parameters["lockdown_days"]:
                 individual_max_contacts = int(round(gathering_max_contacts * (1 + agent.informality)))
@@ -210,4 +212,5 @@ def runner(environment, seed, data_folder='measurement/',
                                                                              critical, recovered, dead]):
                 environment.infection_quantities[key].append(len(quantity))
 
+    print(len(dead))
     return environment

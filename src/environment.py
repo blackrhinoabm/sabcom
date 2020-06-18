@@ -133,7 +133,7 @@ class Environment:
 
                 # create edges between all household members
                 edges = nx.complete_graph(len(household_members)).edges()
-                household_graph.add_edges_from(edges)
+                household_graph.add_edges_from(edges, label='household')
 
                 # add household members to the agent list
                 agents.append(household_members)
@@ -162,7 +162,7 @@ class Environment:
                                                            p=p)
 
                 for ca in location_closest_agents:
-                    city_graph.add_edge(agent.name, ca.name)
+                    city_graph.add_edge(agent.name, ca.name, label='other')
 
         self.network = city_graph
 
@@ -210,5 +210,6 @@ class Environment:
             period))
 
         # output links
-        pd.DataFrame(self.network.edges()).to_csv(base_folder + "seed" + str(seed) + "/edge_list{0:04}.csv".format(
-            period))
+        if period == 0:
+            pd.DataFrame(self.network.edges()).to_csv(base_folder + "seed" + str(seed) + "/edge_list{0:04}.csv".format(
+                period))

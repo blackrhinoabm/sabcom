@@ -27,26 +27,30 @@ class Agent:
         :param number_contacts: the amount of trips the agent will undertake on a daily basis
         """
         # state variables
+        self.status = status
+
+        # agent specific parameters
+        self.name = name
+        self.district = district
+        self.age_group = age_group
+
+        # implementation variables
         self.sick_days = 0
         self.asymptomatic_days = 0
         self.incubation_days = 0
         self.critical_days = 0
         self.exposed_days = 0
         self.days_recovered = 0
-        self.status = status
         self.others_infected = 0
         self.others_infects_total = 0
         self.travel_neighbours = []
 
-        # agent specific parameters
-        self.name = name
-        self.household_number = None
-        self.coordinates = coordinates
-        self.district = district
-        self.age_group = age_group
+        # implementation parameters
         self.num_contacts = number_contacts
+        self.household_number = None
 
         # agent specific parameters that depend on other parameters
+        self.coordinates = coordinates
         self.district_to_travel_to = district_to_travel_to
         self.informality = informality
         self.prob_symptomatic = probability_symptomatic
