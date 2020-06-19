@@ -8,24 +8,18 @@
 
 
 [comment]: <> (One paragraph overview of the project, TODO add link to blog?)
- __The Spatial Agent-Based Covid Model (SABCom)__
+ __The Spatial Agent-Based Covid-19 Model (SABCOM)__
 
-SABCoM is an open source easy-to-use-and-adapt spatial network multi-agent simulation model of the spread of the Covid-19 virus. The model can
-be used to simulate and analyse a spread of the Covid-19 virus on the level of the individual.
-This distinguishes the model from most models, that have a more high level perspective. This makes
-our model particularly usefull for researchers and policy makers that want to study the impact of
-heterogeneity in the population (e.g. by modelling neighbourhoods with vulnerable populations) and
-who want to study the impact of targeted measures (e.g. quarantining certain neighbourhoods,
-or targetted social distancing measures at aimed at specific segments of the population).
+SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, simulation model of the spread of the Covid-19 virus. The model is designed to simulate and analyse the spread of Covid-19 at the level of individual people. This distinguishes the model from most epidemiology models which operate top down and at a higher level of abstraction. This makes our model particularly useful for researchers and policy makers needing to study the impact of Covid-19 in highly heterogenous and unequal populations, e.g. neighbourhoods with vulnerable populations alongside wealthy populations. This bottom up granularity further allows for the analysis of targeted measures such as quarantining certain neighbourhoods, targeted social distancing measures aimed at specific segments of the population, or transmission reduction measures, such as wearing masks.
 
-The model is inspired by the canonical SEIRS structure and generates curves that reflect the amount of agents that are susceptible (s) infected without symptoms (i1), with symptoms (i2), critically ill (c), and are recovered (r). 
+The model is inspired by the canonical SEIR structure and generates curves that reflect the number of agents that are susceptible (s) infected without symptoms (i1), with symptoms (i2), critically ill (c), and are recovered (r). 
 
 
-[comment]: <> (The output of one simulation might look something like this:  ) 
+[comment]: <> (The output of a simulation run might look something like this:  ) 
 
 [comment]: <> (<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/the_curve.png" height="512px"/> ) 
 
-Due to the unique spatial structure of the model, we can track how a virus spreads spatially. For example through Cape Town. The figure below shows the quantity of the population infected in different Wards in the City of Cape town. Note that thisconcerns a hypothetical simulation of the non-calibrated model and is only used to give an idea of possible dynamics. 
+Due to the unique spatial structure of the model, we can track how a virus spreads spatially. For example through Cape Town, our preliminary case study city. The figure below shows the proportion of the population infected in different wards in the City of Cape town. Note, this is a hypothetical simulation of a non-calibrated model and is only used to give an idea of possible dynamics. 
 
 <img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/Infected.gif" height="768px"/>
 
@@ -72,7 +66,7 @@ with open('neighbourhood_data.json', 'w') as outfile:
 ```
 
 The configuration files __parameters.json__ and __neighbourhood_data.json__ can then be fed into the main program.
-There are two options:
+There are two options, with the second more straightforward :
 
 1) you run the __Initialization__, __Simulation__ and  __Save network data__ cells from within the notebook
 2) you run  ```python SABCoModel.py```
@@ -83,8 +77,10 @@ The notebook contains a section that produces the output graphs
 
 
 __Requirements__
-The program requires python 3 and the geopy, networkx non-standard packages.
+The program requires python 3, the geopy, and the networkx non-standard packages.
 
+__Contact and Social Media__
+https://twitter.com/SABCOM5
 
 __Disclaimer__
 
