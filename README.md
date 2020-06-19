@@ -29,55 +29,13 @@ You can **install** the SABCom model by cloning this repository to your system. 
 
 __Running the model__
 
-There are two files in the main folder that will allow you to run the model. In the first step, you set the parameters for the simulation and store them in a json file. Open SABCoModel_notebook.ipynb and set
-
-```python
-parameters = {
-    # general simulation parameters
-    "time": 150,
-    "number_of_agents": 10000,
-    ...
-}
-```
-and save as json file with
-
-```
-with open('parameters.json', 'w') as outfile:
-    json.dump(parameters, outfile)
-```
-
-
-Next, you also need to set the location and number of neigborhoods. We use population density data from 116 Wards in and around Cape Town.
-
-```
-population = pd.read_csv('population.csv')
-smallest_size = population['Population'].sum() / parameters['number_of_agents']
-neighbourhood_data = []
-for i in range(len(population)):
-    if population['Population'].iloc[i] > smallest_size:
-        neighbourhood_data.append(
-            [int(population['WardID'].iloc[i]), {'Population': population['Population'].iloc[i],
-                                                            'Density': population['Density'].iloc[i],
-                                                            'lon': population['lon'].iloc[i],
-                                                            'lat': population['lat'].iloc[i]}])
-max_neighbourhoods = len(neighbourhood_data)
-with open('neighbourhood_data.json', 'w') as outfile:
-    json.dump(neighbourhood_data[:max_neighbourhoods], outfile)
-```
-
-The configuration files __parameters.json__ and __neighbourhood_data.json__ can then be fed into the main program.
-There are two options, with the second more straightforward :
-
-1) you run the __Initialization__, __Simulation__ and  __Save network data__ cells from within the notebook
-2) you run  ```python SABCoModel.py```
-
+There are two files in the main folder that will allow you to run the model: ```SABCoModel.py``` and ```simple_model_simulations.ipynb```. 
 
 __Analysis__
-The notebook contains a section that produces the output graphs
-
+Running the model in the notebook provides the added advantage that it comes with code to generate graphs to understand the model dynamics. 
 
 __Requirements__
-The program requires python 3, the geopy, and the networkx non-standard packages.
+The program requires Python 3, and the packages listed in the requirements.txt file.
 
 __Contact and Social Media__
 https://twitter.com/SABCOM5
