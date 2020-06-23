@@ -58,6 +58,7 @@ def runner(environment, seed, data_folder='measurement/',
                                              replace=False)
             for chosen_agent in chosen_agents:
                 chosen_agent.status = 'e'
+                chosen_agent.exposed_days = np.random.randint(0, environment.parameters['exposed_days'])
                 exposed.append(chosen_agent)
                 susceptible.remove(chosen_agent)
 
@@ -157,40 +158,54 @@ def runner(environment, seed, data_folder='measurement/',
             agent.others_infected = 0
 
             # find indices from neighbour agents
-            neighbours_from_graph = [x for x in environment.network.neighbors(agent.name)]
+            #neighbours_from_graph = [x for x in environment.network.neighbors(agent.name)]
+            household_neighbours = [x for x in environment.network.neighbors(agent.name) if
+                                    environment.agents[x].household_number == agent.household_number and
+                                    environment.agents[x].district == agent.district]
+            other_neighbours = [x for x in environment.network.neighbors(agent.name) if
+                                environment.agents[x].household_number != agent.household_number or
+                                environment.agents[x].district != agent.district]
 
-            # depending on lockdown policies, the amount of contacts an agent can visit is reduced by general lockdown,
-            # then by the self isolation multiplier and finally by gathering max contacts
-
+            # depending on lockdown policies, the amount of non-household contacts an agent can visit is reduced
             informality_term_contacts = (1 - visiting_r_contacts_multiplier) * agent.informality
 
-            planned_contacts = int(round(len(neighbours_from_graph
+            planned_contacts = int(round(len(other_neighbours
                                              ) * (visiting_r_contacts_multiplier + informality_term_contacts)))
 
+            # by gathering max contacts
             if t in environment.parameters["lockdown_days"]:
                 individual_max_contacts = int(round(gathering_max_contacts * (1 + agent.informality)))
             else:
                 individual_max_contacts = gathering_max_contacts
 
             if planned_contacts > individual_max_contacts:
-                neighbours_from_graph = random.sample(neighbours_from_graph, individual_max_contacts)
+                other_neighbours = random.sample(other_neighbours, individual_max_contacts)
             else:
-                neighbours_from_graph = random.sample(neighbours_from_graph, planned_contacts)
+                other_neighbours = random.sample(other_neighbours, planned_contacts)
 
-            # find the corresponding agents
+            # Next, combine household neighbours with other neighbours
+            neighbours_from_graph = household_neighbours + other_neighbours
+
+            # find the corresponding agents and add them to a list to infect
+            # if the agent is aware it will limit its contact to only household contacts
             if agent.status in environment.parameters['aware_status'] and \
                     np.random.random() < likelihood_awareness * (1 - agent.informality):
-                neighbours_to_infect = []
-                for idx in neighbours_from_graph:
-                    if environment.agents[idx].household_number == agent.household_number and \
-                            environment.agents[idx].district == agent.district:
-                        neighbours_to_infect.append(environment.agents[idx])
+                neighbours_to_infect = [environment.agents[idx] for idx in household_neighbours]
+                # for idx in neighbours_from_graph:
+                #     if environment.agents[idx].household_number == agent.household_number and \
+                #             environment.agents[idx].district == agent.district:
+                #         neighbours_to_infect.append(environment.agents[idx])
+            # otherwise the agent will interact with all neighbours from graph
             else:
                 neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
 
             # let these agents be infected (with random probability
             for neighbour in neighbours_to_infect:
-                informality_term_phys_dis = (1 - physical_distancing_multiplier) * agent.informality
+                # informality term phys dist is 1 if it comes to infecting household members: TODO add to model description
+                if neighbour.household_number == agent.household_number and neighbour.district == agent.district:
+                    informality_term_phys_dis = (1 - physical_distancing_multiplier)
+                else:
+                    informality_term_phys_dis = (1 - physical_distancing_multiplier) * agent.informality
 
                 if neighbour.status == 's' and np.random.random() < (
                         environment.parameters['probability_transmission'] * (
