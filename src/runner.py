@@ -20,6 +20,9 @@ def runner(environment, seed, data_folder='measurement/',
     np.random.seed(seed)
     random.seed(seed)
 
+    #TODO move this to initialiser
+    environment.infection_quantities['detected'] = []
+
     # define sets for all agent types
     dead = []
     recovered = []
@@ -43,6 +46,8 @@ def runner(environment, seed, data_folder='measurement/',
     # else infect a set of agents and
     else:
         initial_infected = []
+        environment.newly_detected_cases[0] += round(len(environment.parameters['total_initial_infections']) *
+                                                     environment.parameters["perc_infections_detects"])
         # select districts with probability
         chosen_districts = list(np.random.choice(environment.districts,
                                                  len(environment.parameters['total_initial_infections']),
@@ -216,15 +221,19 @@ def runner(environment, seed, data_folder='measurement/',
                     agent.others_infected += 1
                     agent.others_infects_total += 1
 
+                    # add to detected agents with probability
+                    if np.random.random() < environment.parameters["perc_infections_detects"]:
+                        environment.newly_detected_cases[t] += 1
+
         if data_output == 'network':
             environment.infection_states.append(environment.store_network())
         elif data_output == 'csv':
             environment.write_status_location(t, seed, data_folder)
         elif data_output == 'csv_light':
             # save only the total quantity of agents per category
-            for key, quantity in zip(['e', 's', 'i1', 'i2', 'c', 'r', 'd'], [exposed, susceptible,
+            for key, quantity in zip(['e', 's', 'i1', 'i2', 'c', 'r', 'd', 'detected'], [exposed, susceptible,
                                                                              sick_without_symptoms, sick_with_symptoms,
-                                                                             critical, recovered, dead]):
+                                                                             critical, recovered, dead, [x for x in range(environment.newly_detected_cases[t])]]):
                 environment.infection_quantities[key].append(len(quantity))
 
     print(len(dead))

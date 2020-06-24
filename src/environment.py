@@ -180,6 +180,7 @@ class Environment:
 
         self.infection_states = []
         self.infection_quantities = {key: [] for key in ['e', 's', 'i1', 'i2', 'c', 'r', 'd']}
+        self.newly_detected_cases = [0 for x in range(parameters['time'])]
 
     def store_network(self):
         """Returns a deep copy of the current network"""
