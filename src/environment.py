@@ -66,7 +66,7 @@ class Environment:
             available_districts = list(all_travel_districts.keys())
             probabilities = list(travel_matrix[[str(x) for x in available_districts]].loc[district_code])
 
-            # 2.3 add agents to neighbourhood
+            # 2.3 add agents to district
             for a in range(num_agents):
                 district_to_travel_to = np.random.choice(available_districts, size=1, p=probabilities)[0]
                 agent = Agent(agent_name, 's',
@@ -180,6 +180,7 @@ class Environment:
 
         self.infection_states = []
         self.infection_quantities = {key: [] for key in ['e', 's', 'i1', 'i2', 'c', 'r', 'd']}
+        self.newly_detected_cases = [0 for x in range(parameters['time'])]
 
     def store_network(self):
         """Returns a deep copy of the current network"""
