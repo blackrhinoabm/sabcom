@@ -145,13 +145,13 @@ def runner(environment, seed, data_folder='measurement/',
                     agent.status = 's'
                     susceptible.append(agent)
 
-        # PHASE 3 LOCKDOWN
+        # PHASE 3 LOCKDOWN TODO this bit can be replaced by just the time series
         if t in environment.parameters["lockdown_days"]:
             # During lockdown days the probability that others are infected and that there is travel will be reduced
-            physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
-            gathering_max_contacts = environment.parameters['gathering_max_contacts']
-            likelihood_awareness = environment.parameters['likelihood_awareness']
-            visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"]
+            physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"][t]
+            gathering_max_contacts = environment.parameters['gathering_max_contacts'][t]
+            likelihood_awareness = environment.parameters['likelihood_awareness'][t]
+            visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"][t]
         else:
             likelihood_awareness = 0.0
             physical_distancing_multiplier = 1.0
