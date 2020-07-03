@@ -236,5 +236,4 @@ def runner(environment, seed, data_folder='measurement/',
                                                                              critical, recovered, dead, [x for x in range(environment.newly_detected_cases[t])]]):
                 environment.infection_quantities[key].append(len(quantity))
 
-    print(len(dead))
     return environment
