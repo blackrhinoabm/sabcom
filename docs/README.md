@@ -1,5 +1,4 @@
-<img src="https://cogeorg.github.io/images/black_rhino_logo.jpg" alt="Snow" style="height:64px">
-<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png" height="64px"/>
+![](https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png)
 
 [comment]: <> (One paragraph overview of the project, TODO add link to blog?)
  __The Spatial Agent-Based Covid Model (SABCom)__
@@ -21,7 +20,7 @@ The model is inspired by the canonical SEIR structure and generates curves that 
 
 Due to the unique spatial structure of the model, we can track how a virus spreads spatially. For example through Cape Town. The figure below shows the quantity of the population infected in different Wards in the City of Cape town. Note that thisconcerns a hypothetical simulation of the non-calibrated model and is only used to give an idea of possible dynamics. 
 
-<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/Infected.gif" height="768px"/>
+![](https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/Infected.gif)
 
  __Getting started__
 
