@@ -1,5 +1,6 @@
+# SABCoM 
 
-> The Spatial Agent-Based Covid Model (SABCom)
+> The Spatial Agent-Based Covid Model (SABCoM)
 >
 > Agent-based model used for forecasting the evolution of Covid-19 in South Africa.
 
