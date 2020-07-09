@@ -11,9 +11,9 @@
     ├── calibration.ipynb     # notebook used to set the parameters of the model
     ├── de_model.ipynb        # notebook that contains the differential equation model 
     ├── initialisation.py     # script used to initialise the pickle files in the initialisation folder
-    ├── simulations.py 	      # main script used to simulate the model 
+    ├── SABCoM.py.py 	      # main script used to simulate the model 
     ├── sensitivity.py 	      # script used to do the sensitivity analysis 
-    ├── test_SABCoModel.py    # test script to make sure the application runs
+    ├── test_SABCoM.py        # test script to make sure the application runs
     ├── requirements.txt      # text file containing python package dependencies
     ├── LICENSE		      # MIT licence information	
     ├── README.md	      # model description
