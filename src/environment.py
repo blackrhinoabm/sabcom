@@ -32,7 +32,7 @@ class Environment:
         self.parameters = parameters
         self.other_contact_matrix = other_contact_matrix
 
-        # 1 initialise city districts
+        # 1 create modelled districts
         # 1.1 retrieve population data
         nbd_values = [x[1] for x in district_data]
         population_per_neighbourhood = [x['Population'] for x in nbd_values]
@@ -45,13 +45,13 @@ class Environment:
         indices_big_neighbourhoods = [i for i, x in enumerate(corrected_populations) if x > 0]
         corrected_populations_final = [x for i, x in enumerate(corrected_populations) if x > 0]
 
-        # 2 fill up the districts with agents
+        # 1.4 fill up the districts with agents
         agents = []
         city_graph = nx.Graph()
         agent_name = 0
         all_travel_districts = {district_data[idx][0]: [] for idx in indices_big_neighbourhoods}
         for num_agents, idx in zip(corrected_populations_final, indices_big_neighbourhoods):
-            # 2.1 determine district code, informality, and age categories
+            # 1.4.1 determine district code, informality, and age categories
             district_list = []
             district_code = district_data[idx][0]
             coordinates = what_coordinates(district_code, district_data)
@@ -62,11 +62,11 @@ class Environment:
                                               replace=True,
                                               p=age_distribution_per_district[district_code].values)
 
-            # 2.2 determine district to travel to
+            # 1.4.2 determine district to travel to
             available_districts = list(all_travel_districts.keys())
             probabilities = list(travel_matrix[[str(x) for x in available_districts]].loc[district_code])
 
-            # 2.3 add agents to district
+            # 1.4.3 add agents to district
             for a in range(num_agents):
                 district_to_travel_to = np.random.choice(available_districts, size=1, p=probabilities)[0]
                 agent = Agent(agent_name, 's',
@@ -86,14 +86,14 @@ class Environment:
                 all_travel_districts[district_to_travel_to].append(agent)
                 agent_name += 1
 
-            # 3 Create the household network structure
-            # 3.1 get household size list for this Ward and reduce list to max household size = size of ward
+            # 2 Create the household network structure
+            # 2.1 get household size list for this Ward and reduce list to max household size = size of ward
             max_district_household = min(len(district_list), len(household_size_distribution.columns) - 1)
             hh_sizes = household_size_distribution.loc[district_code][:max_district_household]
-            # 3.2 then calculate probabilities of this being of a certain size
+            # 2.2 then calculate probabilities of this being of a certain size
             hh_probability = pd.Series([float(i) / sum(hh_sizes) for i in hh_sizes])
             hh_probability.index = hh_sizes.index
-            # 3.3 determine household sizes
+            # 2.3 determine household sizes
             sizes = []
             while sum(sizes) < len(district_list):
                 sizes.append(int(np.random.choice(hh_probability.index, size=1, p=hh_probability)[0]))
@@ -102,12 +102,12 @@ class Environment:
                 hh_probability = pd.Series([float(i) / sum(hh_probability) for i in hh_probability])
                 hh_probability.index = hh_sizes.index[:len(district_list) - sum(sizes)]
 
-            # 3.4 Distribute agents over households
-            # 3.4.1 pick the household heads and let it form connections with other based on probabilities.
+            # 2.4 Distribute agents over households
+            # 2.4.1 pick the household heads and let it form connections with other based on probabilities.
             # household heads are chosen at random without replacement
             household_heads = np.random.choice(district_list, size=len(sizes), replace=False)
             not_household_heads = [x for x in district_list if x not in household_heads]
-            # 3.4.2 let the household heads pick n other agents that are not household heads themselves
+            # 2.4.2 let the household heads pick n other agents that are not household heads themselves
             for i, head in enumerate(household_heads):
                 head.household_number = i
                 if sizes[i] > 1:
@@ -127,7 +127,7 @@ class Environment:
                 else:
                     household_members = [head]
 
-                # 3.4.3 create graph for household
+                # 2.4.3 create graph for household
                 household_graph = nx.Graph()
                 household_graph.add_nodes_from(range(len(household_members)))
 
@@ -138,14 +138,14 @@ class Environment:
                 # add household members to the agent list
                 agents.append(household_members)
 
-                # 3.4.4 add network to city graph
+                # 2.4.4 add network to city graph
                 city_graph = nx.disjoint_union(city_graph, household_graph)
 
         self.districts = [x[0] for x in district_data]
         self.district_agents = {d: a for d, a in zip(self.districts, agents)}
         self.agents = [y for x in agents for y in x]
 
-        # 4 Next, we create the a city wide network structure of recurring contacts
+        # 3 Next, we create the a city wide network structure of recurring contacts based on the travel matrix
         for agent in self.agents:
             agents_to_travel_to = all_travel_districts[agent.district_to_travel_to]
             agents_to_travel_to.remove(agent)  # remove the agent itself
@@ -170,10 +170,6 @@ class Environment:
         for idx, agent in enumerate(self.agents):
             agent.name = idx
 
-        # 5 Initialize the probability that a new infected agent appears in every district
-        cases = [x[1]['Cases_With_Subdistricts'] for x in district_data]
-        self.probabilities_new_infection_district = [float(i) / sum(cases) for i in cases]
-
         # add agent to the network structure
         for idx, agent in enumerate(self.agents):
             self.network.nodes[idx]['agent'] = agent
@@ -181,6 +177,7 @@ class Environment:
         self.infection_states = []
         self.infection_quantities = {key: [] for key in ['e', 's', 'i1', 'i2', 'c', 'r', 'd']}
         self.newly_detected_cases = [0 for x in range(parameters['time'])]
+        self.infection_quantities['detected'] = []
 
     def store_network(self):
         """Returns a deep copy of the current network"""

@@ -59,6 +59,9 @@ def test_model():
     # load household size distribution data
     HH_size_distribution = pd.read_excel('input_data/HH_Size_Distribution.xlsx', index_col=0)
 
+    # load initial infections:
+    initial_infections = pd.read_csv('input_data/Cases_With_Subdistricts.csv', index_col=0)
+
     # Monte Carlo simulations
     for seed in range(parameters['monte_carlo_runs']):
         # make new folder for seed, if it does not exist
@@ -70,5 +73,5 @@ def test_model():
                                   hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
         # running the simulation
-        environment = runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
+        environment = runner(environment, initial_infections, seed, data_output=parameters["data_output"], data_folder=data_folder,
                              calculate_r_naught=False)

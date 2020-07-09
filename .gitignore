@@ -96,9 +96,9 @@ Temporary Items
 # Misc
 .ipynb_checkpoints/
 
-# measurement folder
+# output_data folder
 # exclude everything
-measurement/*
+output_data/*
 
 # exception to the rule
-!measurement/.gitkeep 
+!output_data/.gitkeep 

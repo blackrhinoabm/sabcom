@@ -8,7 +8,7 @@ from src.runner import runner
 import time
 
 # set scenario using the following parameter:
-scenarios = ['baseline', 'lockdown', 'ineffective_lockdown']
+scenarios = ['no_intervention', 'lockdown', 'ineffective_lockdown']
 scenario = scenarios[2]  # set scenario here
 
 start = time.time()
@@ -19,18 +19,20 @@ with open('parameters/parameters.json') as json_file:
     parameters = json.load(json_file)
 
 # 1.1 optionally set monte carlo runs quickly here
-#parameters['monte_carlo_runs'] = 5
+parameters['monte_carlo_runs'] = 1
+parameters['number_of_agents'] = 1000
 
 # 1.2 set scenario specific parameters
-if scenario == 'baseline':
-    parameters["lockdown_days"] = [None for x in range(len(parameters['lockdown_days']))]
+if scenario == 'no_intervention':
+    parameters['likelihood_awareness'] = [0.0 for x in parameters['likelihood_awareness']]
+    parameters['visiting_recurring_contacts_multiplier'] = [1.0 for x in
+                                                            parameters['visiting_recurring_contacts_multiplier']]
+    parameters['gathering_max_contacts'] = [float('inf') for x in parameters['gathering_max_contacts']]
+    parameters['physical_distancing_multiplier'] = [1.0 for x in parameters['physical_distancing_multiplier']]
 elif scenario == 'lockdown':
     parameters['informality_dummy'] = 0.0
-    parameters["lockdown_days"] = [x for x in range(len(parameters['lockdown_days']))]
 elif scenario == 'ineffective_lockdown':
     parameters['informality_dummy'] = 1.0
-    parameters["lockdown_days"] = [x for x in range(len(parameters['lockdown_days']))]
-
 
 # Change parameters depending on experiment
 age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
@@ -73,6 +75,8 @@ other_contact_matrix = other_contact_matrix.append(row)
 other_contact_matrix.columns = age_groups
 other_contact_matrix.index = age_groups
 
+# load initial infections:
+initial_infections = pd.read_csv('input_data/Cases_With_Subdistricts.csv', index_col=0)
 
 # Monte Carlo simulations
 for seed in range(parameters['monte_carlo_runs']):
@@ -85,7 +89,7 @@ for seed in range(parameters['monte_carlo_runs']):
                               hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
     # running the simulation
-    environment = runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,
+    environment = runner(environment, initial_infections, seed, data_output=parameters["data_output"], data_folder=data_folder,
                          calculate_r_naught=False)
 
     # save network
