@@ -12,7 +12,7 @@ scenarios = ['no_intervention', 'lockdown', 'ineffective_lockdown']
 scenario = scenarios[2]  # set scenario here
 
 start = time.time()
-data_folder = 'measurement/baseline/'
+data_folder = 'output_data/baseline/'
 
 # 1 load general the parameters
 with open('parameters/parameters.json') as json_file:
