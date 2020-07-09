@@ -8,7 +8,7 @@ from src.runner import runner
 
 def test_model():
     """Basic test to see if the model runs with T=90, 100 agents and 5 Monte Carlo simulations"""
-    data_folder = 'measurement/baseline/'
+    data_folder = 'output_data/baseline/'
 
     # load parameters
     with open('parameters/parameters.json') as json_file:
