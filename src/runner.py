@@ -104,7 +104,7 @@ def runner(environment, initial_infections, seed, data_folder='measurement/',
                 agent.sick_days += 1
                 # some symptomatic agents recover
                 if agent.sick_days > environment.parameters["symptom_days"]:
-                    if np.random.random() < environment.parameters["probability_critical"][agent.age_group]:   #agent.prob_hospital:
+                    if np.random.random() < environment.parameters["probability_critical"][agent.age_group]:
                         agent.status = 'c'
                         sick_with_symptoms.remove(agent)
                         critical.append(agent)
