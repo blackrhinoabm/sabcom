@@ -76,15 +76,14 @@ other_contact_matrix.index = age_groups
 # make new folder for seed, if it does not exist
 if not os.path.exists('{}seed{}'.format(data_folder, seed)):
     os.makedirs('{}seed{}'.format(data_folder, seed))
-
 if not os.path.exists('{}'.format(data_folder_environment)):
     os.makedirs('{}'.format(data_folder_environment))
 
-# initialization
+# initialisation
 environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward,
                           hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
-
+# save environment objects as pickls
 file_name = data_folder_environment + "seed_" + str(seed) + '.pkl'
 save_objects = open(file_name, 'wb')
 pickle.dump([environment, seed], save_objects)
