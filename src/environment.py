@@ -70,15 +70,10 @@ class Environment:
             for a in range(num_agents):
                 district_to_travel_to = np.random.choice(available_districts, size=1, p=probabilities)[0]
                 agent = Agent(agent_name, 's',
-                              parameters["probability_transmission"],
-                              parameters["probability_susceptible"],
                               coordinates,
                               district_code,
                               age_categories[a],
                               informality,
-                              parameters["probability_symptomatic"],
-                              parameters['probability_critical'][age_categories[a]],
-                              parameters['probability_to_die'][age_categories[a]],
                               int(round(other_contact_matrix.loc[age_categories[a]].sum())),
                               district_to_travel_to
                               )
