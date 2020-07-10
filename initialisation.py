@@ -10,11 +10,11 @@ start = time.time()
 
 # set number of seeds
 seeds = list(range(50))  
-simmulations=['50seeds_initialisation']
+simulations=['50seeds_initialisation']
 
 #when parallel in SLURM/HPC
 if sys.argv[1]=='slurm-cluster':
-    parameter_set = list(itertools.product(simmulations, seeds))  #This gives a list with parameter combinations
+    parameter_set = list(itertools.product(simulations, seeds))  #This gives a list with parameter combinations
 
     pos = int(os.getenv('SLURM_ARRAY_TASK_ID'))
     tupl= parameter_set[pos]  #this is a tuple
@@ -25,7 +25,7 @@ if sys.argv[1]=='slurm-cluster':
     data_folder = 'measurement/'+sim +'/'
     data_folder_environment = data_folder+'env_pickls/'
 else:
-    data_folder = 'measurement/'+simmulations[0] +'/'
+    data_folder = 'measurement/'+simulations[0] +'/'
     data_folder_environment = data_folder+'env_pickls/'   
 
 # 1 load general the parameters
