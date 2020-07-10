@@ -15,11 +15,10 @@ simulations=['50seeds_initialisation']
 #when parallel in SLURM/HPC
 if sys.argv[1]=='slurm-cluster':
     parameter_set = list(itertools.product(simulations, seeds))  #This gives a list with parameter combinations
-
     pos = int(os.getenv('SLURM_ARRAY_TASK_ID'))
-    tupl= parameter_set[pos]  #this is a tuple
-    sim=tupl[0]
-    seed=tupl[1]
+    tupl= parameter_set[pos] 
+    sim=tupl[0] #assign simulation
+    seed=tupl[1] #assign seed
 
     # set folder names for storage:
     data_folder = 'measurement/'+sim +'/'
@@ -27,6 +26,7 @@ if sys.argv[1]=='slurm-cluster':
 else:
     data_folder = 'measurement/'+simulations[0] +'/'
     data_folder_environment = data_folder+'env_pickls/'   
+    seed=22 #assigns random seed if not run parallel on cluster
 
 # 1 load general the parameters
 with open('parameters/parameters.json') as json_file:
