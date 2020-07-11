@@ -89,19 +89,6 @@ save_objects = open(file_name, 'wb')
 pickle.dump([environment, seed], save_objects)
 save_objects.close()
 
-# running the simulation
-environment = runner(environment, seed, data_output=parameters["data_output"], data_folder=data_folder,calculate_r_naught=False)
-
-if parameters["data_output"] == 'network':
-    for idx, network in enumerate(environment.infection_states):
-        for i, node in enumerate(network.nodes):
-            network.nodes[i]['agent'] = network.nodes[i]['agent'].status
-        idx_string = '{0:04}'.format(idx)
-        nx.write_graphml(network, "{}seed{}/network_time{}.graphml".format(data_folder, seed, idx_string))
-elif parameters["data_output"] == 'csv_light':
-    pd.DataFrame(environment.infection_quantities).to_csv('{}seed{}/quantities_state_time.csv'.format(data_folder,seed))
-
-
 end = time.time()
 hours_total, rem_total = divmod(end-start, 3600)
 minutes_total, seconds_total = divmod(rem_total, 60)
