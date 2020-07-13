@@ -73,9 +73,7 @@ other_contact_matrix = other_contact_matrix.append(row)
 other_contact_matrix.columns = age_groups
 other_contact_matrix.index = age_groups
 
-# make new folder for seed, if it does not exist
-if not os.path.exists('{}seed{}'.format(data_folder, seed)):
-    os.makedirs('{}seed{}'.format(data_folder, seed))
+# make new folder if it does not exist
 if not os.path.exists('{}'.format(data_folder_environment)):
     os.makedirs('{}'.format(data_folder_environment))
 
