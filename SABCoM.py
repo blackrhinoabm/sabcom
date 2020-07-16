@@ -1,108 +1,92 @@
 import pandas as pd
 import networkx as nx
-import json
 import os
-
-from src.environment import Environment
-from src.runner import runner
+import re
+import pickle
 import time
 
-# set scenario using the following parameter:
-scenarios = ['no_intervention', 'lockdown', 'ineffective_lockdown']
-scenario = scenarios[2]  # set scenario here
+from src.runner import runner
+from src.helpers import generate_district_data
+from src.helpers import what_informality
 
+# time how long it takes to run the script
 start = time.time()
-data_folder = 'output_data/baseline/'
 
-# 1 load general the parameters
-with open('parameters/parameters.json') as json_file:
-    parameters = json.load(json_file)
+# define scenarios and cities:
+scenarios = ['no_intervention', "formal_lockdown", "ineffective_lockdown"]
+cities = ['cape_town']
+data_output_modes = ['csv_light', 'csv', 'network']
 
-# 1.1 optionally set monte carlo runs quickly here
-parameters['monte_carlo_runs'] = 1
-parameters['number_of_agents'] = 1000
+# set these parameters before running the scenario simulations
+SIMULATION_TIME = 350
+MONTE_CARLO_RUNS = 2
+SCENARIO_NUMBERS = [0, 1, 2]  # include in this list all scenario indices that you want to run
+CITY = cities[0]
+DATA_OUTPUT_NUMBER = 0
 
-# 1.2 set scenario specific parameters
-if scenario == 'no_intervention':
-    parameters['likelihood_awareness'] = [0.0 for x in parameters['likelihood_awareness']]
-    parameters['visiting_recurring_contacts_multiplier'] = [1.0 for x in
-                                                            parameters['visiting_recurring_contacts_multiplier']]
-    parameters['gathering_max_contacts'] = [float('inf') for x in parameters['gathering_max_contacts']]
-    parameters['physical_distancing_multiplier'] = [1.0 for x in parameters['physical_distancing_multiplier']]
-elif scenario == 'lockdown':
-    parameters['informality_dummy'] = 0.0
-elif scenario == 'ineffective_lockdown':
-    parameters['informality_dummy'] = 1.0
+for sc in SCENARIO_NUMBERS:
+    # set correct data files
+    scenario = scenarios[sc]
+    data_folder = 'output_data/{}/'.format(scenario)
+    initial_infections = pd.read_csv('input_data/Cases_With_Subdistricts.csv', index_col=0)
+    environment_folder = 'initialisations/cape_town/'
+    initialisations = [name for name in os.listdir(environment_folder) if '.pkl' in name]
+    n_initialisations = len(initialisations)
 
-# Change parameters depending on experiment
-age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
-              'age_50_60', 'age_60_70', 'age_70_80', 'age_80_plus']
+    # Monte Carlo simulations
+    for run in range(min(n_initialisations, MONTE_CARLO_RUNS)):  # simulate min environment files / monte carlo runs
+        file = initialisations[run]
+        seed = int(re.findall(r'\d+', file)[0])
+        data = open(environment_folder + file, "rb")
+        environment = pickle.load(data)[0]
 
-parameters['data_output'] = 'csv_light'
+        # update time and output format in the environment
+        max_time = environment.parameters['time']  # you cannot simulate longer than initialised
+        environment.parameters['time'] = min(SIMULATION_TIME, max_time)
+        environment.parameters['data_output'] = data_output_modes[DATA_OUTPUT_NUMBER]
 
-# 2 load district data
-# 2.1 general neighbourhood data
-with open('parameters/district_data.json') as json_file:
-    neighbourhood_data = json.load(json_file)
+        # transform input data to general district data for simulations
+        district_data = generate_district_data(environment.parameters['number_of_agents'])
 
-# 2.2 age data
-age_distribution = pd.read_csv('input_data/age_dist.csv', sep=';', index_col=0)
-age_distribution_per_ward = dict(age_distribution.transpose())
+        # set scenario specific parameters
+        if scenario == 'no_intervention':
+            environment.parameters['likelihood_awareness'] = [
+                0.0 for x in environment.parameters['likelihood_awareness']]
+            environment.parameters['visiting_recurring_contacts_multiplier'] = [
+                1.0 for x in environment.parameters['visiting_recurring_contacts_multiplier']]
+            environment.parameters['gathering_max_contacts'] = [
+                float('inf') for x in environment.parameters['gathering_max_contacts']]
+            environment.parameters['physical_distancing_multiplier'] = [
+                1.0 for x in environment.parameters['physical_distancing_multiplier']]
+            environment.parameters['informality_dummy'] = 0.0
+        elif scenario == 'lockdown':
+            environment.parameters['informality_dummy'] = 0.0
+        elif scenario == 'ineffective_lockdown':
+            environment.parameters['informality_dummy'] = 1.0
 
-# 2.3 household size distribution
-HH_size_distribution = pd.read_excel('input_data/HH_Size_Distribution.xlsx', index_col=0)
+        for agent in environment.agents:
+            agent.informality = what_informality(agent.district, district_data
+                                                 ) * environment.parameters["informality_dummy"]
 
-# 3 load travel matrix
-travel_matrix = pd.read_csv('input_data/Travel_Probability_Matrix.csv', index_col=0)
+        # make new folder for seed, if it does not exist
+        if not os.path.exists('{}seed{}'.format(data_folder, seed)):
+            os.makedirs('{}seed{}'.format(data_folder, seed))
 
-# 4 load contact matrices
-# 4.1 load household contact matrix
-hh_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
-# add a col & row for 80 plus. Rename columns to mathc our age categories
-hh_contact_matrix['80plus'] = hh_contact_matrix['70_80']
-row = hh_contact_matrix.xs('70_80')
-row.name = '80plus'
-hh_contact_matrix = hh_contact_matrix.append(row)
-hh_contact_matrix.columns = age_groups
-hh_contact_matrix.index = age_groups
+        # simulate the model
+        environment = runner(environment, initial_infections, seed, data_output=environment.parameters["data_output"],
+                             data_folder=data_folder, calculate_r_naught=False)
 
-# 4.2 load other contact matrix
-other_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="OutsideOfHome", index_col=0)
-other_contact_matrix['80plus'] = other_contact_matrix['70_80']
-row = other_contact_matrix.xs('70_80')
-row.name = '80plus'
-other_contact_matrix = other_contact_matrix.append(row)
-other_contact_matrix.columns = age_groups
-other_contact_matrix.index = age_groups
-
-# load initial infections:
-initial_infections = pd.read_csv('input_data/Cases_With_Subdistricts.csv', index_col=0)
-
-# Monte Carlo simulations
-for seed in range(parameters['monte_carlo_runs']):
-    # make new folder for seed, if it does not exist
-    if not os.path.exists('{}seed{}'.format(data_folder, seed)):
-        os.makedirs('{}seed{}'.format(data_folder, seed))
-
-    # initialization
-    environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward,
-                              hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
-
-    # running the simulation
-    environment = runner(environment, initial_infections, seed, data_output=parameters["data_output"], data_folder=data_folder,
-                         calculate_r_naught=False)
-
-    # save network
-    if parameters["data_output"] == 'network':
-        for idx, network in enumerate(environment.infection_states):
-            for i, node in enumerate(network.nodes):
-                network.nodes[i]['agent'] = network.nodes[i]['agent'].status
-
-            idx_string = '{0:04}'.format(idx)
-            nx.write_graphml(network, "{}seed{}/network_time{}.graphml".format(data_folder, seed, idx_string))
-    elif parameters["data_output"] == 'csv_light':
-        pd.DataFrame(environment.infection_quantities).to_csv('{}seed{}/quantities_state_time.csv'.format(data_folder,
-                                                                                                          seed))
-
+        # save csv light or network data
+        if environment.parameters["data_output"] == 'network':
+            for idx, network in enumerate(environment.infection_states):
+                for i, node in enumerate(network.nodes):
+                    network.nodes[i]['agent'] = network.nodes[i]['agent'].status
+                idx_string = '{0:04}'.format(idx)
+                nx.write_graphml(network, "{}seed{}/network_time{}.graphml".format(data_folder, seed, idx_string))
+        elif environment.parameters["data_output"] == 'csv_light':
+            pd.DataFrame(environment.infection_quantities).to_csv('{}seed{}/quantities_state_time.csv'.format(data_folder,
+                                                                                                              seed))
 end = time.time()
-print(end - start)
+hours_total, rem_total = divmod(end-start, 3600)
+minutes_total, seconds_total = divmod(rem_total, 60)
+print("TOTAL RUNTIME", "{:0>2}:{:0>2}:{:05.2f}".format(int(hours_total), int(minutes_total), seconds_total))

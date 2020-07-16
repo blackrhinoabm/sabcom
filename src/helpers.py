@@ -1,6 +1,8 @@
 import random
 import numpy as np
+import pandas as pd
 import math
+from sklearn import preprocessing
 import scipy.stats as stats
 
 
@@ -50,3 +52,49 @@ def confidence_interval(data, av):
     sample_stdev = np.std(data)
     sigma = sample_stdev/math.sqrt(len(data))
     return stats.t.interval(alpha=0.95, df=24, loc=av, scale=sigma)
+
+
+def generate_district_data(number_of_agents, max_districts=None):
+    """
+    Transforms input data on informal residential, initial infections, and population and transforms it to
+    a list of organised data for the simulation.
+
+    :param number_of_agents: number of agents in the simulation, integer
+    :param max_districts: (optional) maximum amount of districts simulated, integer
+    :return: data set containing district data for simulation, list
+    """
+    informal_residential = pd.read_csv('input_data/Informal_Residential.csv').iloc[:-1]
+    inital_infections = pd.read_csv('input_data/Cases_With_Subdistricts.csv', index_col=0)
+    inital_infections = inital_infections.sort_index()
+    population = pd.read_csv('input_data/population.csv')
+
+    # normalise district informality
+    x = informal_residential[['Informal_residential']].values.astype(float)
+    min_max_scaler = preprocessing.MinMaxScaler()
+    x_scaled = min_max_scaler.fit_transform(x)
+    informal_residential['Informal_residential'] = pd.DataFrame(x_scaled)
+    population['Informal_residential'] = informal_residential['Informal_residential']
+
+    # determine smallest district based on number of agents
+    smallest_size = population['Population'].sum() / number_of_agents
+
+    # generate data set for model input
+    districts_data = []
+    for i in range(len(population)):
+        if population['Population'].iloc[i] > smallest_size:
+            districts_data.append(
+                [int(population['WardID'].iloc[i]), {'Population': population['Population'].iloc[i],
+                                                     'Density': population['Density'].iloc[i],
+                                                     'lon': population['lon'].iloc[i],
+                                                     'lat': population['lat'].iloc[i],
+                                                     'Informal_residential': population['Informal_residential'].iloc[i],
+                                                     'Cases_With_Subdistricts':
+                                                         inital_infections.loc[population['WardID'].iloc[i]][
+                                                             'Cases_03292020'],
+                                                     },
+                 ])
+
+    if max_districts is None:
+        max_districts = len(districts_data)  # this can be manually shortened to study dynamics in some districts
+
+    return districts_data[:max_districts]
