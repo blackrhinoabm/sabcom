@@ -39,7 +39,7 @@ class Environment:
 
         # 1.2 correct the population in districts to be proportional to number of agents
         correction_factor = sum(population_per_neighbourhood) / parameters["number_of_agents"]
-        corrected_populations = [round(x / correction_factor) for x in population_per_neighbourhood]
+        corrected_populations = [int(round(x / correction_factor)) for x in population_per_neighbourhood]
 
         # 1.3 only count districts that then have an amount of people bigger than 0
         indices_big_neighbourhoods = [i for i, x in enumerate(corrected_populations) if x > 0]
@@ -58,7 +58,7 @@ class Environment:
             informality = what_informality(district_code, district_data) * parameters["informality_dummy"]
 
             age_categories = np.random.choice(age_distribution_per_district[district_code].index,
-                                              size=num_agents,
+                                              size=int(num_agents),
                                               replace=True,
                                               p=age_distribution_per_district[district_code].values)
 

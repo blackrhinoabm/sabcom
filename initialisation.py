@@ -1,35 +1,58 @@
-
 import pandas as pd
-import networkx as nx
-import json, pickle, itertools
-from src.environment import Environment 
-from src.runner import runner 
-import sys, os, time
- 
+import json
+import pickle
+import itertools
+import sys
+import os
+import time
+
+from src.environment import Environment
+from src.helpers import generate_district_data
+
+# This script works best run on a high performance cluster computer (HPC), where it wil initialise multiple seeds
+# in that case run in the console:
+#
+# python initialisation.py 'slurm-cluster'
+#
+# it will initialise only a single seed when run on a normal computer because of long run time.
+
 start = time.time()
 
-# set number of seeds
-seeds = list(range(50))  
-simulations=['50seeds_initialisation']
+cities = ['cape_town']
 
-#when parallel in SLURM/HPC
-if sys.argv[1]=='slurm-cluster':
-    parameter_set = list(itertools.product(simulations, seeds))  #This gives a list with parameter combinations
+# set these parameters before initialising a seed
+SIMULATION_TIME = 350
+MONTE_CARLO_RUNS = 20
+CITY = cities[0]
+SEED = 22
+
+# set number of seeds
+seeds = list(range(MONTE_CARLO_RUNS))
+simulations = ['50_seeds_initialisation']
+
+
+# The following lines detect whether you are working on HPC with the SLURM scheduler
+try:
+    arg = sys.argv[1]
+except:
+    arg = None
+
+if arg == 'slurm-cluster':
+    parameter_set = list(itertools.product(simulations, seeds))  # This gives a list with parameter combinations
     pos = int(os.getenv('SLURM_ARRAY_TASK_ID'))
-    tupl= parameter_set[pos] 
-    sim=tupl[0] #assign simulation
-    seed=tupl[1] #assign seed
+    tupl = parameter_set[pos]
+    sim = tupl[0]  # assign simulation
+    seed = tupl[1]  # assign seed
 
     # set folder names for storage:
-    data_folder = 'measurement/'+sim +'/'
-    data_folder_environment = data_folder+'env_pickls/'
+    data_folder = 'initialisations/' + sim + '/'
+    data_folder_environment = data_folder + 'env_pickls/'
 else:
-    data_folder = 'measurement/'+simulations[0] +'/'
-    data_folder_environment = data_folder+'env_pickls/'   
-    seed=22 #assigns random seed if not run parallel on cluster
+    data_folder_environment = 'initialisations/' + CITY
+    seed = SEED
 
 # 1 load general the parameters
-with open('parameters/parameters.json') as json_file:
+with open('parameters/parameters_{}.json'.format(CITY)) as json_file:
     parameters = json.load(json_file)
 
 # Change parameters depending on experiment
@@ -39,9 +62,8 @@ age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
               'age_50_60', 'age_60_70', 'age_70_80', 'age_80_plus']
 
 # 2 load district data
-# 2.1 general neighbourhood data
-with open('parameters/district_data_100k.json') as json_file:
-    neighbourhood_data = json.load(json_file)
+# transform input data to general district data for simulations
+district_data = generate_district_data(int(parameters['number_of_agents']))
 
 # 2.2 age data
 age_distribution = pd.read_csv('input_data/age_dist.csv', sep=';', index_col=0)
@@ -78,7 +100,7 @@ if not os.path.exists('{}'.format(data_folder_environment)):
     os.makedirs('{}'.format(data_folder_environment))
 
 # initialisation
-environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward,
+environment = Environment(seed, parameters, district_data, age_distribution_per_ward,
                           hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
 # save environment objects as pickls
@@ -90,4 +112,4 @@ save_objects.close()
 end = time.time()
 hours_total, rem_total = divmod(end-start, 3600)
 minutes_total, seconds_total = divmod(rem_total, 60)
-print("TOTAL RUNTIME","{:0>2}:{:0>2}:{:05.2f}".format(int(hours_total),int(minutes_total),seconds_total))
+print("TOTAL RUNTIME", "{:0>2}:{:0>2}:{:05.2f}".format(int(hours_total), int(minutes_total), seconds_total))
