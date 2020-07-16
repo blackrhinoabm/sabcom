@@ -3,6 +3,7 @@ import json
 import os
 
 from src.environment import Environment
+from src.helpers import generate_district_data
 from src.runner import runner
 
 
@@ -11,7 +12,7 @@ def test_model():
     data_folder = 'output_data/baseline/'
 
     # load parameters
-    with open('parameters/parameters.json') as json_file:
+    with open('parameters/parameters_cape_town.json') as json_file:
         parameters = json.load(json_file)
 
     # set parameters to time = 90, 5 MC runs and 100 agents
@@ -25,9 +26,8 @@ def test_model():
 
     parameters['data_output'] = 'csv_light'
 
-    # load neighbourhood data
-    with open('parameters/district_data.json') as json_file:
-        neighbourhood_data = json.load(json_file)
+    # load district data
+    district_data = generate_district_data(parameters['number_of_agents'])
 
     # load travel matrix
     travel_matrix = pd.read_csv('input_data/Travel_Probability_Matrix.csv', index_col=0)
@@ -69,7 +69,7 @@ def test_model():
             os.makedirs('{}seed{}'.format(data_folder, seed))
 
         # initialization
-        environment = Environment(seed, parameters, neighbourhood_data, age_distribution_per_ward,
+        environment = Environment(seed, parameters, district_data, age_distribution_per_ward,
                                   hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
         # running the simulation
