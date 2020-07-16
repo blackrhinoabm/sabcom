@@ -27,7 +27,7 @@ def test_model():
     parameters['data_output'] = 'csv_light'
 
     # load district data
-    district_data = generate_district_data(parameters['number_of_agents'])
+    district_data = generate_district_data(10000)#parameters['number_of_agents']) TODO debug
 
     # load travel matrix
     travel_matrix = pd.read_csv('input_data/Travel_Probability_Matrix.csv', index_col=0)
@@ -73,5 +73,6 @@ def test_model():
                                   hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
         # running the simulation
-        environment = runner(environment, initial_infections, seed, data_output=parameters["data_output"], data_folder=data_folder,
+        environment = runner(environment, initial_infections, seed, data_output=parameters["data_output"],
+                             data_folder=data_folder,
                              calculate_r_naught=False)
