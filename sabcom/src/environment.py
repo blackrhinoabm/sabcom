@@ -1,6 +1,6 @@
 import numpy as np
-from src.agent import Agent
-from src.helpers import what_coordinates, what_informality
+from sabcom.src.agent import Agent
+from sabcom.src.helpers import what_coordinates, what_informality
 import networkx as nx
 import random
 import copy

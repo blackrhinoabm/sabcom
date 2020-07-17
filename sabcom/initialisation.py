@@ -6,8 +6,8 @@ import sys
 import os
 import time
 
-from src.environment import Environment
-from src.helpers import generate_district_data
+from sabcom.src.environment import Environment
+from sabcom.src.helpers import generate_district_data
 
 # This script works best run on a high performance cluster computer (HPC), where it wil initialise multiple seeds
 # in that case run in the console:
@@ -31,7 +31,7 @@ seeds = list(range(MONTE_CARLO_RUNS))
 simulations = ['50_seeds_initialisation']
 
 
-# The following lines detect whether you are working on HPC with the SLURM scheduler
+# The following lines detect whether you are working on HPC with the SLURM scheduler TODO update this
 try:
     arg = sys.argv[1]
 except:
@@ -48,7 +48,7 @@ if arg == 'slurm-cluster':
     data_folder = 'initialisations/' + sim + '/'
     data_folder_environment = data_folder + 'env_pickls/'
 else:
-    data_folder_environment = 'initialisations/' + CITY
+    data_folder_environment = 'sabcom/initialisations/' + CITY
     seed = SEED
 
 # 1 load general the parameters
