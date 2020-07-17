@@ -6,11 +6,10 @@ from sabcom.src.environment import Environment
 from sabcom.src.helpers import generate_district_data
 from sabcom.src.runner import runner
 
-os.chdir('../sabcom')
-
 
 def test_model():
     """Basic test to see if the model runs with T=90, 100 agents and 5 Monte Carlo simulations"""
+    os.chdir('../sabcom')
     data_folder = 'output_data/baseline/'
 
     # load parameters
