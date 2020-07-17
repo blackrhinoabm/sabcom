@@ -9,7 +9,7 @@ from sabcom.src.runner import runner
 
 def test_model():
     """Basic test to see if the model runs with T=90, 100 agents and 5 Monte Carlo simulations"""
-    os.chdir('../sabcom')
+    #os.chdir('../sabcom')
     data_folder = 'output_data/baseline/'
 
     # load parameters
