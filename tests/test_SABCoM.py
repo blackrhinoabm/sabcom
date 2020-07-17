@@ -2,9 +2,11 @@ import pandas as pd
 import json
 import os
 
-from src.environment import Environment
-from src.helpers import generate_district_data
-from src.runner import runner
+from sabcom.src.environment import Environment
+from sabcom.src.helpers import generate_district_data
+from sabcom.src.runner import runner
+
+os.chdir('../sabcom')
 
 
 def test_model():
