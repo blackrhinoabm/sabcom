@@ -29,7 +29,7 @@ You can **install** the SABCom model by cloning this repository to your system. 
 
 __Running the model__
 
-There are two files in the main folder that will allow you to run the model: ```SABCoModel.py``` and ```simple_model_simulations.ipynb```. 
+Just run the file: ```SABCoModel.py```.
 
 __Analysis__
 Running the model in the notebook provides the added advantage that it comes with code to generate graphs to understand the model dynamics. 
