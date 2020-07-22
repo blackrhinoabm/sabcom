@@ -5,9 +5,9 @@ import re
 import pickle
 import time
 
-from sabcom.src.runner import runner
-from sabcom.src.helpers import generate_district_data
-from sabcom.src.helpers import what_informality
+from src.runner import runner
+from src.helpers import generate_district_data
+from src.helpers import what_informality
 
 # time how long it takes to run the script
 start = time.time()

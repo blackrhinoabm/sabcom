@@ -1,8 +1,8 @@
 import pandas as pd
 import networkx as nx
 
-from sabcom.src.analyselib.read import *
-from sabcom.src.analyselib.calculate import *
+from src.analyselib.read import *
+from src.analyselib.calculate import *
 
 
 population = pd.read_csv('../population.csv')
