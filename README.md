@@ -10,7 +10,7 @@
 [comment]: <> (One paragraph overview of the project, TODO add link to blog?)
  __The Spatial Agent-Based Covid-19 Model (SABCOM)__
 
-SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, simulation model of the spread of the Covid-19 virus. The model is designed to simulate and analyse the spread of Covid-19 at the level of individual people. This distinguishes the model from most epidemiology models which operate top down and at a higher level of abstraction. This makes our model particularly useful for researchers and policy makers needing to study the impact of Covid-19 in highly heterogenous and unequal populations, e.g. neighbourhoods with vulnerable populations alongside wealthy populations. The bottom up granularity further allows for the analysis of targeted measures such as quarantining certain neighbourhoods, transmission reduction measures (such as wearing masks), and targeted social distancing measures aimed at specific segments of the population, .
+SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several South African cities. The model is designed to simulate and analyse the spread of Covid-19 at the level of individual people. This distinguishes the model from most epidemiology models which operate top down and at a higher level of abstraction. This makes our model particularly useful for researchers and policy makers needing to study the impact of Covid-19 in highly heterogenous and unequal populations, e.g. neighbourhoods with vulnerable populations alongside wealthy populations. The bottom up granularity further allows for the analysis of targeted measures such as quarantining certain neighbourhoods, transmission reduction measures (such as wearing masks), and targeted social distancing measures aimed at specific segments of the population, .
 
 The model is inspired by the canonical SEIR structure and generates curves that reflect the number of agents that are susceptible (s) infected without symptoms (i1), with symptoms (i2), critically ill (c), and are recovered (r). 
 
@@ -29,7 +29,7 @@ You can **install** the SABCom model by cloning this repository to your system. 
 
 __Running the model__
 
-There are two files in the main folder that will allow you to run the model: ```SABCoModel.py``` and ```simple_model_simulations.ipynb```. 
+Just run the file: ```SABCoModel.py```.
 
 __Analysis__
 Running the model in the notebook provides the added advantage that it comes with code to generate graphs to understand the model dynamics. 
