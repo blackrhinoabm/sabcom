@@ -1,6 +1,10 @@
 import pandas as pd
 import json
 import os
+import sys
+
+# guarantees that the test will run properly on Github
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from src.environment import Environment
 from src.helpers import generate_district_data
@@ -9,11 +13,11 @@ from src.runner import runner
 
 def test_model():
     """Basic test to see if the model runs with T=90, 100 agents and 5 Monte Carlo simulations"""
-    #os.chdir('../sabcom')
-    data_folder = 'output_data/baseline/'
+
+    data_folder = 'sabcom/output_data/baseline/'
 
     # load parameters
-    with open('parameters/parameters_cape_town.json') as json_file:
+    with open('sabcom/parameters/parameters_cape_town.json') as json_file:
         parameters = json.load(json_file)
 
     # set parameters to time = 90, 5 MC runs and 100 agents
@@ -28,17 +32,17 @@ def test_model():
     parameters['data_output'] = 'csv_light'
 
     # load district data
-    district_data = generate_district_data(10000)#parameters['number_of_agents']) TODO debug
+    district_data = generate_district_data(10000, pathstart='sabcom/')#parameters['number_of_agents']) TODO debug
 
     # load travel matrix
-    travel_matrix = pd.read_csv('input_data/Travel_Probability_Matrix.csv', index_col=0)
+    travel_matrix = pd.read_csv('sabcom/input_data/Travel_Probability_Matrix.csv', index_col=0)
 
     # load age data
-    age_distribution = pd.read_csv('input_data/age_dist.csv', sep=';', index_col=0)
+    age_distribution = pd.read_csv('sabcom/input_data/age_dist.csv', sep=';', index_col=0)
     age_distribution_per_ward = dict(age_distribution.transpose())
 
     # load household contact matrix
-    hh_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
+    hh_contact_matrix = pd.read_excel('sabcom/input_data/ContactMatrices_10year.xlsx', sheet_name="Home", index_col=0)
     # add a col & row for 80 plus. Rename columns to mathc our age categories
     hh_contact_matrix['80plus'] = hh_contact_matrix['70_80']
     row = hh_contact_matrix.xs('70_80')
@@ -48,7 +52,7 @@ def test_model():
     hh_contact_matrix.index = age_groups
 
     # load other contact matrix
-    other_contact_matrix = pd.read_excel('input_data/ContactMatrices_10year.xlsx', sheet_name="OutsideOfHome",
+    other_contact_matrix = pd.read_excel('sabcom/input_data/ContactMatrices_10year.xlsx', sheet_name="OutsideOfHome",
                                          index_col=0)
     other_contact_matrix['80plus'] = other_contact_matrix['70_80']
     row = other_contact_matrix.xs('70_80')
@@ -58,10 +62,10 @@ def test_model():
     other_contact_matrix.index = age_groups
 
     # load household size distribution data
-    HH_size_distribution = pd.read_excel('input_data/HH_Size_Distribution.xlsx', index_col=0)
+    HH_size_distribution = pd.read_excel('sabcom/input_data/HH_Size_Distribution.xlsx', index_col=0)
 
     # load initial infections:
-    initial_infections = pd.read_csv('input_data/Cases_With_Subdistricts.csv', index_col=0)
+    initial_infections = pd.read_csv('sabcom/input_data/Cases_With_Subdistricts.csv', index_col=0)
 
     # Monte Carlo simulations
     for seed in range(parameters['monte_carlo_runs']):
