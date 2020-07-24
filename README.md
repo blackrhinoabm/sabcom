@@ -33,9 +33,8 @@ SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, m
 The application can be used to simulate the progression of Covid-19 over a city of choice. To run it, an initialised environment is needed. 
 
 ## Simulation
-To simulate the model three 
 
-`simulate <initialisation path> <parameters path> <input folder pah> <output folder path> <data output mode> <scenario>`
+`simulate <initialisation path> <parameters path> <input folder path> <output folder path> <data output mode> <scenario>`
 
 For example, say you want to simulate the model using initialisation `seed_2.pkl`, parameter file `parameters.json`, input folder `/input_folder`, output folder `/output_folder`, output mode "csv_light", and scenario "no_intervention". 
 First, make sure that all the files and folders are in your current location. Next, you type in the command line:  
@@ -49,11 +48,12 @@ This will simulate a no_intervention scenario for the seed_2 initialisation with
 Note how this assumes that there is already an initialisation file. If this is not the case, sabcom can be used to produce one given the input files. 
 
 ## Initialisation
+`initialise <seed number> <parameters path> <input folder path>`
 
 If an initialisation file is not present, you can create one using sabcom. For example, if you want to create an initialisation with Monte Carlo seed 2, parameter file `parameters.json`, and the files in input folder `/input_folder`, the following command can be used:
 
 ```bash
-$ sabcom initialise 2 parameters.json /input_folder /output_folder "csv_light" "no_intervention"
+$ sabcom initialise 2 parameters.json /input_folder
 ```
 
 As a rule, creating a model initialisation takes much longer than simulating one.
