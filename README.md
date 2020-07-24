@@ -10,10 +10,7 @@
 [comment]: <> (One paragraph overview of the project, TODO add link to blog?)
  __The Spatial Agent-Based Covid-19 Model (SABCOM)__
 
-SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities. The model is designed to simulate and analyse the spread of Covid-19 at the level of individual people. This distinguishes the model from most epidemiology models which operate top down and at a higher level of abstraction. This makes our model particularly useful for researchers and policy makers needing to study the impact of Covid-19 in highly heterogenous and unequal populations, e.g. neighbourhoods with vulnerable populations alongside wealthy populations. The bottom up granularity further allows for the analysis of targeted measures such as quarantining certain neighbourhoods, transmission reduction measures (such as wearing masks), and targeted social distancing measures aimed at specific segments of the population, .
-
-The model is inspired by the canonical SEIR structure and generates curves that reflect the number of agents that are susceptible (s) infected without symptoms (i1), with symptoms (i2), critically ill (c), and are recovered (r). 
-
+SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities. 
 
 # Installation
 
