@@ -6,9 +6,9 @@ import sys
 # guarantees that the test will run properly on Github
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-from src.environment import Environment
-from src.helpers import generate_district_data
-from src.runner import runner
+from environment import Environment
+from helpers import generate_district_data
+from runner import runner
 
 
 def test_model():
