@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 
-def runner(environment, initial_infections, seed, data_folder='measurement/',
+def runner(environment, initial_infections, seed, data_folder='input_data/',
            data_output=False, calculate_r_naught=False):
     """
     This function is used to run / simulate the model.

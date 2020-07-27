@@ -6,8 +6,8 @@ import sys
 import os
 import time
 
-from src.environment import Environment
-from src.helpers import generate_district_data
+from environment import Environment
+from helpers import generate_district_data
 
 # This script works best run on a high performance cluster computer (HPC), where it wil initialise multiple seeds
 # in that case run in the console:

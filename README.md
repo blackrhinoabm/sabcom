@@ -10,37 +10,61 @@
 [comment]: <> (One paragraph overview of the project, TODO add link to blog?)
  __The Spatial Agent-Based Covid-19 Model (SABCOM)__
 
-SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several South African cities. The model is designed to simulate and analyse the spread of Covid-19 at the level of individual people. This distinguishes the model from most epidemiology models which operate top down and at a higher level of abstraction. This makes our model particularly useful for researchers and policy makers needing to study the impact of Covid-19 in highly heterogenous and unequal populations, e.g. neighbourhoods with vulnerable populations alongside wealthy populations. The bottom up granularity further allows for the analysis of targeted measures such as quarantining certain neighbourhoods, transmission reduction measures (such as wearing masks), and targeted social distancing measures aimed at specific segments of the population, .
+SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities. 
 
-The model is inspired by the canonical SEIR structure and generates curves that reflect the number of agents that are susceptible (s) infected without symptoms (i1), with symptoms (i2), critically ill (c), and are recovered (r). 
+# Installation
 
+## Using Pip
 
-[comment]: <> (The output of a simulation run might look something like this:  ) 
+```bash
+  $ pip install sabcom
+```
 
-[comment]: <> (<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/the_curve.png" height="512px"/> ) 
+## Manual
 
-Due to the unique spatial structure of the model, we can track how a virus spreads spatially. For example through Cape Town, our preliminary case study city. The figure below shows the proportion of the population infected in different wards in the City of Cape town. Note, this is a hypothetical simulation of a non-calibrated model and is only used to give an idea of possible dynamics. 
+```bash
+  $ git clone https://github.com/blackrhinoabm/sabcom
+  $ cd sabcom
+  $ python setup.py install
+```
 
-<img src="https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/Infected.gif" height="768px"/>
+# Usage
 
- __Getting started__
+The application can be used to simulate the progression of Covid-19 over a city of choice. To run it, an initialised environment is needed. 
 
-You can **install** the SABCom model by cloning this repository to your system. After that, you are ready to start using the model.
+## Simulation
 
-__Running the model__
+`simulate <initialisation path> <parameters path> <input folder path> <output folder path> <data output mode> <scenario>`
 
-Just run the file: ```SABCoModel.py```.
+For example, say you want to simulate the model using initialisation `seed_2.pkl`, parameter file `parameters.json`, input folder `/input_folder`, output folder `/output_folder`, output mode "csv_light", and scenario "no_intervention". 
+First, make sure that all the files and folders are in your current location. Next, you type in the command line:  
 
-__Analysis__
-Running the model in the notebook provides the added advantage that it comes with code to generate graphs to understand the model dynamics. 
+```bash
+$ sabcom simulate seed_2.pkl parameters.json /input_folder /output_folder "csv_light" "no_intervention"
+```
 
-__Requirements__
+This will simulate a no_intervention scenario for the seed_2 initialisation with the specified parameters, input files for the city of your choice, and output a csv light data file in the specified output folder.
+
+Note how this assumes that there is already an initialisation file. If this is not the case, sabcom can be used to produce one given the input files. 
+
+## Initialisation
+`initialise <seed number> <parameters path> <input folder path>`
+
+If an initialisation file is not present, you can create one using sabcom. For example, if you want to create an initialisation with Monte Carlo seed 2, parameter file `parameters.json`, and the files in input folder `/input_folder`, the following command can be used:
+
+```bash
+$ sabcom initialise 2 parameters.json /input_folder
+```
+
+As a rule, creating a model initialisation takes much longer than simulating one.
+
+# Requirements
 The program requires Python 3, and the packages listed in the requirements.txt file.
 
-__Contact and Social Media__
+# Contact and Social Media
 https://twitter.com/SABCOM5
 
-__Disclaimer__
+# Disclaimer
 
 This software is intended for educational and research purposes. Despite best efforts,
 we cannot fully rule out the possibility of errors and bugs. The use of SABCoM
