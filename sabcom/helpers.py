@@ -54,7 +54,7 @@ def confidence_interval(data, av):
     return stats.t.interval(alpha=0.95, df=24, loc=av, scale=sigma)
 
 
-def generate_district_data(number_of_agents, max_districts=None, pathstart=''):
+def generate_district_data(number_of_agents, path, max_districts=None):
     """
     Transforms input data on informal residential, initial infections, and population and transforms it to
     a list of organised data for the simulation.
@@ -63,10 +63,10 @@ def generate_district_data(number_of_agents, max_districts=None, pathstart=''):
     :param max_districts: (optional) maximum amount of districts simulated, integer
     :return: data set containing district data for simulation, list
     """
-    informal_residential = pd.read_csv('{}input_data/Informal_Residential.csv'.format(pathstart)).iloc[:-1]
-    inital_infections = pd.read_csv('{}input_data/Cases_With_Subdistricts.csv'.format(pathstart), index_col=0)
+    informal_residential = pd.read_csv('{}/Informal_Residential.csv'.format(path)).iloc[:-1]
+    inital_infections = pd.read_csv('{}/Cases_With_Subdistricts.csv'.format(path), index_col=0)
     inital_infections = inital_infections.sort_index()
-    population = pd.read_csv('{}input_data/population.csv'.format(pathstart))
+    population = pd.read_csv('{}/population.csv'.format(path))
 
     # normalise district informality
     x = informal_residential[['Informal_residential']].values.astype(float)

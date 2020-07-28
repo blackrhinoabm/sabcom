@@ -1,11 +1,11 @@
 import numpy as np
-from src.agent import Agent
-from src.helpers import what_coordinates, what_informality
 import networkx as nx
 import random
 import copy
 import pandas as pd
 
+from sabcom.agent import Agent
+from sabcom.helpers import what_coordinates, what_informality
 
 class Environment:
     """
