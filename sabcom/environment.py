@@ -4,8 +4,9 @@ import random
 import copy
 import pandas as pd
 
-from sabcom.agent import Agent
-from sabcom.helpers import what_coordinates, what_informality
+from agent import Agent
+from helpers import what_coordinates, what_informality
+
 
 class Environment:
     """

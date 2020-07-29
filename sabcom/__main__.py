@@ -1,16 +1,15 @@
 import sys
 import click
 import pickle
-import re
 import os
 import time
 import json
 import pandas as pd
 import networkx as nx
 
-from sabcom.runner import runner
-from sabcom.environment import Environment
-from sabcom.helpers import generate_district_data, what_informality
+from runner import runner
+from environment import Environment
+from helpers import generate_district_data, what_informality
 
 
 @click.group()
@@ -25,23 +24,30 @@ def main():
 
 
 @main.command()
-@click.argument('output_folder_path', required=False)
-@click.argument('initialisation_path', required=False)
-@click.argument('parameters_path', required=False)
-@click.argument('input_folder_path', required=False)
-@click.argument('data_output_mode', required=False)
-@click.argument('scenario', required=False)
-def simulate(**kwargs): #output_folder_path, initialisation_path, parameters_path, input_folder_path, data_output_mode, scenario
+@click.argument('seed', required=True)
+@click.argument('output_folder_path', type=click.Path(exists=True), required=True)
+# @click.argument('initialisation_folder_path', required=False)
+# @click.argument('parameters_path', required=False)
+# @click.argument('input_folder_path', required=False)
+# @click.argument('data_output_mode', required=False)
+# @click.argument('scenario', required=False)
+def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, parameters_path, input_folder_path, data_output_mode, scenario
     """Simulate the model"""
-    initialisation_path = kwargs.get('initialisation_path', 'example_data/initialisations/seed_20.pkl') #  TODO add default
+    start = time.time()
+    default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
+    seed = kwargs.get('seed')
 
-    data = open(initialisation_path, "rb")
+    inititialisation_path = kwargs.get('initialisation_folder_path', os.path.join(default_data_path, 'initialisations'))
+
+    seed_path = os.path.join(inititialisation_path, 'seed_{}.pkl'.format(seed))
+
+    data = open(seed_path, "rb") # TODO add custom error message here informing that the specified seed is not in folder
     list_of_objects = pickle.load(data)
     environment = list_of_objects[0]
 
-    seed = int(re.findall(r'\d+', initialisation_path)[0])
+    #seed = int(re.findall(r'\d+', initialisation_path)[0]) TODO remove
 
-    input_folder_path = kwargs.get('input_folder_path', 'example_data/input_data/')
+    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
 
     # update time and output format in the environment TODO remove?
     #max_time = environment.parameters['time']  # you cannot simulate longer than initialised
@@ -72,44 +78,53 @@ def simulate(**kwargs): #output_folder_path, initialisation_path, parameters_pat
                                              ) * environment.parameters["informality_dummy"]
 
     # make new folder for seed, if it does not exist
-    output_folder_path = kwargs.get('output_folder_path', 'example_data/output_data/')  # if no output folder was provided cwd is used
+    output_folder_path = kwargs.get('output_folder_path')
 
-    if not os.path.exists('{}seed{}'.format(output_folder_path, seed)):
-        os.makedirs('{}seed{}'.format(output_folder_path, seed))
+    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
 
-    input_folder_path = kwargs.get('input_folder_path', 'example_data/input_data')
-
-    initial_infections = pd.read_csv('{}/Cases_With_Subdistricts.csv'.format(input_folder_path), index_col=0)
-    environment = runner(environment, initial_infections, seed, data_folder=input_folder_path,
-                         data_output=output_folder_path)
+    initial_infections = pd.read_csv(os.path.join(input_folder_path, 'Cases_With_Subdistricts.csv'), index_col=0)
 
     # save csv light or network data
     data_output_mode = kwargs.get('data_output_mode', 'csv_light')  # default output mode is csv_light
+    environment.parameters["data_output"] = data_output_mode
+
+    environment = runner(environment=environment, initial_infections=initial_infections, seed=int(seed),
+                         data_folder=output_folder_path,
+                         data_output=data_output_mode)
 
     if data_output_mode == 'network':
         for idx, network in enumerate(environment.infection_states):
             for i, node in enumerate(network.nodes):
                 network.nodes[i]['agent'] = network.nodes[i]['agent'].status
             idx_string = '{0:04}'.format(idx)
-            nx.write_graphml(network, "{}seed{}/network_time{}.graphml".format(output_folder_path, seed, idx_string))
+            nx.write_graphml(network, os.path.join(output_folder_path, "seed{}network_time{}.graphml".format(seed,
+                                                                                                              idx_string)))
     elif data_output_mode == 'csv_light':
-        pd.DataFrame(environment.infection_quantities).to_csv('{}seed{}/quantities_state_time.csv'.format(
-            output_folder_path, seed))
+        pd.DataFrame(environment.infection_quantities).to_csv(os.path.join(output_folder_path,
+                                                                           'seed{}quantities_state_time.csv'.format(seed)))
 
+    end = time.time()
+    hours_total, rem_total = divmod(end - start, 3600)
+    minutes_total, seconds_total = divmod(rem_total, 60)
+    click.echo("TOTAL RUNTIME {:0>2}:{:0>2}:{:05.2f}".format(int(hours_total), int(minutes_total), seconds_total))
     click.echo('Simulation done, check out the output data here: {}'.format(output_folder_path))
 
-#
-# @main.command()
-# @click.argument('seed', required=True)
-# @click.argument('initialisation_path', required=True)
-# @click.argument('parameters_path', required=False)
-# @click.argument('input_folder_path', required=False)
-# @click.argument('data_output_mode', required=False)
+
+@main.command()
+@click.argument('seed', required=True)
+@click.argument('initialisation_path', type=click.Path(exists=True), required=True)
+#@click.argument('parameters_path', required=False)
+#@click.argument('input_folder_path', required=False)
+#@click.argument('data_output_mode', required=False)
 def initialise(**kwargs):  # seed, initialisation_path, parameters_path, input_folder_path, data_output_mode
     """Initialise the model in specified directory"""
     start = time.time()
+
+    default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
+
     # 1 load general the parameters
-    parameters_path = kwargs.get('parameters_path', 'example_data/parameters.json')
+    parameters_path = kwargs.get('parameters_path', os.path.join(default_data_path, 'parameters.json'))
+    print(parameters_path)
 
     with open(parameters_path) as json_file:
         parameters = json.load(json_file)
@@ -121,26 +136,27 @@ def initialise(**kwargs):  # seed, initialisation_path, parameters_path, input_f
     age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
                   'age_50_60', 'age_60_70', 'age_70_80', 'age_80_plus']
 
-    input_folder_path = kwargs.get('input_folder_path', 'example_data/input_data/')
+    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
 
     # 2 load district data
     # transform input data to general district data for simulations
     district_data = generate_district_data(int(parameters['number_of_agents']), path=input_folder_path)
 
     # 2.2 age data
-    age_distribution = pd.read_csv('{}age_dist.csv'.format(input_folder_path), sep=';', index_col=0)
+    age_distribution = pd.read_csv(os.path.join(input_folder_path, 'age_dist.csv'), sep=';', index_col=0)
     age_distribution_per_ward = dict(age_distribution.transpose())
 
     # 2.3 household size distribution
-    HH_size_distribution = pd.read_excel('{}HH_Size_Distribution.xlsx'.format(input_folder_path), index_col=0)
+    HH_size_distribution = pd.read_excel(os.path.join(input_folder_path, 'HH_Size_Distribution.xlsx'), index_col=0)
 
     # 3 load travel matrix
-    travel_matrix = pd.read_csv('{}Travel_Probability_Matrix.csv'.format(input_folder_path), index_col=0)
+    travel_matrix = pd.read_csv(os.path.join(input_folder_path, 'Travel_Probability_Matrix.csv'), index_col=0)
 
     # 4 load contact matrices
     # 4.1 load household contact matrix
-    hh_contact_matrix = pd.read_excel('{}ContactMatrices_10year.xlsx'.format(input_folder_path), sheet_name="Home", index_col=0)
-    # add a col & row for 80 plus. Rename columns to mathc our age categories
+    hh_contact_matrix = pd.read_excel(os.path.join(input_folder_path, 'ContactMatrices_10year.xlsx'),
+                                      sheet_name="Home", index_col=0)
+    # add a column & row for 80 plus. Rename columns to match our age categories
     hh_contact_matrix['80plus'] = hh_contact_matrix['70_80']
     row = hh_contact_matrix.xs('70_80')
     row.name = '80plus'
@@ -149,7 +165,8 @@ def initialise(**kwargs):  # seed, initialisation_path, parameters_path, input_f
     hh_contact_matrix.index = age_groups
 
     # 4.2 load other contact matrix
-    other_contact_matrix = pd.read_excel('{}ContactMatrices_10year.xlsx'.format(input_folder_path), sheet_name="OutsideOfHome",
+    other_contact_matrix = pd.read_excel(os.path.join(input_folder_path, 'ContactMatrices_10year.xlsx'),
+                                         sheet_name="OutsideOfHome",
                                          index_col=0)
     other_contact_matrix['80plus'] = other_contact_matrix['70_80']
     row = other_contact_matrix.xs('70_80')
@@ -159,19 +176,20 @@ def initialise(**kwargs):  # seed, initialisation_path, parameters_path, input_f
     other_contact_matrix.index = age_groups
 
     # make new folder for seed, if it does not exist
-    initialisations_folder_path = kwargs.get('initialisation_path', os.getcwd())  # TODO make this required?
+    initialisations_folder_path = kwargs.get('initialisation_path', os.getcwd())  # TODO make this required!
 
-    # make new folder if it does not exist
+    # make new folder if it does not exist TODO remove this is the above is required
     if not os.path.exists('{}'.format(initialisations_folder_path)):
         os.makedirs('{}'.format(initialisations_folder_path))
 
     seed = kwargs.get('seed')
     # initialisation
-    environment = Environment(seed, parameters, district_data, age_distribution_per_ward,
+    environment = Environment(int(seed), parameters, district_data, age_distribution_per_ward,
                               hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
     # save environment objects as pickls
-    file_name = initialisations_folder_path + "/seed_" + str(seed) + '.pkl'
+    #file_name = initialisations_folder_path + "/seed_" + str(seed) + '.pkl'
+    file_name = os.path.join(initialisations_folder_path, "seed_{}.pkl".format(str(seed))) #TODO debug
     save_objects = open(file_name, 'wb')
     pickle.dump([environment, seed], save_objects)
     save_objects.close()
@@ -179,10 +197,12 @@ def initialise(**kwargs):  # seed, initialisation_path, parameters_path, input_f
     end = time.time()
     hours_total, rem_total = divmod(end - start, 3600)
     minutes_total, seconds_total = divmod(rem_total, 60)
-    print("TOTAL RUNTIME", "{:0>2}:{:0>2}:{:05.2f}".format(int(hours_total), int(minutes_total), seconds_total))
+    click.echo("TOTAL RUNTIME {:0>2}:{:0>2}:{:05.2f}".format(int(hours_total), int(minutes_total), seconds_total))
+    click.echo('Initialisation done, check out the output data here: {}'.format(initialisations_folder_path))
 
 
-initialise(seed=3, initialisation_path='example_data/initialisations')
+#initialise(seed=3, initialisation_path='../example_data/initialisations')
+#simulate(seed=3, output_folder_path='../example_data/output_data')
 
 if __name__ == '__main__':
     args = sys.argv
