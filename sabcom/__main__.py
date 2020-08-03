@@ -26,28 +26,44 @@ def main():
 @main.command()
 @click.argument('seed', required=True)
 @click.argument('output_folder_path', type=click.Path(exists=True), required=True)
-# @click.argument('initialisation_folder_path', required=False)
-# @click.argument('parameters_path', required=False)
-# @click.argument('input_folder_path', required=False)
-# @click.argument('data_output_mode', required=False)
+@click.argument('initialisation_folder_path', required=False)
+@click.argument('parameters_path', required=False)
+@click.argument('input_folder_path', required=False)
+# @click.argument('data_output_mode', required=False)  Use option? https://click.palletsprojects.com/en/7.x/options/
 # @click.argument('scenario', required=False)
 def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, parameters_path, input_folder_path, data_output_mode, scenario
     """Simulate the model"""
     start = time.time()
-    default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
-    seed = kwargs.get('seed')
 
+    # format required arguments
+    seed = kwargs.get('seed')
+    default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
+    output_folder_path = kwargs.get('output_folder_path')
+
+    # format optional arguments
+    # 1
     inititialisation_path = kwargs.get('initialisation_folder_path', os.path.join(default_data_path, 'initialisations'))
+    if inititialisation_path is None:
+        inititialisation_path = os.path.join(default_data_path, 'initialisations')
+
+    # 2 TODO add parameters that can be changed
+
+    # 3
+    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
+    if input_folder_path is None:
+        input_folder_path = os.path.join(default_data_path, 'input_data')
+    # 4
+
+    print('input folder path = ', input_folder_path)
 
     seed_path = os.path.join(inititialisation_path, 'seed_{}.pkl'.format(seed))
-
     data = open(seed_path, "rb") # TODO add custom error message here informing that the specified seed is not in folder
     list_of_objects = pickle.load(data)
     environment = list_of_objects[0]
 
     #seed = int(re.findall(r'\d+', initialisation_path)[0]) TODO remove
 
-    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
+
 
     # update time and output format in the environment TODO remove?
     #max_time = environment.parameters['time']  # you cannot simulate longer than initialised
@@ -77,10 +93,7 @@ def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, p
         agent.informality = what_informality(agent.district, district_data
                                              ) * environment.parameters["informality_dummy"]
 
-    # make new folder for seed, if it does not exist
-    output_folder_path = kwargs.get('output_folder_path')
-
-    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
+    #input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data')) TODO remove
 
     initial_infections = pd.read_csv(os.path.join(input_folder_path, 'Cases_With_Subdistricts.csv'), index_col=0)
 
