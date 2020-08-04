@@ -29,8 +29,10 @@ def main():
 @click.argument('initialisation_folder_path', required=False)
 @click.argument('parameters_path', required=False)
 @click.argument('input_folder_path', required=False)
-# @click.argument('data_output_mode', required=False)  Use option? https://click.palletsprojects.com/en/7.x/options/
-# @click.argument('scenario', required=False)
+@click.option('--data-output-mode', default='csv-light', show_default=True,
+              type=click.Choice(['csv-light', 'csv', 'network'],  case_sensitive=False,))
+@click.option('--scenario', default='no-intervention', show_default=True,
+              type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
 def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, parameters_path, input_folder_path, data_output_mode, scenario
     """Simulate the model"""
     start = time.time()
@@ -54,7 +56,7 @@ def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, p
         input_folder_path = os.path.join(default_data_path, 'input_data')
     # 4
 
-    print('input folder path = ', input_folder_path)
+    #print('input folder path = ', input_folder_path)
 
     seed_path = os.path.join(inititialisation_path, 'seed_{}.pkl'.format(seed))
     data = open(seed_path, "rb") # TODO add custom error message here informing that the specified seed is not in folder
@@ -73,8 +75,9 @@ def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, p
     district_data = generate_district_data(environment.parameters['number_of_agents'], path=input_folder_path)
 
     # set scenario specific parameters
-    scenario = kwargs.get('scenario', 'no_intervention')  # if no scenario was provided no_intervention is used
-    if scenario == 'no_intervention':
+    scenario = kwargs.get('scenario', 'no-intervention')  # if no scenario was provided no_intervention is used
+    print('scenario is ', scenario)
+    if scenario == 'no-intervention':
         environment.parameters['likelihood_awareness'] = [
             0.0 for x in environment.parameters['likelihood_awareness']]
         environment.parameters['visiting_recurring_contacts_multiplier'] = [
@@ -86,19 +89,17 @@ def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, p
         environment.parameters['informality_dummy'] = 0.0
     elif scenario == 'lockdown':
         environment.parameters['informality_dummy'] = 0.0
-    elif scenario == 'ineffective_lockdown':
+    elif scenario == 'ineffective-lockdown':
         environment.parameters['informality_dummy'] = 1.0
 
     for agent in environment.agents:
         agent.informality = what_informality(agent.district, district_data
                                              ) * environment.parameters["informality_dummy"]
 
-    #input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data')) TODO remove
-
     initial_infections = pd.read_csv(os.path.join(input_folder_path, 'Cases_With_Subdistricts.csv'), index_col=0)
 
     # save csv light or network data
-    data_output_mode = kwargs.get('data_output_mode', 'csv_light')  # default output mode is csv_light
+    data_output_mode = kwargs.get('data-output-mode', 'csv-light')  # default output mode is csv_light
     environment.parameters["data_output"] = data_output_mode
 
     environment = runner(environment=environment, initial_infections=initial_infections, seed=int(seed),
@@ -112,7 +113,7 @@ def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, p
             idx_string = '{0:04}'.format(idx)
             nx.write_graphml(network, os.path.join(output_folder_path, "seed{}network_time{}.graphml".format(seed,
                                                                                                               idx_string)))
-    elif data_output_mode == 'csv_light':
+    elif data_output_mode == 'csv-light':
         pd.DataFrame(environment.infection_quantities).to_csv(os.path.join(output_folder_path,
                                                                            'seed{}quantities_state_time.csv'.format(seed)))
 
@@ -126,30 +127,43 @@ def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, p
 @main.command()
 @click.argument('seed', required=True)
 @click.argument('initialisation_path', type=click.Path(exists=True), required=True)
-#@click.argument('parameters_path', required=False)
-#@click.argument('input_folder_path', required=False)
-#@click.argument('data_output_mode', required=False)
+@click.argument('parameters_path', required=False)
+@click.argument('input_folder_path', required=False)
+@click.option('--data-output-mode', default='csv-light', show_default=True,
+              type=click.Choice(['csv-light', 'csv', 'network'],  case_sensitive=False,))
 def initialise(**kwargs):  # seed, initialisation_path, parameters_path, input_folder_path, data_output_mode
     """Initialise the model in specified directory"""
     start = time.time()
 
     default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
 
-    # 1 load general the parameters
+    # format required arguments
+    seed = kwargs.get('seed')
+    initialisations_folder_path = kwargs.get('initialisation_path', os.getcwd())
+
+    # format optional arguments
     parameters_path = kwargs.get('parameters_path', os.path.join(default_data_path, 'parameters.json'))
-    print(parameters_path)
+    if parameters_path is None:
+        parameters_path = os.path.join(default_data_path, 'parameters.json')
+    #print(parameters_path)
+
+    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
+    if input_folder_path is None:
+        input_folder_path = os.path.join(default_data_path, 'input_data')
+
+
 
     with open(parameters_path) as json_file:
         parameters = json.load(json_file)
 
     # Change parameters depending on experiment
     data_output_mode = kwargs.get('data_output_mode', 'csv_light')  # default output mode is csv_light
+    print('data output mode = ', data_output_mode)
+
     parameters['data_output'] = data_output_mode
 
     age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
                   'age_50_60', 'age_60_70', 'age_70_80', 'age_80_plus']
-
-    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
 
     # 2 load district data
     # transform input data to general district data for simulations
@@ -188,14 +202,10 @@ def initialise(**kwargs):  # seed, initialisation_path, parameters_path, input_f
     other_contact_matrix.columns = age_groups
     other_contact_matrix.index = age_groups
 
-    # make new folder for seed, if it does not exist
-    initialisations_folder_path = kwargs.get('initialisation_path', os.getcwd())  # TODO make this required!
-
     # make new folder if it does not exist TODO remove this is the above is required
     if not os.path.exists('{}'.format(initialisations_folder_path)):
         os.makedirs('{}'.format(initialisations_folder_path))
 
-    seed = kwargs.get('seed')
     # initialisation
     environment = Environment(int(seed), parameters, district_data, age_distribution_per_ward,
                               hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
