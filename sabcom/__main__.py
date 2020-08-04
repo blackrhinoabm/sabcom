@@ -7,9 +7,9 @@ import json
 import pandas as pd
 import networkx as nx
 
-from runner import runner
-from environment import Environment
-from helpers import generate_district_data, what_informality
+from sabcom.runner import runner
+from sabcom.environment import Environment
+from sabcom.helpers import generate_district_data, what_informality
 
 
 @click.group()
