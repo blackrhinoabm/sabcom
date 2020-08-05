@@ -24,48 +24,39 @@ def main():
 
 
 @main.command()
-@click.argument('seed', required=True)
-@click.argument('output_folder_path', type=click.Path(exists=True), required=True)
-@click.argument('initialisation_folder_path', required=False)
-@click.argument('parameters_path', required=False)
-@click.argument('input_folder_path', required=False)
-@click.option('--data-output-mode', default='csv-light', show_default=True,
+@click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
+              help="This should contain all nescessary input files, specifically an initialisation folder")
+@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
+              help="All simulation output will be deposited here")
+@click.option('--seed', '-s', type=int, required=True,
+              help="Integer seed number that is used for Monte Carlo simulations")
+@click.option('--data-output-mode', '-d', default='csv-light', show_default=True,
               type=click.Choice(['csv-light', 'csv', 'network'],  case_sensitive=False,))
-@click.option('--scenario', default='no-intervention', show_default=True,
+@click.option('--scenario', '-sc', default='no-intervention', show_default=True,
               type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
-def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, parameters_path, input_folder_path, data_output_mode, scenario
+def simulate(**kwargs): #input folder, output folder, seed, output_mode, scenario
     """Simulate the model"""
     start = time.time()
 
-    # format required arguments
+    # format arguments
     seed = kwargs.get('seed')
-    default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
+    #default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
     output_folder_path = kwargs.get('output_folder_path')
+    input_folder_path = kwargs.get('input_folder_path')
 
-    # format optional arguments
-    # 1
-    inititialisation_path = kwargs.get('initialisation_folder_path', os.path.join(default_data_path, 'initialisations'))
-    if inititialisation_path is None:
-        inititialisation_path = os.path.join(default_data_path, 'initialisations')
+    inititialisation_path = os.path.join(input_folder_path, 'initialisations')
 
-    # 2 TODO add parameters that can be changed
-
-    # 3
-    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
-    if input_folder_path is None:
-        input_folder_path = os.path.join(default_data_path, 'input_data')
-    # 4
-
-    #print('input folder path = ', input_folder_path)
 
     seed_path = os.path.join(inititialisation_path, 'seed_{}.pkl'.format(seed))
-    data = open(seed_path, "rb") # TODO add custom error message here informing that the specified seed is not in folder
+
+    if not os.path.exists(seed_path):
+        click.echo(seed_path + ' not found', err=True)
+        click.echo('Specify a valid seed')
+        return
+
+    data = open(seed_path, "rb")
     list_of_objects = pickle.load(data)
     environment = list_of_objects[0]
-
-    #seed = int(re.findall(r'\d+', initialisation_path)[0]) TODO remove
-
-
 
     # update time and output format in the environment TODO remove?
     #max_time = environment.parameters['time']  # you cannot simulate longer than initialised
@@ -125,40 +116,39 @@ def simulate(**kwargs): #seed, output_folder_path, initialisation_folder_path, p
 
 
 @main.command()
-@click.argument('seed', required=True)
-@click.argument('initialisation_path', type=click.Path(exists=True), required=True)
-@click.argument('parameters_path', required=False)
-@click.argument('input_folder_path', required=False)
-@click.option('--data-output-mode', default='csv-light', show_default=True,
-              type=click.Choice(['csv-light', 'csv', 'network'],  case_sensitive=False,))
-def initialise(**kwargs):  # seed, initialisation_path, parameters_path, input_folder_path, data_output_mode
+@click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
+              help="Folder containing parameters file, input data and an empty initialisations folder")
+#@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
+@click.option('--seed', '-s', type=int, required=True, help="Integer seed number that is used for Monte Carlo simulations")
+def initialise(**kwargs):  # input output seed
     """Initialise the model in specified directory"""
     start = time.time()
 
-    default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
-
-    # format required arguments
     seed = kwargs.get('seed')
-    initialisations_folder_path = kwargs.get('initialisation_path', os.getcwd())
+    #output_folder_path = kwargs.get('output_folder_path') TODO remove
+    input_folder_path = kwargs.get('input_folder_path')
+    #default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
 
     # format optional arguments
-    parameters_path = kwargs.get('parameters_path', os.path.join(default_data_path, 'parameters.json'))
-    if parameters_path is None:
-        parameters_path = os.path.join(default_data_path, 'parameters.json')
-    #print(parameters_path)
+    parameters_path = os.path.join(input_folder_path, 'parameters.json')
+    initialisations_folder_path = os.path.join(input_folder_path, 'initialisations')
 
-    input_folder_path = kwargs.get('input_folder_path', os.path.join(default_data_path, 'input_data'))
-    if input_folder_path is None:
-        input_folder_path = os.path.join(default_data_path, 'input_data')
+    if not os.path.exists(initialisations_folder_path):
+        click.echo(initialisations_folder_path + ' not found', err=True)
+        click.echo('No initialisation folder to place initialisation pickle')
+        return
 
-
+    if not os.path.exists(parameters_path):
+        click.echo(parameters_path + ' not found', err=True)
+        click.echo('No parameter file found')
+        return
 
     with open(parameters_path) as json_file:
         parameters = json.load(json_file)
 
     # Change parameters depending on experiment
-    data_output_mode = kwargs.get('data_output_mode', 'csv_light')  # default output mode is csv_light
-    print('data output mode = ', data_output_mode)
+    data_output_mode = kwargs.get('data_output_mode', 'csv_light')  # TODO is this still nescessary?
+    #print('data output mode = ', data_output_mode)
 
     parameters['data_output'] = data_output_mode
 
