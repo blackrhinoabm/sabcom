@@ -54,11 +54,11 @@ folder (-o), a seed (-s), a data output mode (-d), and a scenario (-sc).
 `simulate -i <input folder path> -o <output folder path> -s <seed> -d <data output mode> -sc <scenario>`
 
 For example, say you want to simulate the model using input folder `example_data`, 
-output folder `example_data/output_data`, seed `2`, data output mode `csv_light`, and scenario `no_intervention`. 
+output folder `example_data/output_data`, seed `2`, data output mode `csv-light`, and scenario `no-intervention`. 
 First, make sure that all the files and folders are in your current location. Next, you type in the command line:  
 
 ```bash
-$ sabcom simulate -i example_data -o example_data/output_data -s 2 -d csv_light -sc no_intervention
+$ sabcom simulate -i example_data -o example_data/output_data -s 2 -d csv-light -sc no-intervention
 ```
 
 This will simulate a no_intervention scenario for the seed_2.pkl initialisation. input files for the city of your choice, 
