@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 
-def runner(environment, initial_infections, seed, data_folder='input_data/',
+def runner(environment, initial_infections, seed, data_folder='output_data/',
            data_output=False, calculate_r_naught=False):
     """
     This function is used to run / simulate the model.
@@ -212,7 +212,7 @@ def runner(environment, initial_infections, seed, data_folder='input_data/',
             environment.infection_states.append(environment.store_network())
         elif data_output == 'csv':
             environment.write_status_location(t, seed, data_folder)
-        elif data_output == 'csv_light':
+        elif data_output == 'csv-light':
             # save only the total quantity of agents per category
             for key, quantity in zip(['e', 's', 'i1', 'i2', 'c', 'r', 'd', 'detected'], [exposed,
                                                                                          susceptible,

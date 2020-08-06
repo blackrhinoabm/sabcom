@@ -7,7 +7,6 @@
 ![](https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png)
 
 
-[comment]: <> (One paragraph overview of the project, TODO add link to blog?)
  __The Spatial Agent-Based Covid-19 Model (SABCOM)__
 
 SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities. 
@@ -20,6 +19,12 @@ SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, m
   $ pip install sabcom
 ```
 
+or, alternatively 
+
+```bash
+  $ pip3 install sabcom
+```
+
 ## Manual
 
 ```bash
@@ -30,30 +35,47 @@ SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, m
 
 # Usage
 
-The application can be used to simulate the progression of Covid-19 over a city of choice. To run it, an initialised environment is needed. 
+The application can be used to simulate the progression of Covid-19 over a city of choice. Before running
+the application, the user needs that make sure that all dependencies are installed. This can be done by 
+installing the files in the requirements.txt file on Github or on your system if you did a manual installation.
+Given that you are in the folder that contains this file use:
+
+```bash
+  $ python -m pip install -r requirements.txt
+```
+
+Next, there are two options. Simulating the model (using an existing initialisation) or initialising a new model environment that can be 
+used for the simulation.
 
 ## Simulation
+Five arguments need to be provided to simulate the model: a path for the input folder (-i), a path for the output
+folder (-o), a seed (-s), a data output mode (-d), and a scenario (-sc).
 
-`simulate <initialisation path> <parameters path> <input folder path> <output folder path> <data output mode> <scenario>`
+`simulate -i <input folder path> -o <output folder path> -s <seed> -d <data output mode> -sc <scenario>`
 
-For example, say you want to simulate the model using initialisation `seed_2.pkl`, parameter file `parameters.json`, input folder `/input_folder`, output folder `/output_folder`, output mode "csv_light", and scenario "no_intervention". 
+For example, say you want to simulate the model using input folder `example_data`, 
+output folder `example_data/output_data`, seed `2`, data output mode `csv_light`, and scenario `no_intervention`. 
 First, make sure that all the files and folders are in your current location. Next, you type in the command line:  
 
 ```bash
-$ sabcom simulate seed_2.pkl parameters.json /input_folder /output_folder "csv_light" "no_intervention"
+$ sabcom simulate -i example_data -o example_data/output_data -s 2 -d csv_light -sc no_intervention
 ```
 
-This will simulate a no_intervention scenario for the seed_2 initialisation with the specified parameters, input files for the city of your choice, and output a csv light data file in the specified output folder.
+This will simulate a no_intervention scenario for the seed_2.pkl initialisation. input files for the city of your choice, 
+and output a csv light data file in the specified output folder.
 
-Note how this assumes that there is already an initialisation file. If this is not the case, sabcom can be used to produce one given the input files. 
+Note how this assumes that there is already an initialisation file. If this is not the case, 
+sabcom can be used to produce one given the input files. 
 
 ## Initialisation
-`initialise <seed number> <parameters path> <input folder path>`
+`initialise <input folder path> <seed number>`
 
-If an initialisation file is not present, you can create one using sabcom. For example, if you want to create an initialisation with Monte Carlo seed 2, parameter file `parameters.json`, and the files in input folder `/input_folder`, the following command can be used:
+If an initialisation file is not present, you can create one using the sabcom initialise function. 
+For example, if you want to create an initialisation with the files in input folder (assumed to be in your current working directory) `example_data`, 
+Monte Carlo seed 3, the following command can be used:
 
 ```bash
-$ sabcom initialise 2 parameters.json /input_folder
+$ sabcom initialise -i example_data -s 3
 ```
 
 As a rule, creating a model initialisation takes much longer than simulating one.
@@ -61,7 +83,9 @@ As a rule, creating a model initialisation takes much longer than simulating one
 # Requirements
 The program requires Python 3, and the packages listed in the requirements.txt file.
 
-# Contact and Social Media
+# Website and Social Media
+https://www.sabcom.co.za
+
 https://twitter.com/SABCOM5
 
 # Disclaimer
