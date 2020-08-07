@@ -4,8 +4,6 @@
 <img src="https://pbs.twimg.com/profile_images/1270246832015314953/CW4YcWdd_400x400.jpg" width="125">
 
 ![](https://cogeorg.github.io/images/black_rhino_logo.jpg)
-![](https://github.com/joerischasfoort/joerischasfoort.github.io/blob/master/images/covi-id.png)
-
 
  __The Spatial Agent-Based Covid-19 Model (SABCOM)__
 
