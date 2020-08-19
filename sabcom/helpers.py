@@ -63,10 +63,10 @@ def generate_district_data(number_of_agents, path, max_districts=None):
     :param max_districts: (optional) maximum amount of districts simulated, integer
     :return: data set containing district data for simulation, list
     """
-    informal_residential = pd.read_csv('{}/Informal_Residential.csv'.format(path)).iloc[:-1]
-    inital_infections = pd.read_csv('{}/Cases_With_Subdistricts.csv'.format(path), index_col=0)
+    informal_residential = pd.read_csv('{}/f_informality.csv'.format(path)).iloc[:-1]
+    inital_infections = pd.read_csv('{}/f_initial_cases.csv'.format(path), index_col=1)
     inital_infections = inital_infections.sort_index()
-    population = pd.read_csv('{}/population.csv'.format(path))
+    population = pd.read_csv('{}/f_population.csv'.format(path))
 
     # normalise district informality
     x = informal_residential[['Informal_residential']].values.astype(float)
@@ -84,13 +84,12 @@ def generate_district_data(number_of_agents, path, max_districts=None):
         if population['Population'].iloc[i] > smallest_size:
             districts_data.append(
                 [int(population['WardID'].iloc[i]), {'Population': population['Population'].iloc[i],
-                                                     'Density': population['Density'].iloc[i],
-                                                     'lon': population['lon'].iloc[i],
-                                                     'lat': population['lat'].iloc[i],
+                                                     #'lon': population['lon'].iloc[i],
+                                                     #'lat': population['lat'].iloc[i],
                                                      'Informal_residential': population['Informal_residential'].iloc[i],
                                                      'Cases_With_Subdistricts':
                                                          inital_infections.loc[population['WardID'].iloc[i]][
-                                                             'Cases_03292020'],
+                                                             'Cases'],
                                                      },
                  ])
 
