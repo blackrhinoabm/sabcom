@@ -44,6 +44,8 @@ def main():
               help="change the likelihood that an agent is aware it is infected.")
 @click.option('--gathering_max_contacts', '-maxc', default=None, type=int, required=False,
               help="change maximum number of contacts and agent is allowed to have.")
+@click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
+              help="Config file that contains parameter combinations for sensitivity analysis on HPC")
 def simulate(**kwargs):
     """Simulate the model"""
     start = time.time()
@@ -59,7 +61,7 @@ def simulate(**kwargs):
 
     if not os.path.exists(seed_path):
         click.echo(seed_path + ' not found', err=True)
-        click.echo('Specify a valid seed')
+        click.echo('Error: specify a valid seed')
         return
 
     data = open(seed_path, "rb")
@@ -88,11 +90,26 @@ def simulate(**kwargs):
         environment.parameters['gathering_max_contacts'] = [kwargs.get('gathering_max_contacts') for x in environment.parameters['visiting_recurring_contacts_multiplier']]
         click.echo('Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts'][0]))
 
+    if kwargs.get('sensitivity_config_file_path'):
+        # open file
+        config_path = kwargs.get('sensitivity_config_file_path')
+        if not os.path.exists(config_path):
+            click.echo(config_path + ' not found', err=True)
+            click.echo('Error: specify a valid path to the sensitivity config file')
+            return
+        else:
+            with open(config_path) as json_file:
+                config_file = json.load(json_file)
+
+                for param in config_file:
+                    environment.parameters[param] = config_file[param]
+                    click.echo('Parameter {} has been set to {}'.format(param, environment.parameters[param]))
+
     # transform input data to general district data for simulations
     district_data = generate_district_data(environment.parameters['number_of_agents'], path=input_folder_path)
 
     # set scenario specific parameters
-    scenario = kwargs.get('scenario', 'no-intervention')  # if no scenario was provided no_intervention is used
+    scenario = kwargs.get('scenario', 'no-intervention')  # if no scenario was provided no_intervention is used todo ADD NONE?
     print('scenario is ', scenario)
     if scenario == 'no-intervention':
         environment.parameters['likelihood_awareness'] = [
@@ -144,16 +161,15 @@ def simulate(**kwargs):
 @main.command()
 @click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
               help="Folder containing parameters file, input data and an empty initialisations folder")
-#@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
-@click.option('--seed', '-s', type=int, required=True, help="Integer seed number that is used for Monte Carlo simulations")
+@click.option('--seed', '-s', type=int, required=True,
+              help="Integer seed number that is used for Monte Carlo simulations")
+##@@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
 def initialise(**kwargs):  # input output seed
     """Initialise the model in specified directory"""
     start = time.time()
 
     seed = kwargs.get('seed')
-    #output_folder_path = kwargs.get('output_folder_path') TODO remove
     input_folder_path = kwargs.get('input_folder_path')
-    #default_data_path = os.path.join(os.path.dirname(sys.path[0]), 'example_data')
 
     # format optional arguments
     parameters_path = os.path.join(input_folder_path, 'parameters.json')
@@ -174,7 +190,6 @@ def initialise(**kwargs):  # input output seed
 
     # Change parameters depending on experiment
     data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # TODO is this still nescessary?
-    #print('data output mode = ', data_output_mode)
 
     parameters['data_output'] = data_output_mode
 
@@ -236,7 +251,7 @@ def initialise(**kwargs):  # input output seed
     click.echo("TOTAL RUNTIME {:0>2}:{:0>2}:{:05.2f}".format(int(hours_total), int(minutes_total), seconds_total))
     click.echo('Initialisation done, check out the output data here: {}'.format(initialisations_folder_path))
 
-
+# for debugging purposes:
 #initialise(seed=3, initialisation_path='../example_data/initialisations')
 #simulate(seed=3, output_folder_path='../example_data/output_data')
 

@@ -63,7 +63,7 @@ def generate_district_data(number_of_agents, path, max_districts=None):
     :param max_districts: (optional) maximum amount of districts simulated, integer
     :return: data set containing district data for simulation, list
     """
-    informal_residential = pd.read_csv('{}/f_informality.csv'.format(path)).iloc[:-1]
+    informal_residential = pd.read_csv('{}/f_informality.csv'.format(path))#.iloc[:-1]
     inital_infections = pd.read_csv('{}/f_initial_cases.csv'.format(path), index_col=1)
     inital_infections = inital_infections.sort_index()
     population = pd.read_csv('{}/f_population.csv'.format(path))
