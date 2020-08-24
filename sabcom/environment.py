@@ -55,7 +55,6 @@ class Environment:
             # 1.4.1 determine district code, informality, and age categories
             district_list = []
             district_code = district_data[idx][0]
-            #coordinates = what_coordinates(district_code, district_data)
             informality = what_informality(district_code, district_data) * parameters["informality_dummy"]
 
             age_categories = np.random.choice(age_distribution_per_district[district_code].index,
@@ -71,7 +70,6 @@ class Environment:
             for a in range(num_agents):
                 district_to_travel_to = np.random.choice(available_districts, size=1, p=probabilities)[0]
                 agent = Agent(agent_name, 's',
-                              #coordinates,
                               district_code,
                               age_categories[a],
                               informality,
