@@ -40,7 +40,7 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
     # otherwise infect a set of agents based on the locations of observed infections
     else:
         initial_infections = initial_infections.sort_index()
-        cases = [x for x in initial_infections['Cases_03292020']]
+        cases = [x for x in initial_infections['Cases']]
         probabilities_new_infection_district = [float(i) / sum(cases) for i in cases]
 
         initial_infected = []

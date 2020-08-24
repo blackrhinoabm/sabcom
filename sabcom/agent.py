@@ -1,6 +1,6 @@
 
 class Agent:
-    def __init__(self, name, status, coordinates, district, age_group,
+    def __init__(self, name, status, district, age_group,
                  informality, number_contacts, district_to_travel_to):
         """
         This method initialises an agent and its properties.
@@ -44,7 +44,7 @@ class Agent:
         self.household_number = None
 
         # agent specific parameters that depend on other parameters
-        self.coordinates = coordinates
+        #self.coordinates = coordinates TODO remove
         self.district_to_travel_to = district_to_travel_to
         self.informality = informality
 
