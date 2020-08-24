@@ -3,11 +3,15 @@ import click
 import pickle
 import os
 import time
+import logging
 import json
 import pandas as pd
 import networkx as nx
+import numpy as np
+from scipy.integrate import odeint
 
 from sabcom.runner import runner
+from sabcom.differential_equation_model import differential_equations_model
 from sabcom.environment import Environment
 from sabcom.helpers import generate_district_data, what_informality
 
@@ -25,7 +29,7 @@ def main():
 
 @main.command()
 @click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
-              help="This should contain all nescessary input files, specifically an initialisation folder")
+              help="This should contain all necessary input files, specifically an initialisation folder")
 @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
               help="All simulation output will be deposited here")
 @click.option('--seed', '-s', type=int, required=True,
@@ -53,11 +57,20 @@ def simulate(**kwargs):
     # format arguments
     seed = kwargs.get('seed')
     output_folder_path = kwargs.get('output_folder_path')
+
+    # logging initialisation
+    logging.basicConfig(filename=os.path.join(output_folder_path,
+                                              'simulation_seed{}.log'.format(seed)), filemode='w', level=logging.DEBUG)
+
     input_folder_path = kwargs.get('input_folder_path')
 
     inititialisation_path = os.path.join(input_folder_path, 'initialisations')
 
     seed_path = os.path.join(inititialisation_path, 'seed_{}.pkl'.format(seed))
+
+    logging.info('Start of simulation seed{} with arguments -i ={}, -o={}'.format(seed,
+                                                                                  input_folder_path,
+                                                                                  output_folder_path))
 
     if not os.path.exists(seed_path):
         click.echo(seed_path + ' not found', err=True)
@@ -73,22 +86,30 @@ def simulate(**kwargs):
         max_time = environment.parameters['time']  # you cannot simulate longer than initialised
         environment.parameters['time'] = min(kwargs.get('days'), max_time)
         click.echo('Time has been set to {}'.format(environment.parameters['time']))
+        logging.debug('Time has been set to {}'.format(environment.parameters['time']))
 
     if kwargs.get('probability_transmission'):
         environment.parameters['probability_transmission'] = kwargs.get('probability_transmission')
         click.echo('Transmission probability has been set to {}'.format(environment.parameters['probability_transmission']))
+        logging.debug('Transmission probability has been set to {}'.format(environment.parameters['probability_transmission']))
 
     if kwargs.get('visiting_recurring_contacts_multiplier'):
         environment.parameters['visiting_recurring_contacts_multiplier'] = [kwargs.get('visiting_recurring_contacts_multiplier') for x in environment.parameters['visiting_recurring_contacts_multiplier']]
         click.echo('Recurring contacts has been set to {}'.format(environment.parameters['visiting_recurring_contacts_multiplier'][0]))
+        logging.debug(
+            'Recurring contacts has been set to {}'.format(environment.parameters['visiting_recurring_contacts_multiplier'][0]))
 
     if kwargs.get('likelihood_awareness'):
         environment.parameters['likelihood_awareness'] = [kwargs.get('likelihood_awareness') for x in environment.parameters['visiting_recurring_contacts_multiplier']]
         click.echo('Likelihood awareness has been set to {}'.format(environment.parameters['likelihood_awareness'][0]))
+        logging.debug(
+            'Likelihood awareness has been set to {}'.format(environment.parameters['likelihood_awareness'][0]))
 
     if kwargs.get('gathering_max_contacts'):
         environment.parameters['gathering_max_contacts'] = [kwargs.get('gathering_max_contacts') for x in environment.parameters['visiting_recurring_contacts_multiplier']]
         click.echo('Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts'][0]))
+        logging.debug(
+            'Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts'][0]))
 
     if kwargs.get('sensitivity_config_file_path'):
         # open file
@@ -103,13 +124,16 @@ def simulate(**kwargs):
 
                 for param in config_file:
                     environment.parameters[param] = config_file[param]
-                    click.echo('Parameter {} has been set to {}'.format(param, environment.parameters[param]))
+
+    # log parameters used
+    for param in environment.parameters:
+        logging.debug('Parameter {} has the value {}'.format(param, environment.parameters[param]))
 
     # transform input data to general district data for simulations
     district_data = generate_district_data(environment.parameters['number_of_agents'], path=input_folder_path)
 
     # set scenario specific parameters
-    scenario = kwargs.get('scenario', 'no-intervention')  # if no scenario was provided no_intervention is used todo ADD NONE?
+    scenario = kwargs.get('scenario', 'no-intervention')
     print('scenario is ', scenario)
     if scenario == 'no-intervention':
         environment.parameters['likelihood_awareness'] = [
@@ -163,17 +187,24 @@ def simulate(**kwargs):
               help="Folder containing parameters file, input data and an empty initialisations folder")
 @click.option('--seed', '-s', type=int, required=True,
               help="Integer seed number that is used for Monte Carlo simulations")
-##@@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
+# @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
+#               help="All simulation output will be deposited here")
+# @@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
 def initialise(**kwargs):  # input output seed
     """Initialise the model in specified directory"""
     start = time.time()
-
     seed = kwargs.get('seed')
+
     input_folder_path = kwargs.get('input_folder_path')
 
     # format optional arguments
     parameters_path = os.path.join(input_folder_path, 'parameters.json')
     initialisations_folder_path = os.path.join(input_folder_path, 'initialisations')
+
+    # logging initialisation
+    logging.basicConfig(filename=os.path.join(initialisations_folder_path,
+                                              'initialise_seed{}.log'.format(seed)), filemode='w', level=logging.DEBUG)
+    logging.info('Start of initialisation seed{} with arguments -i ={}'.format(seed, input_folder_path))
 
     if not os.path.exists(initialisations_folder_path):
         click.echo(initialisations_folder_path + ' not found', err=True)
@@ -187,6 +218,8 @@ def initialise(**kwargs):  # input output seed
 
     with open(parameters_path) as json_file:
         parameters = json.load(json_file)
+        for param in parameters:
+            logging.debug('Parameter {} is {}'.format(param, parameters[param]))
 
     # Change parameters depending on experiment
     data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # TODO is this still nescessary?
@@ -230,7 +263,7 @@ def initialise(**kwargs):  # input output seed
     other_contact_matrix.columns = age_groups
     other_contact_matrix.index = age_groups
 
-    # make new folder if it does not exist TODO remove this if the above is required
+    # make new folder if it does not exist
     if not os.path.exists('{}'.format(initialisations_folder_path)):
         os.makedirs('{}'.format(initialisations_folder_path))
 
@@ -239,8 +272,7 @@ def initialise(**kwargs):  # input output seed
                               hh_contact_matrix, other_contact_matrix, HH_size_distribution, travel_matrix)
 
     # save environment objects as pickls
-    #file_name = initialisations_folder_path + "/seed_" + str(seed) + '.pkl'
-    file_name = os.path.join(initialisations_folder_path, "seed_{}.pkl".format(str(seed))) #TODO debug
+    file_name = os.path.join(initialisations_folder_path, "seed_{}.pkl".format(str(seed)))
     save_objects = open(file_name, 'wb')
     pickle.dump([environment, seed], save_objects)
     save_objects.close()
@@ -251,9 +283,159 @@ def initialise(**kwargs):  # input output seed
     click.echo("TOTAL RUNTIME {:0>2}:{:0>2}:{:05.2f}".format(int(hours_total), int(minutes_total), seconds_total))
     click.echo('Initialisation done, check out the output data here: {}'.format(initialisations_folder_path))
 
-# for debugging purposes:
-#initialise(seed=3, initialisation_path='../example_data/initialisations')
-#simulate(seed=3, output_folder_path='../example_data/output_data')
+
+@main.command()
+@click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
+              help="This should contain all necessary input files, specifically a parameter file")
+@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
+              help="All simulation output will be deposited here")
+@click.option('--r_zero', '-rz', type=int, required=True,
+              help="The reproductive rate of the virus in a fully susceptible population")
+def demodel(**kwargs):
+    input_folder_path = kwargs.get('input_folder_path')
+    output_folder_path = kwargs.get('output_folder_path')
+
+    # logging initialisation
+    logging.basicConfig(filename=os.path.join(output_folder_path,
+                                              'de_model.log'), filemode='w', level=logging.DEBUG)
+    logging.info('Start of DE simulation')
+
+    parameters_path = os.path.join(input_folder_path, 'parameters.json')
+
+    if not os.path.exists(parameters_path):
+        click.echo(parameters_path + ' not found', err=True)
+        click.echo('No parameter file found')
+        return
+
+    with open(parameters_path) as json_file:
+        parameters = json.load(json_file)
+        for param in parameters:
+            logging.debug('Parameter {} is {}'.format(param, parameters[param]))
+
+    # arguments = city
+    initial_infected = len(parameters['total_initial_infections'])
+    T = parameters['time']  # total number of period simulated:
+
+    # Set Covid-19 Parameters:
+    # basic reproduction number
+    r_zero = kwargs.get('r_zero') #initial_recovered
+    exposed_days = float(parameters["exposed_days"])
+    asymptomatic_days = float(parameters["asymptom_days"])
+    symptomatic_days = float(parameters["symptom_days"])
+    critical_days = float(parameters["critical_days"])
+
+    # compartment exit rates
+    exit_rate_exposed = 1.0 / exposed_days
+    exit_rate_asymptomatic = 1.0 / asymptomatic_days
+    exit_rate_symptomatic = 1.0 / symptomatic_days
+    exit_rate_critical = 1.0 / critical_days
+
+    probability_symptomatic = parameters["probability_symptomatic"]
+    # Probability to become critically ill if symptomatic (source: Verity et al.2020)
+    probability_critical = np.array([x for x in parameters["probability_critical"].values()])
+    # Probability to die if critically ill (source: Silal et al.2020)
+    probability_to_die = np.array([x for x in parameters["probability_critical"].values()])
+
+    # Total population:
+    district_population = pd.read_csv(os.path.join(input_folder_path, 'f_population.csv'), index_col=0)
+    district_population = district_population.values
+    population = district_population.sum()  # sum over wards to obtain city population
+
+    # Set city specific parameters
+    hospital_capacity = int(round(parameters["health_system_capacity"] * population))
+
+    # Population by age group (N_age(i) is the population of age group i)
+    ward_age_distribution = pd.read_csv(os.path.join(input_folder_path, 'f_age_distribution.csv'),
+                                        index_col=0)  # the datafile contains ward level fractions in each age group
+    N_age = ward_age_distribution * district_population  # convert to number of people in age group per ward
+    N_age = N_age.sum()  # sum over wards
+    N_age = N_age.values  # store city level population sizes of each age group
+
+    # Load raw contact matrices
+    household_contacts = pd.read_csv(os.path.join(input_folder_path, 'f_household_contacts.csv'), index_col=0)
+    other_contacts = pd.read_csv(os.path.join(input_folder_path, 'f_nonhousehold_contacts.csv'), index_col=0)
+    contact_matrix = household_contacts + other_contacts
+    contact_matrix = contact_matrix.values
+
+    # Replicate last row and column to change the 8 category contact matrix to a 9 category matrix
+    contact_matrix = np.vstack((contact_matrix, contact_matrix[7, 0:8]))
+    C_last_column = contact_matrix[0:9, 7]
+    C_last_column.shape = (9, 1)
+    contact_matrix = np.hstack((contact_matrix, C_last_column))
+
+    # Apply reciprocity correction (see Towers and Feng (2012))
+    # C_corrected(j,k) = (C(j,k)*N(j) + C(k,j)*N(k))/(2*N(j))
+    for j in range(contact_matrix.shape[0]):
+        for k in range(contact_matrix.shape[0]):
+            contact_matrix[j, k] = (contact_matrix[j, k] * N_age[j] + contact_matrix[k, j] * N_age[k]) / (2 * N_age[j])
+
+    # Scale contact matrix by population size
+    # - each column is normalized by the population of that age group: X(i,j)=C(i,j)/N_age(j)
+    N_age_row_vector = np.array(N_age)
+    N_age_row_vector.shape = (1, 9)
+    contact_probability_matrix = np.divide(contact_matrix,
+                                           N_age_row_vector)  # X(i,j)=C(i,j)/N_age(j) - entries now measure fraction of each age group contacted on average per day
+
+    # Compute infection_rate from R0, exit_rate_asymptomatic, e_S and dominant eigenvalue of matrix X(i,j)*N_age(i)
+    N_age_column_vector = np.array(N_age)
+    N_age_column_vector.shape = (9, 1)
+    eigen_values, eigen_vectors = np.linalg.eig(np.multiply(contact_probability_matrix, N_age_column_vector))
+    dom_eig_val = max(eigen_values)
+
+    infection_rate = (((1 - probability_symptomatic) * exit_rate_asymptomatic + probability_symptomatic * exit_rate_symptomatic) * r_zero) / dom_eig_val
+    click.echo('infection rate (beta) is {}'.format(round(infection_rate, 4)))
+
+    # Set initial conditions
+    # spread initial infections (exposed individuals) across age groups equally
+    initial_exposed = (initial_infected / 9) * np.ones(9)
+    # compute remaining initial populations in susceptible compartments
+    initial_susceptible = N_age - initial_exposed
+    # initiallise other compartments at zero
+    initial_asymptomatic = np.zeros(9)
+    initial_symptomatic = np.zeros(9)
+    initial_critical = np.zeros(9)
+    initial_recovered = np.zeros(9)
+    initial_dead = np.zeros(9)
+
+    # Solve model over time from initial conditions, using ODE solver from scipy:
+    time_points = np.linspace(1, T, T)  # Grid of time points (in days)
+    initial_compartments = np.concatenate((initial_susceptible, initial_exposed, initial_asymptomatic,
+                                           initial_symptomatic, initial_critical, initial_recovered, initial_dead),
+                                          axis=0)
+
+    # Integrate the differential equations over the time grid, t.
+    integrals = odeint(differential_equations_model, initial_compartments, time_points, args=(
+        infection_rate, contact_probability_matrix, exit_rate_exposed, exit_rate_asymptomatic, exit_rate_symptomatic,
+        exit_rate_critical, probability_symptomatic, probability_critical, probability_to_die, hospital_capacity))
+
+    # integrals is T by 63, needs to be split in compartments, each disease compartments has 9 age groups
+    susceptible = integrals[:, 0:9].sum(axis=1)
+    exposed = integrals[:, 9:18].sum(axis=1)
+    asymptomatic = integrals[:, 18:27].sum(axis=1)
+    symptomatic = integrals[:, 27:36].sum(axis=1)
+    critical = integrals[:, 36:45].sum(axis=1)
+    recovered = integrals[:, 45:54].sum(axis=1)
+    dead = integrals[:, 54:63].sum(axis=1)
+
+    infected = exposed + asymptomatic + symptomatic + critical + dead + recovered
+    active_infections = exposed + asymptomatic + symptomatic + critical
+    click.echo('Peak of disease:')
+    click.echo('peak critical = {}'.format(round(max(critical))))
+    click.echo('peak infected = {}'.format(round(max(active_infections))))
+    click.echo('time-period at peak = day {}'.format(np.argmax(active_infections)))
+    click.echo('At end of simulation:')
+    click.echo('total infected = {} ({} percent of population)'.format(round(infected[T - 1]),
+                                                                       round(infected[T - 1] * 100 / population, 2)))
+    click.echo('total deceased = {}, ({} percent of infected)'.format(round(dead[T - 1]),
+                                                                      round(dead[T - 1] * 100 / infected[T - 1], 2)))
+
+    # export data
+    pd.DataFrame({'s': susceptible, 'e': exposed, 'i1': asymptomatic,
+                  'i2': symptomatic, 'c': critical, 'r': recovered, 'd': dead}).to_csv(
+        os.path.join(output_folder_path, 'DE_quantities_state_time.csv'))
+
+    click.echo('DE model simulation done, check out the output data here: {}'.format(output_folder_path))
+
 
 if __name__ == '__main__':
     args = sys.argv
