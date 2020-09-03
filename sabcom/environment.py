@@ -47,6 +47,8 @@ class Environment:
         corrected_populations_final = [x for i, x in enumerate(corrected_populations) if x > 0]
 
         # 1.4 fill up the districts with agents
+        self.districts = [x[0] for x in district_data]
+        self.district_agents = {d: [] for d in self.districts} #{d: a for d, a in zip(self.districts, agents)} TODO debug!
         agents = []
         city_graph = nx.Graph()
         agent_name = 0
@@ -76,6 +78,7 @@ class Environment:
                               int(round(other_contact_matrix.loc[age_categories[a]].sum())),
                               district_to_travel_to
                               )
+                self.district_agents[district_code].append(agent) #TODO debug
                 district_list.append(agent)
                 all_travel_districts[district_to_travel_to].append(agent)
                 agent_name += 1
@@ -135,8 +138,7 @@ class Environment:
                 # 2.4.4 add network to city graph
                 city_graph = nx.disjoint_union(city_graph, household_graph)
 
-        self.districts = [x[0] for x in district_data]
-        self.district_agents = {d: a for d, a in zip(self.districts, agents)}
+        #self.district_agents = {d: a for d, a in zip(self.districts, agents)}
         self.agents = [y for x in agents for y in x]
 
         # 3 Next, we create the a city wide network structure of recurring contacts based on the travel matrix
