@@ -48,6 +48,8 @@ def main():
               help="change the likelihood that an agent is aware it is infected.")
 @click.option('--gathering_max_contacts', '-maxc', default=None, type=int, required=False,
               help="change maximum number of contacts and agent is allowed to have.")
+@click.option('--initial_infections', '-ini', default=None, type=int, required=False,
+              help="number of initial infections")
 @click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
 def simulate(**kwargs):
@@ -110,6 +112,11 @@ def simulate(**kwargs):
         click.echo('Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts'][0]))
         logging.debug(
             'Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts'][0]))
+
+    if kwargs.get('initial_infections'):
+        environment.parameters['initial_infections'] = [x for x in range(round(int(kwargs.get('initial_infections'))))]
+        click.echo('Initial infections have been set to {}'.format(len(environment.parameters['initial_infections'])))
+        logging.debug('Initial infections have been set to {}'.format(len(environment.parameters['initial_infections'])))
 
     if kwargs.get('sensitivity_config_file_path'):
         # open file
@@ -222,7 +229,7 @@ def initialise(**kwargs):  # input output seed
             logging.debug('Parameter {} is {}'.format(param, parameters[param]))
 
     # Change parameters depending on experiment
-    data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # TODO is this still nescessary?
+    data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # TODO is this still needed?
 
     parameters['data_output'] = data_output_mode
 
