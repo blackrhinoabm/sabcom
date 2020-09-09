@@ -48,6 +48,8 @@ def main():
               help="change the likelihood that an agent is aware it is infected.")
 @click.option('--gathering_max_contacts', '-maxc', default=None, type=int, required=False,
               help="change maximum number of contacts and agent is allowed to have.")
+@click.option('--initial_infections', '-ini', default=None, type=int, required=False,
+              help="number of initial infections")
 @click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
 def simulate(**kwargs):
@@ -111,6 +113,11 @@ def simulate(**kwargs):
         logging.debug(
             'Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts'][0]))
 
+    if kwargs.get('initial_infections'):
+        environment.parameters['initial_infections'] = [x for x in range(round(int(kwargs.get('initial_infections'))))]
+        click.echo('Initial infections have been set to {}'.format(len(environment.parameters['initial_infections'])))
+        logging.debug('Initial infections have been set to {}'.format(len(environment.parameters['initial_infections'])))
+
     if kwargs.get('sensitivity_config_file_path'):
         # open file
         config_path = kwargs.get('sensitivity_config_file_path')
@@ -124,10 +131,6 @@ def simulate(**kwargs):
 
                 for param in config_file:
                     environment.parameters[param] = config_file[param]
-
-    # log parameters used
-    for param in environment.parameters:
-        logging.debug('Parameter {} has the value {}'.format(param, environment.parameters[param]))
 
     # transform input data to general district data for simulations
     district_data = generate_district_data(environment.parameters['number_of_agents'], path=input_folder_path)
@@ -149,6 +152,10 @@ def simulate(**kwargs):
         environment.parameters['informality_dummy'] = 0.0
     elif scenario == 'ineffective-lockdown':
         environment.parameters['informality_dummy'] = 1.0
+
+    # log parameters used after scenario called
+    for param in environment.parameters:
+        logging.debug('Parameter {} has the value {}'.format(param, environment.parameters[param]))
 
     for agent in environment.agents:
         agent.informality = what_informality(agent.district, district_data
@@ -222,7 +229,7 @@ def initialise(**kwargs):  # input output seed
             logging.debug('Parameter {} is {}'.format(param, parameters[param]))
 
     # Change parameters depending on experiment
-    data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # TODO is this still nescessary?
+    data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # TODO is this still needed?
 
     parameters['data_output'] = data_output_mode
 
@@ -289,7 +296,7 @@ def initialise(**kwargs):  # input output seed
               help="This should contain all necessary input files, specifically a parameter file")
 @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
               help="All simulation output will be deposited here")
-@click.option('--r_zero', '-rz', type=int, required=True,
+@click.option('--r_zero', '-rz', type=float, required=True,
               help="The reproductive rate of the virus in a fully susceptible population")
 def demodel(**kwargs):
     input_folder_path = kwargs.get('input_folder_path')

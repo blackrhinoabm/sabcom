@@ -82,7 +82,7 @@ As a rule, creating a model initialisation takes much longer than simulating one
 The program requires Python 3, and the packages listed in the requirements.txt file.
 
 # Website and Social Media
-https://www.sabcom.co.za
+https://sabcom.co.za
 
 https://twitter.com/SABCOM5
 

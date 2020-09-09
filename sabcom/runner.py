@@ -59,10 +59,10 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
             chosen_agents = np.random.choice(environment.district_agents[district], chosen_districts[district],
                                              replace=False)
             for chosen_agent in chosen_agents:
-                chosen_agent.status = 'e'
+                chosen_agent.status = 'i2'
                 # give exposed days a random value to avoid an unrealistic wave of initial infections
-                chosen_agent.exposed_days = np.random.randint(0, environment.parameters['exposed_days'])
-                exposed.append(chosen_agent)
+                chosen_agent.sick_days = np.random.randint(0, environment.parameters['symptom_days'])
+                sick_with_symptoms.append(chosen_agent)
                 susceptible.remove(chosen_agent)
 
     for t in range(environment.parameters["time"]):
