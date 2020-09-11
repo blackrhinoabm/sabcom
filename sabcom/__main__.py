@@ -27,31 +27,31 @@ def main():
     pass
 
 
-@main.command()
-@click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
-              help="This should contain all necessary input files, specifically an initialisation folder")
-@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
-              help="All simulation output will be deposited here")
-@click.option('--seed', '-s', type=int, required=True,
-              help="Integer seed number that is used for Monte Carlo simulations")
-@click.option('--data_output_mode', '-d', default='csv-light', show_default=True,
-              type=click.Choice(['csv-light', 'csv', 'network'],  case_sensitive=False,))
-@click.option('--scenario', '-sc', default='no-intervention', show_default=True,
-              type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
-@click.option('--days', '-day', default=None, type=int, required=False,
-              help="change the number of simulation days here with the caveat that simulation time can only be shortened compared to what was initialised.")
-@click.option('--probability_transmission', '-pt', default=None, type=float, required=False,
-              help="change the probability of transmission between two agents.")
-@click.option('--visiting_recurring_contacts_multiplier', '-cont', default=None, type=float, required=False,
-              help="change the percentage of contacts agent may have.")
-@click.option('--likelihood_awareness', '-la', default=None, type=float, required=False,
-              help="change the likelihood that an agent is aware it is infected.")
-@click.option('--gathering_max_contacts', '-maxc', default=None, type=int, required=False,
-              help="change maximum number of contacts and agent is allowed to have.")
-@click.option('--initial_infections', '-ini', default=None, type=int, required=False,
-              help="number of initial infections")
-@click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
-              help="Config file that contains parameter combinations for sensitivity analysis on HPC")
+# @main.command()
+# @click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
+#               help="This should contain all necessary input files, specifically an initialisation folder")
+# @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
+#               help="All simulation output will be deposited here")
+# @click.option('--seed', '-s', type=int, required=True,
+#               help="Integer seed number that is used for Monte Carlo simulations")
+# @click.option('--data_output_mode', '-d', default='csv-light', show_default=True,
+#               type=click.Choice(['csv-light', 'csv', 'network'],  case_sensitive=False,))
+# @click.option('--scenario', '-sc', default='no-intervention', show_default=True,
+#               type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
+# @click.option('--days', '-day', default=None, type=int, required=False,
+#               help="change the number of simulation days here with the caveat that simulation time can only be shortened compared to what was initialised.")
+# @click.option('--probability_transmission', '-pt', default=None, type=float, required=False,
+#               help="change the probability of transmission between two agents.")
+# @click.option('--visiting_recurring_contacts_multiplier', '-cont', default=None, type=float, required=False,
+#               help="change the percentage of contacts agent may have.")
+# @click.option('--likelihood_awareness', '-la', default=None, type=float, required=False,
+#               help="change the likelihood that an agent is aware it is infected.")
+# @click.option('--gathering_max_contacts', '-maxc', default=None, type=int, required=False,
+#               help="change maximum number of contacts and agent is allowed to have.")
+# @click.option('--initial_infections', '-ini', default=None, type=int, required=False,
+#               help="number of initial infections")
+# @click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
+#               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
 def simulate(**kwargs):
     """Simulate the model"""
     start = time.time()
@@ -65,11 +65,8 @@ def simulate(**kwargs):
                                               'simulation_seed{}.log'.format(seed)), filemode='w', level=logging.DEBUG)
 
     input_folder_path = kwargs.get('input_folder_path')
-
     inititialisation_path = os.path.join(input_folder_path, 'initialisations')
-
     seed_path = os.path.join(inititialisation_path, 'seed_{}.pkl'.format(seed))
-
     logging.info('Start of simulation seed{} with arguments -i ={}, -o={}'.format(seed,
                                                                                   input_folder_path,
                                                                                   output_folder_path))
@@ -85,10 +82,16 @@ def simulate(**kwargs):
 
     # update optional parameters
     if kwargs.get('days'):
-        max_time = environment.parameters['time']  # you cannot simulate longer than initialised
-        environment.parameters['time'] = min(kwargs.get('days'), max_time)
+        environment.parameters['time'] = kwargs.get('days')
+        # add line to expand stringency index
         click.echo('Time has been set to {}'.format(environment.parameters['time']))
         logging.debug('Time has been set to {}'.format(environment.parameters['time']))
+        # ensure that stringency is never shorter than time if time length is increased
+        if len(environment.stringency_index) < environment.parameters['time']:
+            environment.stringency_index += [environment.stringency_index[-1] for x in range(
+                len(environment.stringency_index), environment.parameters['time'])]
+        logging.debug('The stringency index has been lenghtened by {}'.format(
+            environment.parameters['time'] - len(environment.stringency_index)))
 
     if kwargs.get('probability_transmission'):
         environment.parameters['probability_transmission'] = kwargs.get('probability_transmission')
@@ -102,16 +105,16 @@ def simulate(**kwargs):
             'Recurring contacts has been set to {}'.format(environment.parameters['visiting_recurring_contacts_multiplier'][0]))
 
     if kwargs.get('likelihood_awareness'):
-        environment.parameters['likelihood_awareness'] = [kwargs.get('likelihood_awareness') for x in environment.parameters['visiting_recurring_contacts_multiplier']]
-        click.echo('Likelihood awareness has been set to {}'.format(environment.parameters['likelihood_awareness'][0]))
+        environment.parameters['likelihood_awareness'] = kwargs.get('likelihood_awareness')
+        click.echo('Likelihood awareness has been set to {}'.format(environment.parameters['likelihood_awareness']))
         logging.debug(
-            'Likelihood awareness has been set to {}'.format(environment.parameters['likelihood_awareness'][0]))
+            'Likelihood awareness has been set to {}'.format(environment.parameters['likelihood_awareness']))
 
     if kwargs.get('gathering_max_contacts'):
-        environment.parameters['gathering_max_contacts'] = [kwargs.get('gathering_max_contacts') for x in environment.parameters['visiting_recurring_contacts_multiplier']]
-        click.echo('Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts'][0]))
+        environment.parameters['gathering_max_contacts'] = kwargs.get('gathering_max_contacts')
+        click.echo('Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts']))
         logging.debug(
-            'Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts'][0]))
+            'Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts']))
 
     if kwargs.get('initial_infections'):
         environment.parameters['initial_infections'] = [x for x in range(round(int(kwargs.get('initial_infections'))))]
@@ -189,11 +192,11 @@ def simulate(**kwargs):
     click.echo('Simulation done, check out the output data here: {}'.format(output_folder_path))
 
 
-@main.command()
-@click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
-              help="Folder containing parameters file, input data and an empty initialisations folder")
-@click.option('--seed', '-s', type=int, required=True,
-              help="Integer seed number that is used for Monte Carlo simulations")
+# @main.command()
+# @click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
+#               help="Folder containing parameters file, input data and an empty initialisations folder")
+# @click.option('--seed', '-s', type=int, required=True,
+#               help="Integer seed number that is used for Monte Carlo simulations")
 # @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
 #               help="All simulation output will be deposited here")
 # @@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
@@ -229,9 +232,9 @@ def initialise(**kwargs):  # input output seed
             logging.debug('Parameter {} is {}'.format(param, parameters[param]))
 
     # Change parameters depending on experiment
-    data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # TODO is this still needed?
+    #data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # TODO is this still needed?
 
-    parameters['data_output'] = data_output_mode
+    #parameters['data_output'] = data_output_mode
 
     age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
                   'age_50_60', 'age_60_70', 'age_70_80', 'age_80_plus']
