@@ -194,9 +194,9 @@ def simulate(**kwargs):
               help="Folder containing parameters file, input data and an empty initialisations folder")
 @click.option('--seed', '-s', type=int, required=True,
               help="Integer seed number that is used for Monte Carlo simulations")
-@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
-              help="All simulation output will be deposited here")
-@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
+# @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
+#               help="All simulation output will be deposited here")
+# @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
 def initialise(**kwargs):  # input output seed
     """Initialise the model in specified directory"""
     start = time.time()
