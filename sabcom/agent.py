@@ -1,7 +1,7 @@
 
 class Agent:
     def __init__(self, name, status, district, age_group,
-                 informality, number_contacts, district_to_travel_to):
+                 informality, number_contacts, district_to_travel_to, compliance):
         """
         This method initialises an agent and its properties.
 
@@ -28,6 +28,10 @@ class Agent:
         self.district = district
         self.age_group = age_group
 
+        # agent specific variables
+        self.compliance = compliance  # TODO debug
+        self.previous_compliance = compliance
+
         # implementation variables
         self.sick_days = 0
         self.asymptomatic_days = 0
@@ -44,7 +48,6 @@ class Agent:
         self.household_number = None
 
         # agent specific parameters that depend on other parameters
-        #self.coordinates = coordinates TODO remove
         self.district_to_travel_to = district_to_travel_to
         self.informality = informality
 

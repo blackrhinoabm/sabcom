@@ -3,6 +3,7 @@ import networkx as nx
 import random
 import copy
 import pandas as pd
+import scipy.stats as stats
 
 from sabcom.agent import Agent
 from sabcom.helpers import what_coordinates, what_informality
@@ -29,6 +30,7 @@ class Environment:
         """
         np.random.seed(seed)
         random.seed(seed)
+        random.seed(seed)
 
         self.parameters = parameters
         self.other_contact_matrix = other_contact_matrix
@@ -48,7 +50,7 @@ class Environment:
 
         # 1.4 fill up the districts with agents
         self.districts = [x[0] for x in district_data]
-        self.district_agents = {d: [] for d in self.districts} #{d: a for d, a in zip(self.districts, agents)} TODO debug!
+        self.district_agents = {d: [] for d in self.districts}
         agents = []
         city_graph = nx.Graph()
         agent_name = 0
@@ -69,16 +71,22 @@ class Environment:
             probabilities = list(travel_matrix[[str(x) for x in available_districts]].loc[district_code])
 
             # 1.4.3 add agents to district
+            lower, upper = -(parameters['stringency_index'][0] / 100), (1 - (parameters['stringency_index'][0] / 100))
+            mu, sigma = 0.0, parameters['private_shock_stdev']
+            truncnorm_shock_generator = stats.truncnorm((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
+
             for a in range(num_agents):
+                init_private_signal = parameters['stringency_index'][0] / 100 + truncnorm_shock_generator.rvs(1)[0]
                 district_to_travel_to = np.random.choice(available_districts, size=1, p=probabilities)[0]
                 agent = Agent(agent_name, 's',
                               district_code,
                               age_categories[a],
                               informality,
                               int(round(other_contact_matrix.loc[age_categories[a]].sum())),
-                              district_to_travel_to
+                              district_to_travel_to,
+                              init_private_signal #TODO debug!
                               )
-                self.district_agents[district_code].append(agent) #TODO debug
+                self.district_agents[district_code].append(agent)
                 district_list.append(agent)
                 all_travel_districts[district_to_travel_to].append(agent)
                 agent_name += 1
@@ -138,7 +146,6 @@ class Environment:
                 # 2.4.4 add network to city graph
                 city_graph = nx.disjoint_union(city_graph, household_graph)
 
-        #self.district_agents = {d: a for d, a in zip(self.districts, agents)}
         self.agents = [y for x in agents for y in x]
 
         # 3 Next, we create the a city wide network structure of recurring contacts based on the travel matrix
@@ -171,9 +178,13 @@ class Environment:
             self.network.nodes[idx]['agent'] = agent
 
         self.infection_states = []
-        self.infection_quantities = {key: [] for key in ['e', 's', 'i1', 'i2', 'c', 'r', 'd']}
-        self.newly_detected_cases = [0 for x in range(parameters['time'])]
-        self.infection_quantities['detected'] = []
+        self.infection_quantities = {key: [] for key in ['e', 's', 'i1', 'i2', 'c', 'r', 'd', 'compliance']}
+
+        # NEW feature added stringency index
+        self.stringency_index = parameters['stringency_index']
+        if len(parameters['stringency_index']) < parameters['time']:
+            self.stringency_index += [parameters['stringency_index'][-1] for x in range(len(
+                parameters['stringency_index']), parameters['time'])]
 
     def store_network(self):
         """Returns a deep copy of the current network"""
@@ -189,16 +200,15 @@ class Environment:
         :param base_folder: the location of the folder to write the csv to, string
         :return: None
         """
-        location_status_data = {'agent': [], 'lon': [], 'lat': [], 'status': [],
-                                'WardID': [], 'age_group': [], 'others_infected': []}
+        location_status_data = {'agent': [], 'status': [], 'WardID': [], 'age_group': [],
+                                'others_infected': [], 'compliance': []}
         for agent in self.agents:
             location_status_data['agent'].append(agent.name)
-            #location_status_data['lon'].append(agent.coordinates[0])
-            #location_status_data['lat'].append(agent.coordinates[1])
             location_status_data['status'].append(agent.status)
             location_status_data['WardID'].append(agent.district)
             location_status_data['age_group'].append(agent.age_group)
             location_status_data['others_infected'].append(agent.others_infected)
+            location_status_data['compliance'].append(agent.compliance)
 
         pd.DataFrame(location_status_data).to_csv(base_folder + "seed" + str(seed) + "/agent_data{0:04}.csv".format(
             period))
