@@ -99,7 +99,7 @@ def simulate(**kwargs):
         logging.debug('Transmission probability has been set to {}'.format(environment.parameters['probability_transmission']))
 
     if kwargs.get('visiting_recurring_contacts_multiplier'):
-        environment.parameters['visiting_recurring_contacts_multiplier'] = [kwargs.get('visiting_recurring_contacts_multiplier') for x in environment.parameters['visiting_recurring_contacts_multiplier']]
+        environment.parameters['visiting_recurring_contacts_multiplier'] = [kwargs.get('visiting_recurring_contacts_multiplier') for x in range(environment.parameters['time'])]
         click.echo('Recurring contacts has been set to {}'.format(environment.parameters['visiting_recurring_contacts_multiplier'][0]))
         logging.debug(
             'Recurring contacts has been set to {}'.format(environment.parameters['visiting_recurring_contacts_multiplier'][0]))
@@ -142,14 +142,11 @@ def simulate(**kwargs):
     scenario = kwargs.get('scenario', 'no-intervention')
     print('scenario is ', scenario)
     if scenario == 'no-intervention':
-        environment.parameters['likelihood_awareness'] = [
-            0.0 for x in environment.parameters['likelihood_awareness']]
+        environment.parameters['likelihood_awareness'] = 0.0
         environment.parameters['visiting_recurring_contacts_multiplier'] = [
             1.0 for x in environment.parameters['visiting_recurring_contacts_multiplier']]
-        environment.parameters['gathering_max_contacts'] = [
-            float('inf') for x in environment.parameters['gathering_max_contacts']]
-        environment.parameters['physical_distancing_multiplier'] = [
-            1.0 for x in environment.parameters['physical_distancing_multiplier']]
+        environment.parameters['gathering_max_contacts'] = float('inf')
+        environment.parameters['physical_distancing_multiplier'] = 1.0
         environment.parameters['informality_dummy'] = 0.0
     elif scenario == 'lockdown':
         environment.parameters['informality_dummy'] = 0.0

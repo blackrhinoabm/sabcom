@@ -200,16 +200,15 @@ class Environment:
         :param base_folder: the location of the folder to write the csv to, string
         :return: None
         """
-        location_status_data = {'agent': [], 'lon': [], 'lat': [], 'status': [],
-                                'WardID': [], 'age_group': [], 'others_infected': []}
+        location_status_data = {'agent': [], 'status': [], 'WardID': [], 'age_group': [],
+                                'others_infected': [], 'compliance': []}
         for agent in self.agents:
             location_status_data['agent'].append(agent.name)
-            #location_status_data['lon'].append(agent.coordinates[0])
-            #location_status_data['lat'].append(agent.coordinates[1])
             location_status_data['status'].append(agent.status)
             location_status_data['WardID'].append(agent.district)
             location_status_data['age_group'].append(agent.age_group)
             location_status_data['others_infected'].append(agent.others_infected)
+            location_status_data['compliance'].append(agent.compliance)
 
         pd.DataFrame(location_status_data).to_csv(base_folder + "seed" + str(seed) + "/agent_data{0:04}.csv".format(
             period))

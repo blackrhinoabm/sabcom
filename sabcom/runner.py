@@ -78,19 +78,20 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
         truncnorm_shock_generator = stats.truncnorm((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
 
         # 5 update status loop
-        for agent in susceptible + exposed + sick_without_symptoms + sick_with_symptoms + critical + recovered + dead:  # + recovered if SEIRS model
+        for agent in susceptible + exposed + sick_without_symptoms + sick_with_symptoms + critical + recovered + dead:
             # construct deGroot signals
             # find indices from neighbour agents
             neighbours_to_learn_from = [environment.agents[x] for x in environment.network.neighbors(agent.name)] # TODO debug!
 
-            # TODO debug
             private_signal = environment.stringency_index[t] / 100 + truncnorm_shock_generator.rvs(1)[0]
             if neighbours_to_learn_from: # sometimes an agent has no neighbours
                 neighbour_signal = np.mean([x.previous_compliance for x in neighbours_to_learn_from])
             else:
                 neighbour_signal = private_signal
-            agent.compliance = environment.parameters['weight_private_signal'] * private_signal + \
-                               (1 - environment.parameters['weight_private_signal']) * neighbour_signal # TODO bring in informatility?
+
+            agent.compliance = (1 - agent.informality) * \
+                               (environment.parameters['weight_private_signal'] * private_signal +
+                                (1 - environment.parameters['weight_private_signal']) * neighbour_signal)
 
             if agent.status == 'e':
                 agent.exposed_days += 1
@@ -143,7 +144,7 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                         recovered.append(agent)
 
             elif agent.status == 'c':
-                agent.compliance = 1.0 # TODO debug! make sure that this remains so when dead
+                agent.compliance = 1.0  # TODO debug! make sure that this remains so when dead
                 agent.critical_days += 1
                 # some agents in critical status will die, the rest will recover
                 if agent.critical_days > environment.parameters["critical_days"]:
@@ -182,22 +183,23 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                                 environment.agents[x].district != agent.district]
 
             # depending on compliance, the amount of non-household contacts an agent can visit is reduced
-            #visiting_r_contacts_multiplier =  # TODO debug! environment.parameters["visiting_recurring_contacts_multiplier"][t] # change visiting recurring contacts!
-            #informality_term_contacts = (1 - visiting_r_contacts_multiplier) * agent.informality
+            visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"][t] # TODO debug!
+            compliance_term_contacts = (1 - visiting_r_contacts_multiplier) * (1 - agent.compliance)
 
             # step 1 planned contacts is shaped by
             if other_neighbours:
-                planned_contacts = int(round(len(other_neighbours) * (1 - agent.compliance)))  # * (visiting_r_contacts_multiplier +
+                planned_contacts = int(round(len(other_neighbours
+                                                 ) * (visiting_r_contacts_multiplier + compliance_term_contacts))) # * (visiting_r_contacts_multiplier +
             else:
                 planned_contacts = 0
             # step 2 randomly sample from other neighbours planned contacts
             #other_neighbours = random.sample(other_neighbours, planned_contacts)
 
-
-            # step 2 by gathering max contacts TODO this is removed
-            gathering_max_contacts = round(environment.parameters['gathering_max_contacts'] * (1 + (1 - (agent.compliance / 100))))
+            # step 2 by gathering max contacts
+            gathering_max_contacts = environment.parameters['gathering_max_contacts']
             if gathering_max_contacts != float('inf'):
-                individual_max_contacts = int(round(gathering_max_contacts * (1 + agent.informality)))
+                gathering_max_contacts = round(gathering_max_contacts * (1 + (1 - (environment.stringency_index[t] / 100))))
+                individual_max_contacts = int(round(gathering_max_contacts * (1 + (1 - agent.compliance))))
             else:
                 individual_max_contacts = gathering_max_contacts
 
@@ -210,19 +212,22 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
             neighbours_from_graph = household_neighbours + other_neighbours
             # step 4 find the corresponding agents and add them to a list to infect
             if agent.status in ['i1', 'i2']:
-                neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
+                if agent.compliance == 1.0: #TODO debug, this means an agent with 1.0 compliance will self-isolate
+                    neighbours_to_infect = [environment.agents[idx] for idx in household_neighbours]
+                else:
+                    neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
                 # step 4 let these agents be infected (with random probability
                 physical_distancing_multiplier = 1 - ((1 - environment.parameters["physical_distancing_multiplier"]
-                                                       ) * (agent.compliance / 100)) # TODO debug! maybe add twice?
+                                                       ) * agent.compliance)
                 for neighbour in neighbours_to_infect:
                     if neighbour.household_number == agent.household_number and neighbour.district == agent.district:
-                        informality_term_phys_dis = (1 - physical_distancing_multiplier)
+                        compliance_term_phys_dis = (1 - physical_distancing_multiplier)
                     else:
-                        informality_term_phys_dis = (1 - physical_distancing_multiplier) * agent.informality
+                        compliance_term_phys_dis = (1 - physical_distancing_multiplier) * agent.compliance
 
                     if neighbour.status == 's' and np.random.random() < (
                             environment.parameters['probability_transmission'] * (
-                            physical_distancing_multiplier + informality_term_phys_dis)):
+                            physical_distancing_multiplier + compliance_term_phys_dis)):
                         neighbour.status = 'e'
                         susceptible.remove(neighbour)
                         exposed.append(neighbour)
@@ -243,7 +248,7 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                                       'c', 'r', 'd'],
                                      [exposed, susceptible, sick_without_symptoms, sick_with_symptoms,
                                       critical, recovered, dead]):
-                environment.infection_quantities[key].append(len(quantity)) #TODO debug
+                environment.infection_quantities[key].append(len(quantity))
             environment.infection_quantities['compliance'].append(np.mean(compliance))
 
     return environment
