@@ -27,31 +27,31 @@ def main():
     pass
 
 
-# @main.command()
-# @click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
-#               help="This should contain all necessary input files, specifically an initialisation folder")
-# @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
-#               help="All simulation output will be deposited here")
-# @click.option('--seed', '-s', type=int, required=True,
-#               help="Integer seed number that is used for Monte Carlo simulations")
-# @click.option('--data_output_mode', '-d', default='csv-light', show_default=True,
-#               type=click.Choice(['csv-light', 'csv', 'network'],  case_sensitive=False,))
-# @click.option('--scenario', '-sc', default='no-intervention', show_default=True,
-#               type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
-# @click.option('--days', '-day', default=None, type=int, required=False,
-#               help="change the number of simulation days here with the caveat that simulation time can only be shortened compared to what was initialised.")
-# @click.option('--probability_transmission', '-pt', default=None, type=float, required=False,
-#               help="change the probability of transmission between two agents.")
-# @click.option('--visiting_recurring_contacts_multiplier', '-cont', default=None, type=float, required=False,
-#               help="change the percentage of contacts agent may have.")
-# @click.option('--likelihood_awareness', '-la', default=None, type=float, required=False,
-#               help="change the likelihood that an agent is aware it is infected.")
-# @click.option('--gathering_max_contacts', '-maxc', default=None, type=int, required=False,
-#               help="change maximum number of contacts and agent is allowed to have.")
-# @click.option('--initial_infections', '-ini', default=None, type=int, required=False,
-#               help="number of initial infections")
-# @click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
-#               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
+@main.command()
+@click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
+              help="This should contain all necessary input files, specifically an initialisation folder")
+@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
+              help="All simulation output will be deposited here")
+@click.option('--seed', '-s', type=int, required=True,
+              help="Integer seed number that is used for Monte Carlo simulations")
+@click.option('--data_output_mode', '-d', default='csv-light', show_default=True,
+              type=click.Choice(['csv-light', 'csv', 'network'],  case_sensitive=False,))
+@click.option('--scenario', '-sc', default='no-intervention', show_default=True,
+              type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
+@click.option('--days', '-day', default=None, type=int, required=False,
+              help="change the number of simulation days here with the caveat that simulation time can only be shortened compared to what was initialised.")
+@click.option('--probability_transmission', '-pt', default=None, type=float, required=False,
+              help="change the probability of transmission between two agents.")
+@click.option('--visiting_recurring_contacts_multiplier', '-cont', default=None, type=float, required=False,
+              help="change the percentage of contacts agent may have.")
+@click.option('--likelihood_awareness', '-la', default=None, type=float, required=False,
+              help="change the likelihood that an agent is aware it is infected.")
+@click.option('--gathering_max_contacts', '-maxc', default=None, type=int, required=False,
+              help="change maximum number of contacts and agent is allowed to have.")
+@click.option('--initial_infections', '-ini', default=None, type=int, required=False,
+              help="number of initial infections")
+@click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
+              help="Config file that contains parameter combinations for sensitivity analysis on HPC")
 def simulate(**kwargs):
     """Simulate the model"""
     start = time.time()
@@ -189,14 +189,14 @@ def simulate(**kwargs):
     click.echo('Simulation done, check out the output data here: {}'.format(output_folder_path))
 
 
-# @main.command()
-# @click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
-#               help="Folder containing parameters file, input data and an empty initialisations folder")
-# @click.option('--seed', '-s', type=int, required=True,
-#               help="Integer seed number that is used for Monte Carlo simulations")
-# @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
-#               help="All simulation output will be deposited here")
-# @@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
+@main.command()
+@click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
+              help="Folder containing parameters file, input data and an empty initialisations folder")
+@click.option('--seed', '-s', type=int, required=True,
+              help="Integer seed number that is used for Monte Carlo simulations")
+@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
+              help="All simulation output will be deposited here")
+@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True)
 def initialise(**kwargs):  # input output seed
     """Initialise the model in specified directory"""
     start = time.time()
