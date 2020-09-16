@@ -8,6 +8,7 @@ import json
 import pandas as pd
 import networkx as nx
 import numpy as np
+import scipy.stats as stats
 from scipy.integrate import odeint
 
 from sabcom.runner import runner
@@ -50,6 +51,8 @@ def main():
               help="change maximum number of contacts and agent is allowed to have.")
 @click.option('--initial_infections', '-ini', default=None, type=int, required=False,
               help="number of initial infections")
+@click.option('--stringency_changed', '-str', default=False, type=Boolean, required=False,
+              help="indicates that stringency index has been changed in config file")
 @click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
 def simulate(**kwargs):
@@ -81,6 +84,20 @@ def simulate(**kwargs):
     environment = list_of_objects[0]
 
     # update optional parameters
+    if kwargs.get('sensitivity_config_file_path'):
+        # open file
+        config_path = kwargs.get('sensitivity_config_file_path')
+        if not os.path.exists(config_path):
+            click.echo(config_path + ' not found', err=True)
+            click.echo('Error: specify a valid path to the sensitivity config file')
+            return
+        else:
+            with open(config_path) as json_file:
+                config_file = json.load(json_file)
+
+                for param in config_file:
+                    environment.parameters[param] = config_file[param]
+
     if kwargs.get('days'):
         environment.parameters['time'] = kwargs.get('days')
         # add line to expand stringency index
@@ -117,23 +134,9 @@ def simulate(**kwargs):
             'Max contacts has been set to {}'.format(environment.parameters['gathering_max_contacts']))
 
     if kwargs.get('initial_infections'):
-        environment.parameters['initial_infections'] = [x for x in range(round(int(kwargs.get('initial_infections'))))]
-        click.echo('Initial infections have been set to {}'.format(len(environment.parameters['initial_infections'])))
-        logging.debug('Initial infections have been set to {}'.format(len(environment.parameters['initial_infections'])))
-
-    if kwargs.get('sensitivity_config_file_path'):
-        # open file
-        config_path = kwargs.get('sensitivity_config_file_path')
-        if not os.path.exists(config_path):
-            click.echo(config_path + ' not found', err=True)
-            click.echo('Error: specify a valid path to the sensitivity config file')
-            return
-        else:
-            with open(config_path) as json_file:
-                config_file = json.load(json_file)
-
-                for param in config_file:
-                    environment.parameters[param] = config_file[param]
+        environment.parameters['total_initial_infections'] = round(int(kwargs.get('initial_infections')))
+        click.echo('Initial infections have been set to {}'.format(environment.parameters['total_initial_infections']))
+        logging.debug('Initial infections have been set to {}'.format(environment.parameters['total_initial_infections']))
 
     # transform input data to general district data for simulations
     district_data = generate_district_data(environment.parameters['number_of_agents'], path=input_folder_path)
@@ -166,6 +169,16 @@ def simulate(**kwargs):
     # save csv light or network data
     data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # default output mode is csv_light
     environment.parameters["data_output"] = data_output_mode
+
+    if kwargs.get('stringency_changed'):
+        lower, upper = -(environment.parameters['stringency_index'][0] / 100), \
+                       (1 - (environment.parameters['stringency_index'][0] / 100))
+        mu, sigma = 0.0, environment.parameters['private_shock_stdev']
+        truncnorm_shock_generator = stats.truncnorm((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
+
+        click.echo('stringency updated for all agents')
+        for a in environment.agents:
+            a.compliance = environment.parameters['stringency_index'][0] / 100 + truncnorm_shock_generator.rvs(1)[0]
 
     environment = runner(environment=environment, initial_infections=initial_infections, seed=int(seed),
                          data_folder=output_folder_path,

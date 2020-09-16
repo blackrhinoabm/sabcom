@@ -78,10 +78,13 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
         truncnorm_shock_generator = stats.truncnorm((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
 
         # 5 update status loop
-        for agent in susceptible + exposed + sick_without_symptoms + sick_with_symptoms + critical + recovered + dead:
+        for agent in susceptible + exposed + sick_without_symptoms + sick_with_symptoms + critical + recovered:
             # construct deGroot signals
+            # save compliance to previous compliance
+            agent.previous_compliance = agent.compliance
+
             # find indices from neighbour agents
-            neighbours_to_learn_from = [environment.agents[x] for x in environment.network.neighbors(agent.name)] # TODO debug!
+            neighbours_to_learn_from = [environment.agents[x] for x in environment.network.neighbors(agent.name)]
 
             private_signal = environment.stringency_index[t] / 100 + truncnorm_shock_generator.rvs(1)[0]
             if neighbours_to_learn_from: # sometimes an agent has no neighbours
@@ -121,9 +124,9 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
 
             elif agent.status == 'i2':
                 # check if the agent is aware that is is infected here and set compliance to 1.0 if so
-                likelihood_awareness = environment.parameters['likelihood_awareness'] * (
-                            environment.stringency_index[t] / 100) * (
-                                                   1 - agent.informality)  # TODO DEBUG!
+                likelihood_awareness = environment.parameters['likelihood_awareness']# * (
+                            # environment.stringency_index[t] / 100) * (
+                            #                        1 - agent.informality)
                 if np.random.random() < likelihood_awareness:
                     agent.compliance = 1.0
 
@@ -170,8 +173,10 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                     agent.status = 's'
                     susceptible.append(agent)
 
+            compliance.append(agent.compliance)
+
         # 6 New infections loop
-        for agent in susceptible + exposed + sick_without_symptoms + sick_with_symptoms + critical + recovered + dead:
+        for agent in sick_without_symptoms + sick_with_symptoms:
             agent.others_infected = 0
 
             # find indices from neighbour agents
@@ -192,8 +197,6 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                                                  ) * (visiting_r_contacts_multiplier + compliance_term_contacts))) # * (visiting_r_contacts_multiplier +
             else:
                 planned_contacts = 0
-            # step 2 randomly sample from other neighbours planned contacts
-            #other_neighbours = random.sample(other_neighbours, planned_contacts)
 
             # step 2 by gathering max contacts
             gathering_max_contacts = environment.parameters['gathering_max_contacts']
@@ -217,13 +220,12 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                 else:
                     neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
                 # step 4 let these agents be infected (with random probability
-                physical_distancing_multiplier = 1 - ((1 - environment.parameters["physical_distancing_multiplier"]
-                                                       ) * agent.compliance)
+                physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"] #1 - ((1 - environment.parameters["physical_distancing_multiplier"]) * agent.compliance)
                 for neighbour in neighbours_to_infect:
                     if neighbour.household_number == agent.household_number and neighbour.district == agent.district:
-                        compliance_term_phys_dis = (1 - physical_distancing_multiplier)
+                        compliance_term_phys_dis = 0.0#(1 - physical_distancing_multiplier)
                     else:
-                        compliance_term_phys_dis = (1 - physical_distancing_multiplier) * agent.compliance
+                        compliance_term_phys_dis = (1 - physical_distancing_multiplier) * (1 - agent.compliance)
 
                     if neighbour.status == 's' and np.random.random() < (
                             environment.parameters['probability_transmission'] * (
@@ -234,9 +236,43 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                         agent.others_infected += 1
                         agent.others_infects_total += 1
 
-            # save compliance to previous compliance
-            agent.previous_compliance = agent.compliance
-            compliance.append(agent.compliance)
+        # NEW infections!!! TODO debug!
+        if t == environment.parameters['time_4_new_infections']:
+            if environment.parameters['new_infections_scenario'] == 'initial':
+                cases = [x for x in initial_infections['Cases']]
+                probabilities_second_infection_district = [float(i) / sum(cases) for i in cases]
+                # select districts with probability
+                chosen_districts = list(np.random.choice(environment.districts,
+                                                         environment.parameters['total_initial_infections'],
+                                                         p=probabilities_second_infection_district))
+                # count how often a district is in that list
+                chosen_districts = {distr: min(len(environment.district_agents[distr]),
+                                               chosen_districts.count(distr)) for distr in chosen_districts}
+
+            elif environment.parameters['new_infections_scenario'] == 'random':
+                cases = [1 for x in initial_infections['Cases']] #TODO debug this should lead to a uniform distribution
+                probabilities_second_infection_district = [float(i) / sum(cases) for i in cases]
+                # select districts with probability
+                chosen_districts = list(np.random.choice(environment.districts,
+                                                         environment.parameters['total_initial_infections'],
+                                                         p=probabilities_second_infection_district))
+                # count how often a district is in that list
+                chosen_districts = {distr: min(len(environment.district_agents[distr]),
+                                               chosen_districts.count(distr)) for distr in chosen_districts}
+            else:
+                chosen_districts = []  # TODO debug ..
+
+            for district in chosen_districts:
+                # infect appropriate number of random agents
+                chosen_agents = np.random.choice(environment.district_agents[district], chosen_districts[district],
+                                                 replace=False)
+                for chosen_agent in chosen_agents:
+                    if chosen_agent.status == 's':
+                        chosen_agent.status = 'i2'
+                        # give i2 days a random value to avoid an unrealistic wave of initial critical cases and deaths
+                        chosen_agent.sick_days = np.random.randint(0, environment.parameters['symptom_days'])
+                        sick_with_symptoms.append(chosen_agent)
+                        susceptible.remove(chosen_agent)
 
         if data_output == 'network':
             environment.infection_states.append(environment.store_network())
