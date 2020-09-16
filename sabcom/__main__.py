@@ -51,7 +51,7 @@ def main():
               help="change maximum number of contacts and agent is allowed to have.")
 @click.option('--initial_infections', '-ini', default=None, type=int, required=False,
               help="number of initial infections")
-@click.option('--stringency_changed', '-str', default=False, type=Boolean, required=False,
+@click.option('--stringency_changed', '-str', default=False, type=bool, required=False,
               help="indicates that stringency index has been changed in config file")
 @click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
