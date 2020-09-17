@@ -66,6 +66,7 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                 susceptible.remove(chosen_agent)
 
     for t in range(environment.parameters["time"]):
+        print(t)
         # Check if the health system is not overburdened
         if len(critical) / len(environment.agents) > environment.parameters["health_system_capacity"]:
             health_overburdened_multiplier = environment.parameters["no_hospital_multiplier"]
@@ -224,12 +225,16 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                 for neighbour in neighbours_to_infect:
                     if neighbour.household_number == agent.household_number and neighbour.district == agent.district:
                         compliance_term_phys_dis = 0.0#(1 - physical_distancing_multiplier)
+                        compliance_term_phys_dis_neighbour = 0.0
                     else:
                         compliance_term_phys_dis = (1 - physical_distancing_multiplier) * (1 - agent.compliance)
+                        # TODO debug NEW! takes into account the compliance of two neighbours
+                        compliance_term_phys_dis_neighbour = (1 - physical_distancing_multiplier) * (1 - neighbour.compliance)
 
                     if neighbour.status == 's' and np.random.random() < (
                             environment.parameters['probability_transmission'] * (
-                            physical_distancing_multiplier + compliance_term_phys_dis)):
+                            physical_distancing_multiplier + compliance_term_phys_dis) * (
+                            physical_distancing_multiplier + compliance_term_phys_dis_neighbour)):
                         neighbour.status = 'e'
                         susceptible.remove(neighbour)
                         exposed.append(neighbour)
