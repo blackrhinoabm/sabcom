@@ -160,25 +160,32 @@ def simulate(**kwargs):
     for param in environment.parameters:
         logging.debug('Parameter {} has the value {}'.format(param, environment.parameters[param]))
 
+    # initialise stochastic process in case stringency index has changed
+    if kwargs.get('stringency_changed'):
+        click.echo('stringency updated for all agents')
+        # update stringency index and increase lenght
+        environment.stringency_index = environment.parameters['stringency_index']
+        if len(environment.parameters['stringency_index']) < environment.parameters['time']:
+            environment.stringency_index += [environment.parameters['stringency_index'][-1] for x in range(len(
+                environment.parameters['stringency_index']), environment.parameters['time'])]
+
+        lower, upper = -(environment.parameters['stringency_index'][0] / 100), \
+                       (1 - (environment.parameters['stringency_index'][0] / 100))
+        mu, sigma = 0.0, environment.parameters['private_shock_stdev']
+        truncnorm_shock_generator = stats.truncnorm((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
+
     for agent in environment.agents:
         agent.informality = what_informality(agent.district, district_data
                                              ) * environment.parameters["informality_dummy"]
+        if kwargs.get('stringency_changed'):
+            agent.compliance = environment.parameters['stringency_index'][0] / 100 + truncnorm_shock_generator.rvs(1)[0]
+            agent.previous_compliance = agent.compliance
 
     initial_infections = pd.read_csv(os.path.join(input_folder_path, 'f_initial_cases.csv'), index_col=0)
 
     # save csv light or network data
     data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # default output mode is csv_light
     environment.parameters["data_output"] = data_output_mode
-
-    if kwargs.get('stringency_changed'):
-        lower, upper = -(environment.parameters['stringency_index'][0] / 100), \
-                       (1 - (environment.parameters['stringency_index'][0] / 100))
-        mu, sigma = 0.0, environment.parameters['private_shock_stdev']
-        truncnorm_shock_generator = stats.truncnorm((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
-
-        click.echo('stringency updated for all agents')
-        for a in environment.agents:
-            a.compliance = environment.parameters['stringency_index'][0] / 100 + truncnorm_shock_generator.rvs(1)[0]
 
     environment = runner(environment=environment, initial_infections=initial_infections, seed=int(seed),
                          data_folder=output_folder_path,
@@ -240,11 +247,6 @@ def initialise(**kwargs):  # input output seed
         parameters = json.load(json_file)
         for param in parameters:
             logging.debug('Parameter {} is {}'.format(param, parameters[param]))
-
-    # Change parameters depending on experiment
-    #data_output_mode = kwargs.get('data_output_mode', 'csv-light')  # TODO is this still needed?
-
-    #parameters['data_output'] = data_output_mode
 
     age_groups = ['age_0_10', 'age_10_20', 'age_20_30', 'age_30_40', 'age_40_50',
                   'age_50_60', 'age_60_70', 'age_70_80', 'age_80_plus']
