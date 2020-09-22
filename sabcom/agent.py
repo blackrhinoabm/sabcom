@@ -29,7 +29,7 @@ class Agent:
         self.age_group = age_group
 
         # agent specific variables
-        self.compliance = compliance  # TODO debug
+        self.compliance = compliance
         self.previous_compliance = compliance
 
         # implementation variables
@@ -42,6 +42,7 @@ class Agent:
         self.others_infected = 0
         self.others_infects_total = 0
         self.travel_neighbours = []
+        self.period_to_become_infected = None
 
         # implementation parameters
         self.num_contacts = number_contacts

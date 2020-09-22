@@ -19,11 +19,11 @@ install_requires = [x.strip() for x in all_reqs if ('git+' not in x) and (
     not x.startswith('#')) and (not x.startswith('-'))]
 dependency_links = [x.strip().replace('git+', '') for x in all_reqs \
                     if 'git+' not in x]
-setup (
- name = 'sabcom',
- description = 'SABCOM is an open source, easy-to-use, spatial network, agent-based, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities.',
- version = '0.10.4a',
- packages = find_packages(), # list of all packages
+setup(
+ name='sabcom',
+ description='SABCOM is an open source, easy-to-use, spatial network, agent-based, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities.',
+ version='0.10.5a',
+ packages=find_packages(),  # list of all packages
  #install_requires = install_requires,
  python_requires='>=3.6', # any python greater than 3.6
  entry_points='''

@@ -6,7 +6,7 @@ import pandas as pd
 import scipy.stats as stats
 
 from sabcom.agent import Agent
-from sabcom.helpers import what_coordinates, what_informality
+from sabcom.helpers import what_informality
 
 
 class Environment:
@@ -48,15 +48,23 @@ class Environment:
         indices_big_neighbourhoods = [i for i, x in enumerate(corrected_populations) if x > 0]
         corrected_populations_final = [x for i, x in enumerate(corrected_populations) if x > 0]
 
-        # 1.4 fill up the districts with agents
+        # 1.4 create a shock generator for the initialisation of agents initial compliance
+        lower, upper = -(parameters['stringency_index'][0] / 100), (1 - (parameters['stringency_index'][0] / 100))
+        mu, sigma = 0.0, parameters['private_shock_stdev']
+        shocks = stats.truncnorm.rvs((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma,
+                                     size=sum(corrected_populations_final))
+
+        # 1.5 fill up the districts with agents
         self.districts = [x[0] for x in district_data]
         self.district_agents = {d: [] for d in self.districts}
         agents = []
         city_graph = nx.Graph()
         agent_name = 0
         all_travel_districts = {district_data[idx][0]: [] for idx in indices_big_neighbourhoods}
+
+        # for every district
         for num_agents, idx in zip(corrected_populations_final, indices_big_neighbourhoods):
-            # 1.4.1 determine district code, informality, and age categories
+            # 1.5.1 determine district code, informality, and age categories
             district_list = []
             district_code = district_data[idx][0]
             informality = what_informality(district_code, district_data) * parameters["informality_dummy"]
@@ -66,17 +74,13 @@ class Environment:
                                               replace=True,
                                               p=age_distribution_per_district[district_code].values)
 
-            # 1.4.2 determine district to travel to
+            # 1.5.2 determine districts to travel to
             available_districts = list(all_travel_districts.keys())
             probabilities = list(travel_matrix[[str(x) for x in available_districts]].loc[district_code])
 
-            # 1.4.3 add agents to district
-            lower, upper = -(parameters['stringency_index'][0] / 100), (1 - (parameters['stringency_index'][0] / 100))
-            mu, sigma = 0.0, parameters['private_shock_stdev']
-            truncnorm_shock_generator = stats.truncnorm((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma)
-
+            # 1.5.3 add agents to district
             for a in range(num_agents):
-                init_private_signal = parameters['stringency_index'][0] / 100 + truncnorm_shock_generator.rvs(1)[0]
+                init_private_signal = parameters['stringency_index'][0] / 100 + shocks[agent_name]
                 district_to_travel_to = np.random.choice(available_districts, size=1, p=probabilities)[0]
                 agent = Agent(agent_name, 's',
                               district_code,
@@ -84,7 +88,7 @@ class Environment:
                               informality,
                               int(round(other_contact_matrix.loc[age_categories[a]].sum())),
                               district_to_travel_to,
-                              init_private_signal #TODO debug!
+                              init_private_signal
                               )
                 self.district_agents[district_code].append(agent)
                 district_list.append(agent)
@@ -169,18 +173,18 @@ class Environment:
 
         self.network = city_graph
 
-        # rename agents to reflect their new position
+        # 4 rename agents to reflect their new position
         for idx, agent in enumerate(self.agents):
             agent.name = idx
 
-        # add agent to the network structure
+        # 5 add agent to the network structure
         for idx, agent in enumerate(self.agents):
             self.network.nodes[idx]['agent'] = agent
 
         self.infection_states = []
         self.infection_quantities = {key: [] for key in ['e', 's', 'i1', 'i2', 'c', 'r', 'd', 'compliance']}
 
-        # NEW feature added stringency index
+        # 6 add stringency index from parameters to reflect how strict regulations are enforced
         self.stringency_index = parameters['stringency_index']
         if len(parameters['stringency_index']) < parameters['time']:
             self.stringency_index += [parameters['stringency_index'][-1] for x in range(len(
