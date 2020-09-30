@@ -109,7 +109,15 @@ class Environment:
                 hh_probability = hh_probability[:len(district_list) - sum(sizes)]
                 # recalculate probabilities
                 hh_probability = pd.Series([float(i) / sum(hh_probability) for i in hh_probability])
-                hh_probability.index = hh_sizes.index[:len(district_list) - sum(sizes)]
+                try:
+                    hh_probability.index = hh_sizes.index[:len(district_list) - sum(sizes)]
+                except:
+                    print('Error occured')
+                    print('lenght of district list = {}'.format(len(district_list)))
+                    print('sum(sizes) = {}'.format(sum(sizes)))
+                    print('hh_sizes.index[:len(district_list) - sum(sizes)]is '.format(hh_sizes.index[:len(district_list) - sum(sizes)]))
+                    print('hh_probability.index = {}'.format(hh_probability.index))
+                    break
 
             # 2.4 Distribute agents over households
             # 2.4.1 pick the household heads and let it form connections with other based on probabilities.
