@@ -286,12 +286,13 @@ def estimate(**kwargs):
         LB = [x[0] for x in pr['bounds']]
         UB = [x[1] for x in pr['bounds']]
         init_vars = [x for x in pr['initial']]
+        names = [x for x in pr['names']]
 
         args = (kwargs.get('input_folder_path'), kwargs.get('n_seeds'),
-                kwargs.get('output_folder_path'), kwargs.get('scenario'))
+                kwargs.get('output_folder_path'), kwargs.get('scenario'), names)
 
         output = constrNM(ls_model_performance, init_vars, LB, UB, args=args,
-                          maxiter=kwargs.get('iterations'), full_output=True) #TODO debug
+                          maxiter=kwargs.get('iterations'), full_output=True) #TODO is it possible to make a
 
         estimated_parameters.append(output['xopt'])
         average_costs.append(output['fopt'])
