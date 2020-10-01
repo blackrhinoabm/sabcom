@@ -74,6 +74,27 @@ def updater(**kwargs):
         logging.debug(
             'Transmission probability has been set to {}'.format(environment.parameters['probability_transmission']))
 
+    if kwargs.get('second_infection_n'):
+        environment.parameters['second_infection_n'] = kwargs.get('second_infection_n')
+        click.echo(
+            'Second infection number has been set to {}'.format(environment.parameters['second_infection_n']))
+        logging.debug(
+            'Second infection number has been set to {}'.format(environment.parameters['second_infection_n']))
+
+    if kwargs.get('time_4_new_infections'):
+        environment.parameters['time_4_new_infections'] = kwargs.get('time_4_new_infections')
+        click.echo(
+            'Second infection time has been set to {}'.format(environment.parameters['time_4_new_infections']))
+        logging.debug(
+            'Second infection time has been set to {}'.format(environment.parameters['time_4_new_infections']))
+
+    if kwargs.get('new_infections_scenario'):
+        environment.parameters['new_infections_scenario'] = kwargs.get('new_infections_scenario')
+        click.echo(
+            'New infections scenario has been set to {}'.format(environment.parameters['new_infections_scenario']))
+        logging.debug(
+            'New infections scenario has been set to {}'.format(environment.parameters['new_infections_scenario']))
+
     if kwargs.get('visiting_recurring_contacts_multiplier'):
         environment.parameters['visiting_recurring_contacts_multiplier'] = [
             kwargs.get('visiting_recurring_contacts_multiplier') for x in range(environment.parameters['time'])]

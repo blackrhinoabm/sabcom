@@ -53,6 +53,12 @@ def main():
               help="change maximum number of contacts and agent is allowed to have.")
 @click.option('--initial_infections', '-ini', default=None, type=int, required=False,
               help="number of initial infections")
+@click.option('--second_infection_n', '-sec', default=None, type=int, required=False,
+              help="number of infections in the second wave")
+@click.option('--time_4_new_infections', '-sect', default=None, type=int, required=False,
+              help="time of the second wave of infections")
+@click.option('--new_infections_scenario', '-scsi', default='None', show_default=True,
+              type=click.Choice(['None', 'initial', 'random'],  case_sensitive=False,))
 @click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
 def simulate(**kwargs):
