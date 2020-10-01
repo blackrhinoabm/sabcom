@@ -263,7 +263,7 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                 probabilities_second_infection_district = [float(i) / sum(cases) for i in cases]
                 # select districts with probability
                 chosen_districts = list(np.random.choice(environment.districts,
-                                                         environment.parameters['total_initial_infections'],
+                                                         environment.parameters['second_infection_n'],
                                                          p=probabilities_second_infection_district))
                 # count how often a district is in that list
                 chosen_districts = {distr: min(len(environment.district_agents[distr]),
@@ -274,7 +274,7 @@ def runner(environment, initial_infections, seed, data_folder='output_data/',
                 probabilities_second_infection_district = [float(i) / sum(cases) for i in cases]
                 # select districts with probability
                 chosen_districts = list(np.random.choice(environment.districts,
-                                                         environment.parameters['total_initial_infections'],
+                                                         environment.parameters['second_infection_n'],
                                                          p=probabilities_second_infection_district))
                 # count how often a district is in that list
                 chosen_districts = {distr: min(len(environment.district_agents[distr]),

@@ -9,17 +9,20 @@ import scipy.optimize as sciopt
 from sabcom.updater import updater
 
 
-def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder_path, scenario):
+def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder_path, scenario, names):
     """
     Simple function calibrate uncertain model parameters
     :param input_parameters: list of input parameters
     :return: cost
     """
-    transmission_probability = input_params[0]
-    initial_infections = input_params[1]
-    infection_multiplier = input_params[2]
-    base_awareness_likelihood = input_params[3]
-    gathering_max_contacts = input_params[4]
+    # zip names and input params together in a dictionary
+    #new_params = {name: par for name, par in zip(names, input_params)}
+
+    # transmission_probability = input_params[0]
+    # initial_infections = input_params[1]
+    # infection_multiplier = input_params[2]
+    # base_awareness_likelihood = input_params[3]
+    # gathering_max_contacts = input_params[4]
 
     parameter_json_path = os.path.join(input_folder_path, 'parameters.json')
     mc_runs = mc_runs
@@ -31,15 +34,26 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
     emp_fatality_curve = param_file['empirical_fatalities']
     empirical_population = param_file['empirical_population']
     # new!
-    param_file['private_shock_stdev'] = input_params[5]
-    param_file['weight_private_signal'] = input_params[6]
-    # change all of them
-    param_file['probability_transmission'] = transmission_probability
-    param_file["physical_distancing_multiplier"] = infection_multiplier
-    param_file['likelihood_awareness'] = base_awareness_likelihood
-    param_file["gathering_max_contacts"] = gathering_max_contacts
+    # param_file['private_shock_stdev'] = input_params[5]
+    # param_file['weight_private_signal'] = input_params[6]
+    # # change all of them
+    # param_file['probability_transmission'] = transmission_probability
+    # param_file["physical_distancing_multiplier"] = infection_multiplier
+    # param_file['likelihood_awareness'] = base_awareness_likelihood
+    # param_file["gathering_max_contacts"] = gathering_max_contacts
+    for name, par in zip(names, input_params):
+        if name not in ['visiting_recurring_contacts_multiplier', 'total_initial_infections']:
+            param_file[name] = par
+        if name == 'visiting_recurring_contacts_multiplier':
+            vis_rec = par
+        else:
+            vis_rec = None
+        if name == 'total_initial_infections':
+            initial_infections = par
+        else:
+            vis_rec = None
+
     param_file["time"] = len(emp_fatality_curve)
-    vis_rec = input_params[7]
 
     # dump in config file
     with open('estimation_parameters.json', 'w') as outfile:

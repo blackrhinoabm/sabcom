@@ -22,7 +22,7 @@ dependency_links = [x.strip().replace('git+', '') for x in all_reqs \
 setup(
  name='sabcom',
  description='SABCOM is an open source, easy-to-use, spatial network, agent-based, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities.',
- version='0.12a',
+ version='0.14a',
  packages=find_packages(),  # list of all packages
  #install_requires = install_requires,
  python_requires='>=3.6', # any python greater than 3.6

@@ -53,6 +53,12 @@ def main():
               help="change maximum number of contacts and agent is allowed to have.")
 @click.option('--initial_infections', '-ini', default=None, type=int, required=False,
               help="number of initial infections")
+@click.option('--second_infection_n', '-sec', default=None, type=int, required=False,
+              help="number of infections in the second wave")
+@click.option('--time_4_new_infections', '-sect', default=None, type=int, required=False,
+              help="time of the second wave of infections")
+@click.option('--new_infections_scenario', '-scsi', default='None', show_default=True,
+              type=click.Choice(['None', 'initial', 'random'],  case_sensitive=False,))
 @click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
 def simulate(**kwargs):
@@ -286,12 +292,13 @@ def estimate(**kwargs):
         LB = [x[0] for x in pr['bounds']]
         UB = [x[1] for x in pr['bounds']]
         init_vars = [x for x in pr['initial']]
+        names = [x for x in pr['names']]
 
         args = (kwargs.get('input_folder_path'), kwargs.get('n_seeds'),
-                kwargs.get('output_folder_path'), kwargs.get('scenario'))
+                kwargs.get('output_folder_path'), kwargs.get('scenario'), names)
 
         output = constrNM(ls_model_performance, init_vars, LB, UB, args=args,
-                          maxiter=kwargs.get('iterations'), full_output=True) #TODO debug
+                          maxiter=kwargs.get('iterations'), full_output=True) #TODO is it possible to make a
 
         estimated_parameters.append(output['xopt'])
         average_costs.append(output['fopt'])
