@@ -6,6 +6,7 @@ import time
 import copy
 import logging
 import json
+import random
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -83,11 +84,15 @@ def simulate(**kwargs):
     """
     start = time.time()
 
-    # simulate the model and return an updated environment
-    environment = updater(**kwargs)
-
     output_folder_path = kwargs.get('output_folder_path')
     seed = kwargs.get('seed')
+
+    # fix seeds
+    np.random.seed(seed)
+    random.seed(seed)
+
+    # simulate the model and return an updated environment
+    environment = updater(**kwargs)
 
     if environment.parameters["data_output"] == 'network':
         for idx, network in enumerate(environment.infection_states):

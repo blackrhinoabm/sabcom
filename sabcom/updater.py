@@ -12,6 +12,7 @@ from sabcom.helpers import generate_district_data, what_informality
 
 def updater(**kwargs):
     """
+    This function is used to update parameters
 
     :param kwargs:
     :return:
