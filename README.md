@@ -11,24 +11,26 @@ SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, m
 
 # Installation
 
-## Using Pip
+The first step of working with sabcom is installing it. The easiest way to install it is using the Python pip package installer.
+
+Using pip, type the following command in your terminal:
 
 ```bash
-  $ pip install sabcom
+$ pip install sabcom
 ```
 
-or, alternatively 
+or alternatively
 
 ```bash
-  $ pip3 install sabcom
+$ pip3 install sabcom
 ```
 
-## Manual
+It is also possible to install sabcom manually via git using the following command:
 
 ```bash
-  $ git clone https://github.com/blackrhinoabm/sabcom
-  $ cd sabcom
-  $ python setup.py install
+$ git clone https://github.com/blackrhinoabm/sabcom
+$ cd sabcom
+$ python setup.py install
 ```
 
 # Usage
@@ -42,41 +44,8 @@ Given that you are in the folder that contains this file use:
   $ python -m pip install -r requirements.txt
 ```
 
-Next, there are two options. Simulating the model (using an existing initialisation) or initialising a new model environment that can be 
-used for the simulation.
+Then, make sure you have correctly formatted input data and the model should be ready for simulation. For an exact description on how to do so, we refer to the [documentation](https://sabcom.co.za/docs/build/html/index.html.
 
-## Simulation
-Five arguments need to be provided to simulate the model: a path for the input folder (-i), a path for the output
-folder (-o), a seed (-s), a data output mode (-d), and a scenario (-sc).
-
-`simulate -i <input folder path> -o <output folder path> -s <seed> -d <data output mode> -sc <scenario>`
-
-For example, say you want to simulate the model using input folder `example_data`, 
-output folder `example_data/output_data`, seed `2`, data output mode `csv-light`, and scenario `no-intervention`. 
-First, make sure that all the files and folders are in your current location. Next, you type in the command line:  
-
-```bash
-$ sabcom simulate -i example_data -o example_data/output_data -s 2 -d csv-light -sc no-intervention
-```
-
-This will simulate a no_intervention scenario for the seed_2.pkl initialisation. input files for the city of your choice, 
-and output a csv light data file in the specified output folder.
-
-Note how this assumes that there is already an initialisation file. If this is not the case, 
-sabcom can be used to produce one given the input files. 
-
-## Initialisation
-`initialise <input folder path> <seed number>`
-
-If an initialisation file is not present, you can create one using the sabcom initialise function. 
-For example, if you want to create an initialisation with the files in input folder (assumed to be in your current working directory) `example_data`, 
-Monte Carlo seed 3, the following command can be used:
-
-```bash
-$ sabcom initialise -i example_data -s 3
-```
-
-As a rule, creating a model initialisation takes much longer than simulating one.
 
 # Requirements
 The program requires Python 3, and the packages listed in the requirements.txt file.
