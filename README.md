@@ -44,7 +44,7 @@ Given that you are in the folder that contains this file use:
   $ python -m pip install -r requirements.txt
 ```
 
-Then, make sure you have correctly formatted input data and the model should be ready for simulation. For an exact description on how to do so, we refer to the [documentation](https://sabcom.co.za/docs/build/html/index.html.
+Then, make sure you have correctly formatted input data and the model should be ready for simulation. For an exact description on how to do so, we refer to the [documentation](https://sabcom.co.za/docs/build/html/index.html).
 
 
 # Requirements
