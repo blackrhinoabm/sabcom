@@ -6,6 +6,7 @@ import time
 import copy
 import logging
 import json
+import random
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -33,7 +34,7 @@ def main():
 @main.command()
 @click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
               help="This should contain all necessary input files, specifically an initialisation folder")
-@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
+@click.option('--output_folder_path', '-o', type=click.Path(exists=False), required=True,
               help="All simulation output will be deposited here")
 @click.option('--seed', '-s', type=int, required=True,
               help="Integer seed number that is used for Monte Carlo simulations")
@@ -46,7 +47,7 @@ def main():
 @click.option('--probability_transmission', '-pt', default=None, type=float, required=False,
               help="change the probability of transmission between two agents.")
 @click.option('--visiting_recurring_contacts_multiplier', '-cont', default=None, type=float, required=False,
-              help="change the percentage of contacts agent may have.")
+              help="change the percentage of contacts agents may have.")
 @click.option('--likelihood_awareness', '-la', default=None, type=float, required=False,
               help="change the likelihood that an agent is aware it is infected.")
 @click.option('--gathering_max_contacts', '-maxc', default=None, type=int, required=False,
@@ -81,13 +82,31 @@ def simulate(**kwargs):
     sensitivity_config_file_path or -scf: path to config file with parameters for sensitivity analysis on HPC, str
     :return: None
     """
+    # fix seeds
+    seed = kwargs.get('seed')
+    np.random.seed(seed)
+    random.seed(seed)
+
     start = time.time()
+
+    if kwargs.get('output_folder_path'):
+        output_folder_path = kwargs.get('output_folder_path')
+    else:
+        output_folder_path = os.getcwd()
+
+    # check if the output folder path exists. If not create it:
+
+    if not os.path.isdir(output_folder_path):
+        os.makedirs(output_folder_path)
+        click.echo('Created output folder at {}'.format(output_folder_path))
+
+    # create folders for every seed if the mode is csv light
+    if kwargs.get('data_output_mode') == 'csv':
+        folder_path = os.path.join(output_folder_path, 'seed{}'.format(kwargs.get('seed')))
+        os.mkdir(folder_path)
 
     # simulate the model and return an updated environment
     environment = updater(**kwargs)
-
-    output_folder_path = kwargs.get('output_folder_path')
-    seed = kwargs.get('seed')
 
     if environment.parameters["data_output"] == 'network':
         for idx, network in enumerate(environment.infection_states):
@@ -100,6 +119,7 @@ def simulate(**kwargs):
         pd.DataFrame(environment.infection_quantities).to_csv(os.path.join(output_folder_path,
                                                                            'seed{}quantities_state_time.csv'.format(seed)))
 
+    click.echo('random number for seed is {}'.format(random.random()))
     end = time.time()
     hours_total, rem_total = divmod(end - start, 3600)
     minutes_total, seconds_total = divmod(rem_total, 60)
@@ -124,6 +144,8 @@ def initialise(**kwargs):
     """
     start = time.time()
     seed = kwargs.get('seed')
+    np.random.seed(seed)
+    random.seed(seed)
 
     input_folder_path = kwargs.get('input_folder_path')
 
@@ -257,18 +279,22 @@ def sample(**kwargs):
 @main.command()
 @click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
               help="This should contain all necessary input files, specifically an initialisation folder")
-@click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
-              help="the estimated parameters will be deposited in this folder")
+# @click.option('--output_folder_path', '-o', default='', required=False, # type=click.Path(exists=True), required=True
+#               help="the estimated parameters will be deposited in this folder")
 @click.option('--scenario', '-sc', default='no-intervention', show_default=True,
               type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
 @click.option('--problems_file_path', '-pfp', type=click.Path(exists=True), required=True,
-              help="All simulation output will be deposited here")
+              help="leads to a json file that was generated using the sample function.")
 @click.option('--n_seeds', '-n', type=int, default=1, required=False,
               help="The number of seeds that should be simulated")
 @click.option('--iterations', '-iter', type=int, default=1, required=False,
               help="The number iterations the Nelder-Mead optimisers should do")
 @click.option('--output_file_name', '-ofn', required=False,
               help="Change the name of the output file to one of your liking, default is estimated_parameters")
+@click.option('--output_folder_path', '-o', required=False, type=click.Path(exists=False),
+              help="the estimated parameters will be deposited in this folder")
+@click.option('--sensitivity_parameters_path', '-spp', required=False,
+              help="A path to a json file with parameters that need to be updated irrespective of the calibration")
 def estimate(**kwargs):
     """
     Estimates uncertain parameters with Nelder-Mead optimisation by fitting simulated deaths to observed excess deaths
@@ -281,9 +307,36 @@ def estimate(**kwargs):
     else:
         output_file_name = 'estimated_parameters.json'
 
+    if kwargs.get('output_folder_path'):
+        output_folder = kwargs.get('output_folder_path')
+    else:
+        output_folder = os.getcwd()
+
+    # check if the output folder path exists. If not create it:
+
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)
+        click.echo('Created output folder at {}'.format(output_folder))
+
     # 1 load problems
     with open(kwargs.get('problems_file_path')) as json_file:
         problems = json.load(json_file)
+
+    # and load optional sensitivity parameters
+    # update optional parameters
+    sensitivity_parameters = {} # TODO debug
+    if kwargs.get('sensitivity_parameters_path'):
+        config_path = kwargs.get('sensitivity_parameters_path')
+        if not os.path.exists(config_path):
+            click.echo(config_path + ' not found', err=True)
+            click.echo('Error: specify a valid path to the sensitivity parameter file')
+            return
+        else:
+            with open(config_path) as json_file:
+                config_file = json.load(json_file)
+
+                for param in config_file:
+                    sensitivity_parameters[param] = config_file[param]
 
     # 2 for every initial parameter set find optimal output
     estimated_parameters = []
@@ -295,7 +348,7 @@ def estimate(**kwargs):
         names = [x for x in pr['names']]
 
         args = (kwargs.get('input_folder_path'), kwargs.get('n_seeds'),
-                kwargs.get('output_folder_path'), kwargs.get('scenario'), names)
+                kwargs.get('output_folder_path'), kwargs.get('scenario'), names, sensitivity_parameters)
 
         output = constrNM(ls_model_performance, init_vars, LB, UB, args=args,
                           maxiter=kwargs.get('iterations'), full_output=True) #TODO is it possible to make a
@@ -324,7 +377,7 @@ def estimate(**kwargs):
         else:
             standard_params[x] = y
 
-    with open(os.path.join(kwargs.get('input_folder_path'), output_file_name), 'w') as f:
+    with open(os.path.join(kwargs.get('output_folder_path'), output_file_name), 'w') as f:
         json.dump(standard_params, f)
 
 
