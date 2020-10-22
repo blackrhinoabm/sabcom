@@ -20,26 +20,27 @@ install_requires = [x.strip() for x in all_reqs if ('git+' not in x) and (
 dependency_links = [x.strip().replace('git+', '') for x in all_reqs \
                     if 'git+' not in x]
 setup(
- name='sabcom',
- description='SABCOM is an open source, easy-to-use, spatial network, agent-based, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities.',
- version='0.18.4a',
- packages=find_packages(),  # list of all packages
- #install_requires = install_requires,
- python_requires='>=3.6', # any python greater than 3.6
- entry_points='''
-        [console_scripts]
-        sabcom=sabcom.__main__:main
+    name='sabcom',
+    description='SABCOM is an open source, easy-to-use, spatial network, agent-based, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities.',
+    version='0.19a',
+    packages=find_packages(),  # list of all packages
+    install_requires=['joblib', 'SALib', 'click', 'decorator', 'networkx', 'numpy', 'pandas', 'python-dateutil',
+                      'pytz', 'scikit-learn', 'scipy', 'sklearn', 'threadpoolctl', 'xlrd'],#install_requires,
+    python_requires='>=3.6', # any python greater than 3.6
+    entry_points='''
+    [console_scripts]
+    sabcom=sabcom.__main__:main
     ''',
- author="Joeri Schasfoort",
- keyword="sabcom, covid-19, South Africa, simulation, Coronavirus",
- long_description=README,
- long_description_content_type="text/markdown",
- license='MIT',
- url='https://github.com/blackrhinoabm/sabcom',
- download_url='https://github.com/blackrhinoabm/sabcom/archive/1.0.0.tar.gz',
-  #dependency_links=dependency_links,
-  author_email='joeri.schasfoort@uct.ac.za',
-  classifiers=[
+    author="Joeri Schasfoort",
+    keyword="sabcom, covid-19, South Africa, simulation, Coronavirus",
+    long_description=README,
+    long_description_content_type="text/markdown",
+    license='MIT',
+    url='https://github.com/blackrhinoabm/sabcom',
+    download_url='https://github.com/blackrhinoabm/sabcom/archive/1.0.0.tar.gz',
+    dependency_links=['https://github.com/blackrhinoabm/sabcom/master/#egg=sabcom'], #dependency_links,
+    author_email='joeri.schasfoort@uct.ac.za',
+    classifiers=[
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
