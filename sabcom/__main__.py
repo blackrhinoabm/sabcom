@@ -13,7 +13,7 @@ import numpy as np
 from scipy.integrate import odeint
 from SALib.sample import latin
 
-from sabcom.updater import updater
+from sabcom.runner import runner
 from sabcom.estimation import ls_model_performance, constrNM
 from sabcom.differential_equation_model import differential_equations_model
 from sabcom.environment import Environment
@@ -48,10 +48,6 @@ def main():
               help="change the probability of transmission between two agents.")
 @click.option('--visiting_recurring_contacts_multiplier', '-cont', default=None, type=float, required=False,
               help="change the percentage of contacts agents may have.")
-@click.option('--likelihood_awareness', '-la', default=None, type=float, required=False,
-              help="change the likelihood that an agent is aware it is infected.")
-@click.option('--gathering_max_contacts', '-maxc', default=None, type=int, required=False,
-              help="change maximum number of contacts and agent is allowed to have.")
 @click.option('--initial_infections', '-ini', default=None, type=int, required=False,
               help="number of initial infections")
 @click.option('--second_infection_n', '-sec', default=None, type=int, required=False,
@@ -76,8 +72,6 @@ def simulate(**kwargs):
     days or -day:  sets the number of simulation days, int
     probability_transmission or -pt: change the probability of transmission between two agents
     visiting_recurring_contacts_multiplier, or -cont: change the percentage of contacts agent may have, float
-    likelihood_awareness or -la: change the likelihood that an agent is aware it is infected., float
-    gathering_max_contacts or -maxc: change maximum number of contacts and agent is allowed to have, int
     initial_infections or -ini: number of initial infections, int
     sensitivity_config_file_path or -scf: path to config file with parameters for sensitivity analysis on HPC, str
     :return: None
@@ -106,7 +100,7 @@ def simulate(**kwargs):
         os.mkdir(folder_path)
 
     # simulate the model and return an updated environment
-    environment = updater(**kwargs)
+    environment = runner(**kwargs)
 
     if environment.parameters["data_output"] == 'network':
         for idx, network in enumerate(environment.infection_states):
@@ -279,8 +273,6 @@ def sample(**kwargs):
 @main.command()
 @click.option('--input_folder_path', '-i', type=click.Path(exists=True), required=True,
               help="This should contain all necessary input files, specifically an initialisation folder")
-# @click.option('--output_folder_path', '-o', default='', required=False, # type=click.Path(exists=True), required=True
-#               help="the estimated parameters will be deposited in this folder")
 @click.option('--scenario', '-sc', default='no-intervention', show_default=True,
               type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
 @click.option('--problems_file_path', '-pfp', type=click.Path(exists=True), required=True,
@@ -324,7 +316,7 @@ def estimate(**kwargs):
 
     # and load optional sensitivity parameters
     # update optional parameters
-    sensitivity_parameters = {} # TODO debug
+    sensitivity_parameters = {}
     if kwargs.get('sensitivity_parameters_path'):
         config_path = kwargs.get('sensitivity_parameters_path')
         if not os.path.exists(config_path):
@@ -351,7 +343,7 @@ def estimate(**kwargs):
                 kwargs.get('output_folder_path'), kwargs.get('scenario'), names, sensitivity_parameters)
 
         output = constrNM(ls_model_performance, init_vars, LB, UB, args=args,
-                          maxiter=kwargs.get('iterations'), full_output=True) #TODO is it possible to make a
+                          maxiter=kwargs.get('iterations'), full_output=True)
 
         estimated_parameters.append(output['xopt'])
         average_costs.append(output['fopt'])
@@ -370,9 +362,7 @@ def estimate(**kwargs):
         standard_params = json.load(json_file)
 
     for x, y in zip(estimated_parameters['names'], estimated_parameters['estimates']):
-        if x == 'visiting_recurring_contacts_multiplier':
-            standard_params[x] = [y for i in standard_params[x]]
-        elif x in ["gathering_max_contacts", 'total_initial_infections']:
+        if x == 'total_initial_infections':
             standard_params[x] = int(round(y))
         else:
             standard_params[x] = y

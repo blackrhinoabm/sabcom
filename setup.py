@@ -22,7 +22,7 @@ dependency_links = [x.strip().replace('git+', '') for x in all_reqs \
 setup(
     name='sabcom',
     description='SABCOM is an open source, easy-to-use, spatial network, agent-based, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities.',
-    version='0.19.1a',
+    version='0.20a',
     packages=find_packages(),  # list of all packages
     install_requires=['joblib', 'SALib', 'click', 'decorator', 'networkx', 'numpy', 'pandas', 'python-dateutil',
                       'pytz', 'scikit-learn', 'scipy', 'sklearn', 'threadpoolctl', 'xlrd'],#install_requires,

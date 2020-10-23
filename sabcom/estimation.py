@@ -6,7 +6,7 @@ import os
 import scipy.stats as stats
 import scipy.optimize as sciopt
 
-from sabcom.updater import updater
+from sabcom.runner import runner
 
 
 def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder_path, scenario, names, sensitivity_parameters):
@@ -59,13 +59,13 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
             continue
 
         # run model with parameters.
-        environment = updater(input_folder_path=input_folder_path,
-                              output_folder_path=output_folder_path, seed=seed,
-                              scenario=scenario,
-                              initial_infections=initial_infections,
-                              visiting_recurring_contacts_multiplier=vis_rec,
-                              stringency_changed=True,
-                              sensitivity_config_file_path='estimation_parameters.json')
+        environment = runner(input_folder_path=input_folder_path,
+                             output_folder_path=output_folder_path, seed=seed,
+                             scenario=scenario,
+                             initial_infections=initial_infections,
+                             visiting_recurring_contacts_multiplier=vis_rec,
+                             stringency_changed=True,
+                             sensitivity_config_file_path='estimation_parameters.json')
 
         sim_dead_curve = pd.DataFrame(environment.infection_quantities)['d'] * (empirical_population / param_file['number_of_agents'])
         sim_dead_curve = sim_dead_curve.diff().ewm(span=10).mean()
