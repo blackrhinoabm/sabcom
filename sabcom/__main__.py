@@ -294,6 +294,7 @@ def estimate(**kwargs):
     :param kwargs:
     :return: None
     """
+    start = time.time()
     if kwargs.get('output_file_name'):
         output_file_name = kwargs.get('output_file_name')
     else:
@@ -369,6 +370,11 @@ def estimate(**kwargs):
 
     with open(os.path.join(kwargs.get('output_folder_path'), output_file_name), 'w') as f:
         json.dump(standard_params, f)
+
+    end = time.time()
+    hours_total, rem_total = divmod(end - start, 3600)
+    minutes_total, seconds_total = divmod(rem_total, 60)
+    click.echo("TOTAL ESTIMATION TIME {:0>2}:{:0>2}:{:05.2f}".format(int(hours_total), int(minutes_total), seconds_total))
 
 
 @main.command()

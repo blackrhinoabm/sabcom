@@ -100,7 +100,17 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
 
             private_signal = environment.stringency_index[t] / 100 + shocks[i]
             if neighbours_to_learn_from:  # take into account the scenario that there are no neighbours to learn from
-                neighbour_signal = np.mean([x.previous_compliance for x in neighbours_to_learn_from])
+                total_weights = 0
+                total_compliance = 0.0
+                for x in neighbours_to_learn_from:
+                    if x.status in ['c', 'd']:
+                        total_compliance += x.previous_compliance * environment.parameters['weight_sick_agents']
+                        total_weights += environment.parameters['weight_sick_agents']
+                    else:
+                        total_compliance += x.previous_compliance
+                        total_weights += 1.0
+                neighbour_signal = total_compliance / total_weights
+                #neighbour_signal = np.mean([x.previous_compliance for x in neighbours_to_learn_from]) TODO remove
             else:
                 neighbour_signal = private_signal
 

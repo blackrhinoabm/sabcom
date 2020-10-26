@@ -151,7 +151,7 @@ def runner(**kwargs):
                                              ) * environment.parameters["informality_dummy"]
         # optionally also update agent initial compliance if stringency was changed.
         if sringency_index_updated:
-            agent.compliance = environment.parameters['stringency_index'][0] / 100 + shocks[i]
+            agent.compliance = environment.stringency_index[0] / 100 + shocks[i]
             agent.previous_compliance = agent.compliance
 
     initial_infections = pd.read_csv(os.path.join(input_folder_path, 'f_initial_cases.csv'), index_col=0)
