@@ -103,7 +103,7 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                 total_weights = 0
                 total_compliance = 0.0
                 for x in neighbours_to_learn_from:
-                    if x.status in ['c', 'd']:
+                    if x.status in ['i2', 'c', 'd']:
                         total_compliance += x.previous_compliance * environment.parameters['weight_sick_agents']
                         total_weights += environment.parameters['weight_sick_agents']
                     else:

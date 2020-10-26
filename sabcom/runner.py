@@ -135,6 +135,7 @@ def runner(**kwargs):
     click.echo('scenario is {}'.format(scenario))
     if scenario == 'no-intervention':
         environment.parameters['stringency_index'] = [0.0 for x in environment.parameters['stringency_index']] # TODO debug
+        environment.stringency_index = environment.parameters['stringency_index']
         environment.parameters['informality_dummy'] = 0.0
     elif scenario == 'lockdown':
         environment.parameters['informality_dummy'] = 0.0
