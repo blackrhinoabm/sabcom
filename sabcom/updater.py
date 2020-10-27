@@ -155,26 +155,47 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                                     environment.agents[x].district != agent.district]
 
                 # depending on compliance, the amount of non-household contacts an agent can visit is reduced
-                visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"]
-                compliance_term_contacts = (1 - visiting_r_contacts_multiplier) * (1 - agent.compliance)
+
+                #compliance_term_contacts = (1 - visiting_r_contacts_multiplier) * (1 - agent.compliance)
+
+                # TODO planned contacts should be shaped by the compliance of all agents ...
+                # non_household_contacts = []
+                # for nb in other_neighbours:
+                #     # determine if the neighbour will be visited based on the compliance of BOTH agents
+                #     neighbour_compliance_term = (1 - visiting_r_contacts_multiplier) * (1 - environment.agents[nb].compliance)
+                #     if np.random.random() < np.mean([visiting_r_contacts_multiplier + compliance_term_contacts,
+                #                                      visiting_r_contacts_multiplier + neighbour_compliance_term]):
+                #         non_household_contacts.append(nb)
 
                 # step 1 planned contacts is shaped by visiting recurring contacts multiplier
-                if other_neighbours:
-                    planned_contacts = int(round(len(other_neighbours
-                                                     ) * (visiting_r_contacts_multiplier + compliance_term_contacts)))
-                else:
-                    planned_contacts = 0
+                # if other_neighbours:
+                #     planned_contacts = int(round(len(other_neighbours
+                #                                      ) * (visiting_r_contacts_multiplier + compliance_term_contacts)))
+                # else:
+                #     planned_contacts = 0
 
-                other_neighbours = random.sample(other_neighbours, planned_contacts)
-                all_neighbours = household_neighbours + other_neighbours
+                #other_neighbours = random.sample(other_neighbours, planned_contacts)
+                all_neighbours = household_neighbours + other_neighbours #other_neighbours
                 neighbours_to_infect = [environment.agents[idx] for idx in all_neighbours]
 
                 # step 2
+                visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"]
                 for neighbour in neighbours_to_infect:
-                    if neighbour.status == 's' and np.random.random() < environment.parameters['probability_transmission']:
-                        neighbour.period_to_become_infected = t + 1
-                        agent.others_infected += 1
-                        agent.others_infects_total += 1
+                    if neighbour.status == 's':
+                        if neighbour.name in other_neighbours: # TODO debug
+                            # for other neighbours determine the
+                            neighbour_compliance_term = (1 - visiting_r_contacts_multiplier) * (
+                                        1 - neighbour.compliance)
+                            agent_compliance_term = (1 - visiting_r_contacts_multiplier) * (1 - agent.compliance)
+                            likelihood_to_meet = (visiting_r_contacts_multiplier + agent_compliance_term) * (visiting_r_contacts_multiplier + neighbour_compliance_term)
+
+                        else:
+                            likelihood_to_meet = 1.0
+
+                        if np.random.random() < environment.parameters['probability_transmission'] and np.random.random() < likelihood_to_meet:
+                            neighbour.period_to_become_infected = t + 1
+                            agent.others_infected += 1
+                            agent.others_infects_total += 1
 
                 # update current status based on category
                 if agent.status == 'i1':
