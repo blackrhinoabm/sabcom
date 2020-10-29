@@ -76,11 +76,10 @@ def simulate(**kwargs):
     sensitivity_config_file_path or -scf: path to config file with parameters for sensitivity analysis on HPC, str
     :return: None
     """
-    # fix seeds
+    # fix seeds and start timer
     seed = kwargs.get('seed')
     np.random.seed(seed)
     random.seed(seed)
-
     start = time.time()
 
     if kwargs.get('output_folder_path'):
@@ -89,7 +88,6 @@ def simulate(**kwargs):
         output_folder_path = os.getcwd()
 
     # check if the output folder path exists. If not create it:
-
     if not os.path.isdir(output_folder_path):
         os.makedirs(output_folder_path)
         click.echo('Created output folder at {}'.format(output_folder_path))
@@ -97,7 +95,8 @@ def simulate(**kwargs):
     # create folders for every seed if the mode is csv light
     if kwargs.get('data_output_mode') == 'csv':
         folder_path = os.path.join(output_folder_path, 'seed{}'.format(kwargs.get('seed')))
-        os.mkdir(folder_path)
+        if not os.path.isdir(folder_path):
+            os.mkdir(folder_path)
 
     # simulate the model and return an updated environment
     environment = runner(**kwargs)
@@ -113,7 +112,6 @@ def simulate(**kwargs):
         pd.DataFrame(environment.infection_quantities).to_csv(os.path.join(output_folder_path,
                                                                            'seed{}quantities_state_time.csv'.format(seed)))
 
-    click.echo('random number for seed is {}'.format(random.random()))
     end = time.time()
     hours_total, rem_total = divmod(end - start, 3600)
     minutes_total, seconds_total = divmod(rem_total, 60)

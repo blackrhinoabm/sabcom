@@ -36,6 +36,9 @@ def runner(**kwargs):
     list_of_objects = pickle.load(data)
     environment = list_of_objects[0]
 
+    # add contacts section to csv light DataFrame TODO remove after re-initialisation
+    environment.infection_quantities['contacts'] = []
+
     # initialise logging
     logging.basicConfig(filename=os.path.join(output_folder_path,
                                               'simulation_seed{}.log'.format(seed)), filemode='w', level=logging.DEBUG)

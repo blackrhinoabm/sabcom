@@ -190,7 +190,7 @@ class Environment:
             self.network.nodes[idx]['agent'] = agent
 
         self.infection_states = []
-        self.infection_quantities = {key: [] for key in ['e', 's', 'i1', 'i2', 'c', 'r', 'd', 'compliance']}
+        self.infection_quantities = {key: [] for key in ['e', 's', 'i1', 'i2', 'c', 'r', 'd', 'compliance', 'contacts']}
 
         # 6 add stringency index from parameters to reflect how strict regulations are enforced
         self.stringency_index = parameters['stringency_index']
