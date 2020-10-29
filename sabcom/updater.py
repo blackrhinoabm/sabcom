@@ -88,42 +88,33 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
             agent.previous_compliance = agent.compliance
             private_signal = environment.stringency_index[t] / 100 + shocks[i]
 
-            # 4.3.2 calculate new compliance based on private and neighbour signal
-            # find indices from neighbour agents
+            # 4.3.2 loop over neighbours for learning and record effective contacts
             household_neighbours = []
             other_neighbours = []
-            neighbours_to_learn_from = []
-            likelyhood_to_meet_neighbours = []
-            total_weights = 0
-            total_compliance = 0.0
+            likelihood_to_meet_neighbours = []
+            total_compliance = []
+            for nb in environment.network.neighbors(agent.name):
+                total_compliance.append(environment.agents[nb].previous_compliance)
 
-            for x in environment.network.neighbors(agent.name):
-                neighbours_to_learn_from.append(x)
-                if environment.agents[x].status in ['i2', 'c', 'd']:
-                    total_compliance += environment.agents[x].previous_compliance * environment.parameters['weight_sick_agents']
-                    total_weights += environment.parameters['weight_sick_agents']
+                # make a distinction between household and non-household neighbours
+                if environment.agents[nb].household_number == agent.household_number and environment.agents[nb].district == agent.district:
+                    household_neighbours.append(nb)
                 else:
-                    total_compliance += environment.agents[x].previous_compliance
-                    total_weights += 1.0
-
-                if environment.agents[x].household_number == agent.household_number and environment.agents[x].district == agent.district:
-                    household_neighbours.append(x)
-                else:
-                    other_neighbours.append(x)
-                    # add logic here to record likelihood to meet neighbours
+                    other_neighbours.append(nb)
+                    # record likelihood to meet neighbours
                     neighbour_compliance_term = (1 - visiting_r_contacts_multiplier) * (
-                            1 - environment.agents[x].compliance)
+                            1 - environment.agents[nb].compliance)
                     agent_compliance_term = (1 - visiting_r_contacts_multiplier) * (1 - agent.compliance)
                     likelihood_to_meet = (visiting_r_contacts_multiplier + agent_compliance_term) * (
                             visiting_r_contacts_multiplier + neighbour_compliance_term)
-                    likelyhood_to_meet_neighbours.append(likelihood_to_meet)
-            if neighbours_to_learn_from:
-                neighbour_signal = total_compliance / total_weights
+                    likelihood_to_meet_neighbours.append(likelihood_to_meet)
+            if total_compliance:
+                neighbour_signal = np.mean(total_compliance)
             else:
                 neighbour_signal = private_signal
 
             if other_neighbours:
-                average_neighbours_met = np.mean(likelyhood_to_meet_neighbours)
+                average_neighbours_met = np.mean(likelihood_to_meet_neighbours)
             else:
                 average_neighbours_met = 1.0
 
@@ -134,7 +125,7 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                                (environment.parameters['weight_private_signal'] * private_signal +
                                 (1 - environment.parameters['weight_private_signal']) * neighbour_signal)
 
-            # 4.3.3 the disease status of the agent
+            # 4.3.3 update the disease status of the agent and possibly infect others
             if agent.status == 's' and agent.period_to_become_infected == t:
                 agent.status = 'e'
                 susceptible.remove(agent)
@@ -161,17 +152,12 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
 
                 # Infect others / TAG SUSCEPTIBLE AGENTS FOR INFECTION
                 agent.others_infected = 0
-
-                all_neighbours = household_neighbours + other_neighbours
-                neighbours_to_infect = [environment.agents[idx] for idx in all_neighbours]
-
-                # step 2
-                for neighbour in neighbours_to_infect:
-                    if neighbour.status == 's':
-                        if neighbour.name in other_neighbours:
+                for nb in environment.network.neighbors(agent.name):
+                    if environment.agents[nb].status == 's':
+                        if environment.agents[nb].name in other_neighbours:
                             # for other neighbours determine the
                             neighbour_compliance_term = (1 - visiting_r_contacts_multiplier) * (
-                                        1 - neighbour.compliance)
+                                        1 - environment.agents[nb].compliance)
                             agent_compliance_term = (1 - visiting_r_contacts_multiplier) * (1 - agent.compliance)
                             likelihood_to_meet = (visiting_r_contacts_multiplier + agent_compliance_term) * (visiting_r_contacts_multiplier + neighbour_compliance_term)
 
@@ -179,7 +165,7 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                             likelihood_to_meet = 1.0
 
                         if np.random.random() < environment.parameters['probability_transmission'] and np.random.random() < likelihood_to_meet:
-                            neighbour.period_to_become_infected = t + 1
+                            environment.agents[nb].period_to_become_infected = t + 1
                             agent.others_infected += 1
                             agent.others_infects_total += 1
 
@@ -227,9 +213,10 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                     agent.status = 's'
                     susceptible.append(agent)
 
+            # record compliance
             compliance.append(agent.compliance)
 
-        # New infections
+        # 5 allow for the possibility of new infections
         if t == environment.parameters['time_4_new_infections']:
             if environment.parameters['new_infections_scenario'] == 'initial':
                 cases = [x for x in initial_infections['Cases']]
@@ -294,6 +281,5 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                 environment.infection_quantities['contacts'].append(np.mean(contacts))
             else:
                 environment.infection_quantities['contacts'].append(np.nan)
-            #recorded_contacts.append(np.mean(contacts))
 
     return environment
