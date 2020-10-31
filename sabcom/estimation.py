@@ -37,12 +37,12 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
         else:
             vis_rec = None
 
-    param_file["time"] = len(emp_fatality_curve)
-
     # TODO debug!
     for key in sensitivity_parameters:
         param_file[key] = sensitivity_parameters[key]
         print('Parameter {} has been updated to {}'.format(key, param_file[key]))
+
+    param_file["time"] = len(emp_fatality_curve)
 
     # dump in config file
     with open('estimation_parameters.json', 'w') as outfile:
