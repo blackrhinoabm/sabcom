@@ -36,25 +36,25 @@ class Environment:
         self.other_contact_matrix = other_contact_matrix
 
         # 1 create modelled districts
-        # 1.1 retrieve population data
+        # retrieve population data
         nbd_values = [x[1] for x in district_data]
         population_per_neighbourhood = [x['Population'] for x in nbd_values]
 
-        # 1.2 correct the population in districts to be proportional to number of agents
+        # 1.1 correct the population in districts to be proportional to number of agents
         correction_factor = sum(population_per_neighbourhood) / parameters["number_of_agents"]
         corrected_populations = [int(round(x / correction_factor)) for x in population_per_neighbourhood]
 
-        # 1.3 only count districts that then have an amount of people bigger than 0
+        # 1.2 only count districts that then have an amount of people bigger than 0
         indices_big_neighbourhoods = [i for i, x in enumerate(corrected_populations) if x > 0]
         corrected_populations_final = [x for i, x in enumerate(corrected_populations) if x > 0]
 
-        # 1.4 create a shock generator for the initialisation of agents initial compliance
+        # 1.3 create a shock generator for the initialisation of agents initial compliance
         lower, upper = -(parameters['stringency_index'][0] / 100), (1 - (parameters['stringency_index'][0] / 100))
         mu, sigma = 0.0, parameters['private_shock_stdev']
         shocks = stats.truncnorm.rvs((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma,
                                      size=sum(corrected_populations_final))
 
-        # 1.5 fill up the districts with agents
+        # 1.4 fill up the districts with agents
         self.districts = [x[0] for x in district_data]
         self.district_agents = {d: [] for d in self.districts}
         agents = []
@@ -181,7 +181,7 @@ class Environment:
 
         self.network = city_graph
 
-        # 4 rename agents to reflect their new position
+        # rename agents to reflect their new position
         for idx, agent in enumerate(self.agents):
             agent.name = idx
 

@@ -119,11 +119,11 @@ def runner(**kwargs):
         # initialise stochastic process in case stringency index has changed
         click.echo('change in stringency index detected and updated for all agents')
         environment.stringency_index = environment.parameters['stringency_index']
-        if len(environment.parameters['stringency_index']) < environment.parameters['time']:
-            environment.stringency_index += [environment.parameters['stringency_index'][-1] for x in range(len(
-                environment.parameters['stringency_index']), environment.parameters['time'])]
+        if len(environment.stringency_index) < environment.parameters['time']:
+            environment.stringency_index += [environment.stringency_index[-1] for x in range(len(
+                environment.stringency_index), environment.parameters['time'])]
 
-        lower, upper = -(environment.parameters['stringency_index'][0] / 100), \
+        lower, upper = -(environment.stringency_index[0] / 100), \
                        (1 - (environment.parameters['stringency_index'][0] / 100))
         mu, sigma = 0.0, environment.parameters['private_shock_stdev']
         shocks = stats.truncnorm.rvs((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma,
