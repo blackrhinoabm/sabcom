@@ -115,7 +115,7 @@ def runner(**kwargs):
 
     # check if the stringency index has changed in the parameter file
     sringency_index_updated = False
-    if environment.stringency_index != environment.parameters['stringency_index']:
+    if environment.stringency_index != environment.parameters['stringency_index'] or len(environment.stringency_index) < environment.parameters['time']:
         # initialise stochastic process in case stringency index has changed
         click.echo('change in stringency index detected and updated for all agents')
         environment.stringency_index = environment.parameters['stringency_index']
