@@ -155,7 +155,7 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                 for nb in environment.network.neighbors(agent.name):
                     if environment.agents[nb].status == 's':
                         if environment.agents[nb].name in other_neighbours:
-                            # for other neighbours determine the
+                            # for other neighbours determine the likelihood to meet
                             neighbour_compliance_term = (1 - visiting_r_contacts_multiplier) * (
                                         1 - environment.agents[nb].compliance)
                             agent_compliance_term = (1 - visiting_r_contacts_multiplier) * (1 - agent.compliance)
