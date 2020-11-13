@@ -283,7 +283,7 @@ def sample(**kwargs):
               help="Change the name of the output file to one of your liking, default is estimated_parameters")
 @click.option('--output_folder_path', '-o', required=False, type=click.Path(exists=False),
               help="the estimated parameters will be deposited in this folder")
-@click.option('--sensitivity_parameters_path', '-spp', required=False,
+@click.option('--sensitivity_config_file_path', '-scf', required=False,
               help="A path to a json file with parameters that need to be updated irrespective of the calibration")
 def estimate(**kwargs):
     """
@@ -316,11 +316,11 @@ def estimate(**kwargs):
     # and load optional sensitivity parameters
     # update optional parameters
     sensitivity_parameters = {}
-    if kwargs.get('sensitivity_parameters_path'):
-        config_path = kwargs.get('sensitivity_parameters_path')
+    if kwargs.get('sensitivity_config_file_path'):
+        config_path = kwargs.get('sensitivity_config_file_path')
         if not os.path.exists(config_path):
             click.echo(config_path + ' not found', err=True)
-            click.echo('Error: specify a valid path to the sensitivity parameter file')
+            click.echo('Error: specify a valid path to the sensitivity parameter configuration file')
             return
         else:
             with open(config_path) as json_file:

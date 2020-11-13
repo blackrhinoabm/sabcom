@@ -37,7 +37,6 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
         else:
             vis_rec = None
 
-    # TODO debug!
     for key in sensitivity_parameters:
         param_file[key] = sensitivity_parameters[key]
         print('Parameter {} has been updated to {}'.format(key, param_file[key]))
@@ -72,6 +71,7 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
 
         # calculate the cost
         costs.append(ls_cost_function(emp_fatality_curve, sim_dead_curve))
+        print(costs[-1])
 
     return np.mean(costs)
 
