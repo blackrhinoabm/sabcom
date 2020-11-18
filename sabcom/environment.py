@@ -2,6 +2,7 @@ import numpy as np
 import networkx as nx
 import random
 import copy
+import os
 import pandas as pd
 import scipy.stats as stats
 
@@ -203,7 +204,7 @@ class Environment:
         current_network = copy.deepcopy(self.network)
         return current_network
 
-    def write_status_location(self, period, seed, base_folder='measurement/'):
+    def write_status_location(self, period, seed, base_folder='output_data'):
         """
         Writes information about the agents and their status in the current period to a csv file
 
@@ -222,7 +223,7 @@ class Environment:
             location_status_data['others_infected'].append(agent.others_infected)
             location_status_data['compliance'].append(agent.compliance)
 
-        pd.DataFrame(location_status_data).to_csv(base_folder + "seed" + str(seed) + "/agent_data{0:04}.csv".format(
+        pd.DataFrame(location_status_data).to_csv(os.path.join(base_folder, "seed{}".format(seed)) + "/agent_data{0:04}.csv".format(
             period))
 
         # output links

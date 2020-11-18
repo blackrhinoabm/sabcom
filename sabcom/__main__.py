@@ -92,7 +92,7 @@ def simulate(**kwargs):
         os.makedirs(output_folder_path)
         click.echo('Created output folder at {}'.format(output_folder_path))
 
-    # create folders for every seed if the mode is csv light
+    # create folders for every seed if the mode is csv
     if kwargs.get('data_output_mode') == 'csv':
         folder_path = os.path.join(output_folder_path, 'seed{}'.format(kwargs.get('seed')))
         if not os.path.isdir(folder_path):
