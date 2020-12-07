@@ -6,7 +6,7 @@ import os
 import scipy.stats as stats
 import scipy.optimize as sciopt
 
-from sabcom.updater import updater
+from sabcom.runner import runner
 
 
 def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder_path, scenario, names, sensitivity_parameters):
@@ -35,14 +35,13 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
         if name == 'total_initial_infections':
             initial_infections = par
         else:
-            vis_rec = None
+            initial_infections = None
 
-    param_file["time"] = len(emp_fatality_curve)
-
-    # TODO debug!
     for key in sensitivity_parameters:
         param_file[key] = sensitivity_parameters[key]
         print('Parameter {} has been updated to {}'.format(key, param_file[key]))
+
+    param_file["time"] = len(emp_fatality_curve)
 
     # dump in config file
     with open('estimation_parameters.json', 'w') as outfile:
@@ -59,19 +58,20 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
             continue
 
         # run model with parameters.
-        environment = updater(input_folder_path=input_folder_path,
-                              output_folder_path=output_folder_path, seed=seed,
-                              scenario=scenario,
-                              initial_infections=initial_infections,
-                              visiting_recurring_contacts_multiplier=vis_rec,
-                              stringency_changed=True,
-                              sensitivity_config_file_path='estimation_parameters.json')
+        environment = runner(input_folder_path=input_folder_path,
+                             output_folder_path=output_folder_path, seed=seed,
+                             scenario=scenario,
+                             initial_infections=initial_infections,
+                             visiting_recurring_contacts_multiplier=vis_rec,
+                             stringency_changed=True,
+                             sensitivity_config_file_path='estimation_parameters.json')
 
         sim_dead_curve = pd.DataFrame(environment.infection_quantities)['d'] * (empirical_population / param_file['number_of_agents'])
         sim_dead_curve = sim_dead_curve.diff().ewm(span=10).mean()
 
         # calculate the cost
         costs.append(ls_cost_function(emp_fatality_curve, sim_dead_curve))
+        print(costs[-1])
 
     return np.mean(costs)
 

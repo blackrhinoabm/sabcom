@@ -1,320 +1,170 @@
-import random
-import numpy as np
+import click
+import os
+import pickle
+import json
+import logging
+import pandas as pd
 import scipy.stats as stats
 
+from sabcom.updater import updater
+from sabcom.helpers import generate_district_data, what_informality
 
-def runner(environment, initial_infections, seed, data_folder='output_data/',
-           data_output=False, calculate_r_naught=False):
+
+def runner(**kwargs):
     """
-    This function is used to run / simulate the model.
+    This function is used to update parameters
 
-    :param environment: contains the parameters and agents, Environment object
-    :param initial_infections: contains the Wards and corresponding initial infections, Pandas DataFrame
-    :param seed: used to initialise the random generators to ensure reproducibility, int
-    :param data_folder:  string of the folder where data output files should be created
-    :param data_output:  can be 'csv', 'network', or False (for no output)
-    :param calculate_r_naught: set to True to calculate the R0 that the model produces given a single infected agent
-    :return: environment object containing the updated agents, Environment object
+    :param kwargs:
+    :return:
     """
-    # 1 set monte carlo seed
-    np.random.seed(seed)
-    random.seed(seed)
 
-    # 2 create sets for all agent types
-    dead = []
-    recovered = []
-    critical = []
-    sick_with_symptoms = []
-    sick_without_symptoms = []
-    exposed = []
-    susceptible = [agent for agent in environment.agents]
-    compliance = []
+    # store often used arguments in temporary variable
+    seed = kwargs.get('seed')
+    output_folder_path = kwargs.get('output_folder_path')
+    input_folder_path = kwargs.get('input_folder_path')
 
-    # 3 Initialisation of infections
-    # 3a infect a fixed initial agent to calculate R_0
-    if calculate_r_naught:
-        initial_infected = []
-        chosen_agent = environment.agents[environment.parameters['init_infected_agent']]
-        chosen_agent.status = 'e'
-        initial_infected.append(chosen_agent)
-        exposed.append(chosen_agent)
-        susceptible.remove(chosen_agent)
-    # 3b the default mode is to infect a set of agents based on the locations of observed infections
-    else:
-        initial_infections = initial_infections.sort_index()
-        cases = [x for x in initial_infections['Cases']]
-        probabilities_new_infection_district = [float(i) / sum(cases) for i in cases]
+    # formulate paths to initialisation folder and seed within input folder
+    inititialisation_path = os.path.join(input_folder_path, 'initialisations')
+    seed_path = os.path.join(inititialisation_path, 'seed_{}.pkl'.format(seed))
+    if not os.path.exists(seed_path):
+        click.echo(seed_path + ' not found', err=True)
+        click.echo('Error: specify a valid seed')
+        return
 
-        initial_infected = []
-        # 3b-1 select districts with probability
-        chosen_districts = list(np.random.choice(environment.districts,
-                                                 environment.parameters['total_initial_infections'],
-                                                 p=probabilities_new_infection_district))
-        # 3b-2 count how often a district is in that list
-        chosen_districts = {distr: min(len(environment.district_agents[distr]),
-                                       chosen_districts.count(distr)) for distr in chosen_districts}
+    # open the seed pickle object as an environment
+    data = open(seed_path, "rb")
+    list_of_objects = pickle.load(data)
+    environment = list_of_objects[0]
 
-        for district in chosen_districts:
-            # 3b-3 infect appropriate number of random agents
-            chosen_agents = np.random.choice(environment.district_agents[district], chosen_districts[district],
-                                             replace=False)
-            categories = ['e', 'i1', 'i2']
-            # 3b-4 and give them a random status exposed, asymptomatic, or symptomatic with a random number of days
-            # already passed being in that state
-            for chosen_agent in chosen_agents:
-                new_status = random.choice(categories)
-                chosen_agent.status = new_status
-                if new_status == 'e':
-                    chosen_agent.incubation_days = np.random.randint(0, environment.parameters['exposed_days'])
-                    exposed.append(chosen_agent)
-                elif new_status == 'i1':
-                    chosen_agent.asymptomatic_days = np.random.randint(0, environment.parameters['asymptom_days'])
-                    sick_without_symptoms.append(chosen_agent)
-                elif new_status == 'i2':
-                    chosen_agent.sick_days = np.random.randint(0, environment.parameters['symptom_days'])
-                    sick_with_symptoms.append(chosen_agent)
+    # add contacts section to csv light DataFrame TODO remove after re-initialisation
+    environment.infection_quantities['contacts'] = []
 
-                susceptible.remove(chosen_agent)
+    # initialise logging
+    logging.basicConfig(filename=os.path.join(output_folder_path,
+                                              'simulation_seed{}.log'.format(seed)), filemode='w', level=logging.DEBUG)
+    logging.info('Start of simulation seed{} with arguments -i ={}, -o={}'.format(seed,
+                                                                                  input_folder_path,
+                                                                                  output_folder_path))
 
-    # 4 day loop
-    for t in range(environment.parameters["time"]):
-        # 4.1 check if the health system is not overburdened
-        if len(critical) / len(environment.agents) > environment.parameters["health_system_capacity"]:
-            health_overburdened_multiplier = environment.parameters["no_hospital_multiplier"]
+    # update optional parameters
+    if kwargs.get('sensitivity_config_file_path'):
+        config_path = kwargs.get('sensitivity_config_file_path')
+        if not os.path.exists(config_path):
+            click.echo(config_path + ' not found', err=True)
+            click.echo('Error: specify a valid path to the sensitivity config file')
+            return
         else:
-            health_overburdened_multiplier = 1.0
+            with open(config_path) as json_file:
+                config_file = json.load(json_file)
 
-        # 4.2 create a generator to generate shocks for private signal for this period based on current stringency index
-        lower, upper = -(environment.stringency_index[t] / 100), (1 - (environment.stringency_index[t] / 100))
+                for param in config_file:
+                    environment.parameters[param] = config_file[param]
+
+    if kwargs.get('days'):
+        environment.parameters['time'] = kwargs.get('days')
+        click.echo('Time has been set to {}'.format(environment.parameters['time']))
+        logging.debug('Time has been set to {}'.format(environment.parameters['time']))
+        # ensure that stringency is never shorter than time if time length is increased
+        if len(environment.stringency_index) < environment.parameters['time']:
+            environment.stringency_index += [environment.stringency_index[-1] for x in range(
+                len(environment.stringency_index), environment.parameters['time'])]
+        logging.debug('The stringency index has been lenghtened by {}'.format(
+            environment.parameters['time'] - len(environment.stringency_index)))
+
+    if kwargs.get('probability_transmission'):
+        environment.parameters['probability_transmission'] = kwargs.get('probability_transmission')
+        click.echo(
+            'Transmission probability has been set to {}'.format(environment.parameters['probability_transmission']))
+        logging.debug(
+            'Transmission probability has been set to {}'.format(environment.parameters['probability_transmission']))
+
+    if kwargs.get('second_infection_n'):
+        environment.parameters['second_infection_n'] = kwargs.get('second_infection_n')
+        click.echo(
+            'Second infection number has been set to {}'.format(environment.parameters['second_infection_n']))
+        logging.debug(
+            'Second infection number has been set to {}'.format(environment.parameters['second_infection_n']))
+
+    if kwargs.get('time_4_new_infections'):
+        environment.parameters['time_4_new_infections'] = kwargs.get('time_4_new_infections')
+        click.echo(
+            'Second infection time has been set to {}'.format(environment.parameters['time_4_new_infections']))
+        logging.debug(
+            'Second infection time has been set to {}'.format(environment.parameters['time_4_new_infections']))
+
+    if kwargs.get('new_infections_scenario'):
+        environment.parameters['new_infections_scenario'] = kwargs.get('new_infections_scenario')
+        click.echo(
+            'New infections scenario has been set to {}'.format(environment.parameters['new_infections_scenario']))
+        logging.debug(
+            'New infections scenario has been set to {}'.format(environment.parameters['new_infections_scenario']))
+
+    if kwargs.get('visiting_recurring_contacts_multiplier'):
+        environment.parameters['visiting_recurring_contacts_multiplier'] = kwargs.get('visiting_recurring_contacts_multiplier')
+        click.echo('Recurring contacts has been set to {}'.format(
+            environment.parameters['visiting_recurring_contacts_multiplier']))
+        logging.debug(
+            'Recurring contacts has been set to {}'.format(
+                environment.parameters['visiting_recurring_contacts_multiplier']))
+
+    if kwargs.get('initial_infections'):
+        environment.parameters['total_initial_infections'] = round(int(kwargs.get('initial_infections')))
+        click.echo('Initial infections have been set to {}'.format(environment.parameters['total_initial_infections']))
+        logging.debug(
+            'Initial infections have been set to {}'.format(environment.parameters['total_initial_infections']))
+
+    # check if the stringency index has changed in the parameter file
+    sringency_index_updated = False
+    if environment.stringency_index != environment.parameters['stringency_index'] or len(environment.stringency_index) < environment.parameters['time']:
+        # initialise stochastic process in case stringency index has changed
+        click.echo('change in stringency index detected and updated for all agents')
+        environment.stringency_index = environment.parameters['stringency_index']
+        if len(environment.stringency_index) < environment.parameters['time']:
+            environment.stringency_index += [environment.stringency_index[-1] for x in range(len(
+                environment.stringency_index), environment.parameters['time'])]
+
+        lower, upper = -(environment.stringency_index[0] / 100), \
+                       (1 - (environment.parameters['stringency_index'][0] / 100))
         mu, sigma = 0.0, environment.parameters['private_shock_stdev']
         shocks = stats.truncnorm.rvs((lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma,
-                                     size=len(susceptible + exposed + sick_without_symptoms + sick_with_symptoms + critical + recovered))
+                                     size=len(environment.agents))
+        sringency_index_updated = True
 
-        # 4.3 update status loop for all agents, except dead agents
-        for i, agent in enumerate(susceptible + exposed + sick_without_symptoms + sick_with_symptoms + critical + recovered):
-            # 4.3.1 save compliance to previous compliance
+    # transform input data to general district data for simulations
+    district_data = generate_district_data(environment.parameters['number_of_agents'], path=input_folder_path)
+
+    # set scenario specific parameters
+    scenario = kwargs.get('scenario', 'no-intervention')  # if no input was provided use no-intervention
+    click.echo('scenario is {}'.format(scenario))
+    if scenario == 'no-intervention':
+        environment.parameters['stringency_index'] = [0.0 for x in environment.parameters['stringency_index']] # TODO debug
+        environment.stringency_index = environment.parameters['stringency_index']
+        environment.parameters['informality_dummy'] = 0.0
+    elif scenario == 'lockdown':
+        environment.parameters['informality_dummy'] = 0.0
+    elif scenario == 'ineffective-lockdown':
+        environment.parameters['informality_dummy'] = 1.0
+
+    # log parameters used after scenario called
+    for param in environment.parameters:
+        logging.debug('Parameter {} has the value {}'.format(param, environment.parameters[param]))
+
+    # update agent informality based on scenario
+    for i, agent in enumerate(environment.agents):
+        agent.informality = what_informality(agent.district, district_data
+                                             ) * environment.parameters["informality_dummy"]
+        # optionally also update agent initial compliance if stringency was changed.
+        if sringency_index_updated:
+            agent.compliance = environment.stringency_index[0] / 100 + shocks[i]
             agent.previous_compliance = agent.compliance
 
-            # 4.3.2 calculate new compliance based on private and neighbour signal
-            neighbours_to_learn_from = [environment.agents[x] for x in environment.network.neighbors(agent.name)]
+    initial_infections = pd.read_csv(os.path.join(input_folder_path, 'f_initial_cases.csv'), index_col=0)
+    environment.parameters["data_output"] = kwargs.get('data_output_mode',
+                                                       'csv-light')  # default output mode is csv_light
 
-            private_signal = environment.stringency_index[t] / 100 + shocks[i]
-            if neighbours_to_learn_from:  # take into account the scenario that there are no neighbours to learn from
-                neighbour_signal = np.mean([x.previous_compliance for x in neighbours_to_learn_from])
-            else:
-                neighbour_signal = private_signal
-
-            agent.compliance = (1 - agent.informality) * \
-                               (environment.parameters['weight_private_signal'] * private_signal +
-                                (1 - environment.parameters['weight_private_signal']) * neighbour_signal)
-
-            # 4.3.3 the disease status of the agent
-            if agent.status == 's' and agent.period_to_become_infected == t:
-                agent.status = 'e'
-                susceptible.remove(agent)
-                exposed.append(agent)
-
-            elif agent.status == 'e':
-                agent.exposed_days += 1
-                # some agents will become infectious but do not show agents while others will show symptoms
-                if agent.exposed_days > environment.parameters["exposed_days"]:
-                    if np.random.random() < environment.parameters["probability_symptomatic"]:
-                        agent.status = 'i2'
-                        exposed.remove(agent)
-                        sick_with_symptoms.append(agent)
-                    else:
-                        agent.status = 'i1'
-                        exposed.remove(agent)
-                        sick_without_symptoms.append(agent)
-
-            # any agent with status i1, or i2 might first infect other agents and then will update her status
-            elif agent.status in ['i1', 'i2']:
-                # check if the agent is aware that is is infected here and set compliance to 1.0 if so
-                likelihood_awareness = environment.parameters['likelihood_awareness']
-                if np.random.random() < likelihood_awareness and agent.status == 'i2':
-                    agent.compliance = 1.0
-
-                # Infect others / TAG SUSCEPTIBLE AGENTS FOR INFECTION
-                agent.others_infected = 0
-
-                # find indices from neighbour agents
-                household_neighbours = [x for x in environment.network.neighbors(agent.name) if
-                                        environment.agents[x].household_number == agent.household_number and
-                                        environment.agents[x].district == agent.district]
-                other_neighbours = [x for x in environment.network.neighbors(agent.name) if
-                                    environment.agents[x].household_number != agent.household_number or
-                                    environment.agents[x].district != agent.district]
-
-                # depending on compliance, the amount of non-household contacts an agent can visit is reduced
-                visiting_r_contacts_multiplier = environment.parameters["visiting_recurring_contacts_multiplier"][t]
-                compliance_term_contacts = (1 - visiting_r_contacts_multiplier) * (1 - agent.compliance)
-
-                # step 1 planned contacts is shaped by
-                if other_neighbours:
-                    planned_contacts = int(round(len(other_neighbours
-                                                     ) * (visiting_r_contacts_multiplier + compliance_term_contacts)))
-                else:
-                    planned_contacts = 0
-
-                # step 2 by gathering max contacts
-                gathering_max_contacts = environment.parameters['gathering_max_contacts']
-                if gathering_max_contacts != float('inf'):
-                    gathering_max_contacts = round(
-                        gathering_max_contacts * (1 + (1 - (environment.stringency_index[t] / 100))))
-                    individual_max_contacts = int(round(gathering_max_contacts * (1 + (1 - agent.compliance))))
-                else:
-                    individual_max_contacts = gathering_max_contacts
-
-                if planned_contacts > individual_max_contacts:
-                    other_neighbours = random.sample(other_neighbours, individual_max_contacts)
-                else:
-                    other_neighbours = random.sample(other_neighbours, planned_contacts)
-
-                # step 3 combine household neighbours with other neighbours
-                neighbours_from_graph = household_neighbours + other_neighbours
-                # step 4 find the corresponding agents and add them to a list to infect
-                if agent.compliance == 1.0:
-                    neighbours_to_infect = [environment.agents[idx] for idx in household_neighbours]
-                else:
-                    neighbours_to_infect = [environment.agents[idx] for idx in neighbours_from_graph]
-                # step 4 let these agents be infected (with random probability
-                physical_distancing_multiplier = environment.parameters["physical_distancing_multiplier"]
-                for neighbour in neighbours_to_infect:
-                    if neighbour.household_number == agent.household_number and neighbour.district == agent.district:
-                        compliance_term_phys_dis = 0.0  # (1 - physical_distancing_multiplier)
-                        compliance_term_phys_dis_neighbour = 0.0
-                    else:
-                        compliance_term_phys_dis = (1 - physical_distancing_multiplier) * (1 - agent.compliance)
-                        compliance_term_phys_dis_neighbour = (1 - physical_distancing_multiplier) * (
-                                    1 - neighbour.compliance)
-
-                    if neighbour.status == 's' and np.random.random() < (
-                            environment.parameters['probability_transmission'] * (
-                            physical_distancing_multiplier + compliance_term_phys_dis) * (
-                                    physical_distancing_multiplier + compliance_term_phys_dis_neighbour)):
-                        neighbour.period_to_become_infected = t + 1
-                        agent.others_infected += 1
-                        agent.others_infects_total += 1
-
-                # update current status based on category
-                if agent.status == 'i1':
-                    agent.asymptomatic_days += 1
-                    # asymptomatic agents all recover after some time
-                    if agent.asymptomatic_days > environment.parameters["asymptom_days"]:
-                        # calculate R0 here if the first agent recovers
-                        if calculate_r_naught and agent in initial_infected:
-                            print(t, ' patient zero recovered or dead with R0 = ', agent.others_infects_total)
-                            return agent.others_infects_total
-
-                        agent.status = 'r'
-                        sick_without_symptoms.remove(agent)
-                        recovered.append(agent)
-
-                elif agent.status == 'i2':
-                    agent.sick_days += 1
-                    # some symptomatic agents recover
-                    if agent.sick_days > environment.parameters["symptom_days"]:
-                        if np.random.random() < environment.parameters["probability_critical"][agent.age_group]:
-                            agent.status = 'c'
-                            sick_with_symptoms.remove(agent)
-                            critical.append(agent)
-                        else:
-                            # calculate R0 here if the first agent recovers
-                            if calculate_r_naught and agent in initial_infected:
-                                print(t, ' patient zero recovered or dead with R0 = ', agent.others_infects_total)
-                                return agent.others_infects_total
-                            agent.status = 'r'
-                            sick_with_symptoms.remove(agent)
-                            recovered.append(agent)
-
-            elif agent.status == 'c':
-                agent.compliance = 1.0
-                agent.critical_days += 1
-                # some agents in critical status will die, the rest will recover
-                if agent.critical_days > environment.parameters["critical_days"]:
-                    # calculate R0 here if the first agent recovers or dies
-                    if calculate_r_naught and agent in initial_infected:
-                        print(t, ' patient zero recovered or dead with R0 = ', agent.others_infects_total)
-                        return agent.others_infects_total
-
-                    if np.random.random() < (environment.parameters["probability_to_die"][
-                                agent.age_group] * health_overburdened_multiplier):
-                        agent.status = 'd'
-                        critical.remove(agent)
-                        dead.append(agent)
-                    else:
-                        agent.status = 'r'
-                        critical.remove(agent)
-                        recovered.append(agent)
-
-            elif agent.status == 'r':
-                agent.days_recovered += 1
-                if np.random.random() < (environment.parameters["probability_susceptible"] * agent.days_recovered):
-                    recovered.remove(agent)
-                    agent.status = 's'
-                    susceptible.append(agent)
-
-            compliance.append(agent.compliance)
-
-        # New infections
-        if t == environment.parameters['time_4_new_infections']:
-            if environment.parameters['new_infections_scenario'] == 'initial':
-                cases = [x for x in initial_infections['Cases']]
-                probabilities_second_infection_district = [float(i) / sum(cases) for i in cases]
-                # select districts with probability
-                chosen_districts = list(np.random.choice(environment.districts,
-                                                         environment.parameters['second_infection_n'],
-                                                         p=probabilities_second_infection_district))
-                # count how often a district is in that list
-                chosen_districts = {distr: min(len(environment.district_agents[distr]),
-                                               chosen_districts.count(distr)) for distr in chosen_districts}
-
-            elif environment.parameters['new_infections_scenario'] == 'random':
-                cases = [1 for x in initial_infections['Cases']]
-                probabilities_second_infection_district = [float(i) / sum(cases) for i in cases]
-                # select districts with probability
-                chosen_districts = list(np.random.choice(environment.districts,
-                                                         environment.parameters['second_infection_n'],
-                                                         p=probabilities_second_infection_district))
-                # count how often a district is in that list
-                chosen_districts = {distr: min(len(environment.district_agents[distr]),
-                                               chosen_districts.count(distr)) for distr in chosen_districts}
-            else:
-                chosen_districts = []
-
-            for district in chosen_districts:
-                # infect appropriate number of random agents
-                chosen_agents = np.random.choice(environment.district_agents[district], chosen_districts[district],
-                                                 replace=False)
-                categories = ['e', 'i1', 'i2']
-                for chosen_agent in chosen_agents:
-                    if chosen_agent.status == 's':
-                        new_status = random.choice(categories)
-                        chosen_agent.status = new_status
-                        if new_status == 'e':
-                            chosen_agent.incubation_days = np.random.randint(0, environment.parameters['exposed_days'])
-                            exposed.append(chosen_agent)
-                        elif new_status == 'i1':
-                            chosen_agent.asymptomatic_days = np.random.randint(0,
-                                                                               environment.parameters['asymptom_days'])
-                            sick_without_symptoms.append(chosen_agent)
-                        elif new_status == 'i2':
-                            chosen_agent.sick_days = np.random.randint(0, environment.parameters['symptom_days'])
-                            sick_with_symptoms.append(chosen_agent)
-
-                        susceptible.remove(chosen_agent)
-
-        if data_output == 'network':
-            environment.infection_states.append(environment.store_network())
-        elif data_output == 'csv':
-            environment.write_status_location(t, seed, data_folder)
-        elif data_output == 'csv-light':
-            # save only the total quantity of agents per category
-            for key, quantity in zip(['e', 's', 'i1', 'i2',
-                                      'c', 'r', 'd'],
-                                     [exposed, susceptible, sick_without_symptoms, sick_with_symptoms,
-                                      critical, recovered, dead]):
-                environment.infection_quantities[key].append(len(quantity))
-            environment.infection_quantities['compliance'].append(np.mean(compliance))
+    # Simulate the model
+    environment = updater(environment=environment, initial_infections=initial_infections, seed=int(seed),
+                          data_folder=output_folder_path,
+                          data_output=environment.parameters["data_output"])
 
     return environment

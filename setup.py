@@ -22,11 +22,11 @@ dependency_links = [x.strip().replace('git+', '') for x in all_reqs \
 setup(
     name='sabcom',
     description='SABCOM is an open source, easy-to-use, spatial network, agent-based, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities.',
-    version='0.19.1a',
+    version='0.30a',
     packages=find_packages(),  # list of all packages
     install_requires=['joblib', 'SALib', 'click', 'decorator', 'networkx', 'numpy', 'pandas', 'python-dateutil',
-                      'pytz', 'scikit-learn', 'scipy', 'sklearn', 'threadpoolctl', 'xlrd'],#install_requires,
-    python_requires='>=3.6', # any python greater than 3.6
+                      'pytz', 'scikit-learn', 'scipy', 'sklearn', 'threadpoolctl', 'xlrd'],
+    python_requires='>=3.6',
     entry_points='''
     [console_scripts]
     sabcom=sabcom.__main__:main
@@ -38,7 +38,6 @@ setup(
     license='MIT',
     url='https://github.com/blackrhinoabm/sabcom',
     download_url='https://github.com/blackrhinoabm/sabcom/archive/1.0.0.tar.gz',
-    #dependency_links=['https://github.com/blackrhinoabm/sabcom/master/#egg=sabcom'], #dependency_links,
     author_email='joeri.schasfoort@uct.ac.za',
     classifiers=[
         "License :: OSI Approved :: MIT License",
