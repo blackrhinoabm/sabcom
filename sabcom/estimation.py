@@ -35,7 +35,7 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
         if name == 'total_initial_infections':
             initial_infections = par
         else:
-            vis_rec = None
+            initial_infections = None
 
     for key in sensitivity_parameters:
         param_file[key] = sensitivity_parameters[key]
