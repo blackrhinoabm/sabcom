@@ -356,7 +356,10 @@ def estimate(**kwargs):
     click.echo('Estimated parameter values are {}'.format(estimated_parameters['estimates']))
     click.echo('Estimated parameter cost is {}'.format(average_costs[lowest_cost_idx]))
 
-    parameters_path = os.path.join(kwargs.get('input_folder_path'), 'parameters.json')
+    if kwargs.get('sensitivity_config_file_path'):
+        parameters_path = kwargs.get('sensitivity_config_file_path')
+    else:
+        parameters_path = os.path.join(kwargs.get('input_folder_path'), 'parameters.json')
     with open(parameters_path) as json_file:
         standard_params = json.load(json_file)
 
