@@ -85,6 +85,13 @@ def runner(**kwargs):
         logging.debug(
             'Second infection number has been set to {}'.format(environment.parameters['second_infection_n']))
 
+    if kwargs.get('learning_scenario'):
+        environment.parameters['learning_scenario'] = kwargs.get('learning_scenario')
+        click.echo(
+            'learning_scenario has been set to {}'.format(environment.parameters['learning_scenario']))
+        logging.debug(
+            'learning_scenario has been set to {}'.format(environment.parameters['learning_scenario']))
+
     if kwargs.get('time_4_new_infections'):
         environment.parameters['time_4_new_infections'] = kwargs.get('time_4_new_infections')
         click.echo(

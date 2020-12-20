@@ -93,7 +93,10 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
             other_neighbours = []
             likelihood_to_meet_neighbours = []
             total_compliance = []
+            critical_or_sick_detected = False
             for nb in environment.network.neighbors(agent.name):
+                if environment.agents[nb].status in ['c', 'd']: #TODO debug!
+                    critical_or_sick_detected = True
                 total_compliance.append(environment.agents[nb].previous_compliance)
 
                 # make a distinction between household and non-household neighbours
@@ -109,7 +112,7 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                             visiting_r_contacts_multiplier + neighbour_compliance_term)
                     likelihood_to_meet_neighbours.append(likelihood_to_meet)
             if total_compliance:
-                neighbour_signal = np.mean(total_compliance)
+                neighbour_signal = np.mean(total_compliance) # TODO change code her?
             else:
                 neighbour_signal = private_signal
 
@@ -124,6 +127,10 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
             agent.compliance = (1 - agent.informality) * \
                                (environment.parameters['weight_private_signal'] * private_signal +
                                 (1 - environment.parameters['weight_private_signal']) * neighbour_signal)
+
+            # TODO debug!!!
+            if environment.parameters['learning_scenario'] == 'lexicographic' and critical_or_sick_detected:
+                agent.compliance = 1.0
 
             # 4.3.3 update the disease status of the agent and possibly infect others
             if agent.status == 's' and agent.period_to_become_infected == t:

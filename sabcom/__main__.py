@@ -42,6 +42,8 @@ def main():
               type=click.Choice(['csv-light', 'csv', 'network'],  case_sensitive=False,))
 @click.option('--scenario', '-sc', default='no-intervention', show_default=True,
               type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
+@click.option('--learning_scenario', '-lsc', default='degroot', show_default=True,
+              type=click.Choice(['degroot', 'lexicographic'],  case_sensitive=False,))
 @click.option('--days', '-day', default=None, type=int, required=False,
               help="integer that sets the number of simulation days")
 @click.option('--probability_transmission', '-pt', default=None, type=float, required=False,
@@ -273,6 +275,8 @@ def sample(**kwargs):
               help="This should contain all necessary input files, specifically an initialisation folder")
 @click.option('--scenario', '-sc', default='no-intervention', show_default=True,
               type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
+@click.option('--learning_scenario', '-lsc', default='degroot', show_default=True,
+              type=click.Choice(['degroot', 'lexicographic'],  case_sensitive=False,))
 @click.option('--problems_file_path', '-pfp', type=click.Path(exists=True), required=True,
               help="leads to a json file that was generated using the sample function.")
 @click.option('--n_seeds', '-n', type=int, default=1, required=False,
@@ -313,6 +317,13 @@ def estimate(**kwargs):
     with open(kwargs.get('problems_file_path')) as json_file:
         problems = json.load(json_file)
 
+    # TODO consider this
+    # if 'lockdown_days' in problems[0]['names']:
+    #     stringency_index = [100.0 for x in range(optimal_lockdown_days)]
+    #     # then update stringency index
+
+
+
     # and load optional sensitivity parameters
     # update optional parameters
     sensitivity_parameters = {}
@@ -339,7 +350,8 @@ def estimate(**kwargs):
         names = [x for x in pr['names']]
 
         args = (kwargs.get('input_folder_path'), kwargs.get('n_seeds'),
-                kwargs.get('output_folder_path'), kwargs.get('scenario'), names, sensitivity_parameters)
+                kwargs.get('output_folder_path'), kwargs.get('scenario'),
+                names, sensitivity_parameters, kwargs.get('learning_scenario'))
 
         output = constrNM(ls_model_performance, init_vars, LB, UB, args=args,
                           maxiter=kwargs.get('iterations'), full_output=True)
@@ -356,7 +368,10 @@ def estimate(**kwargs):
     click.echo('Estimated parameter values are {}'.format(estimated_parameters['estimates']))
     click.echo('Estimated parameter cost is {}'.format(average_costs[lowest_cost_idx]))
 
-    parameters_path = os.path.join(kwargs.get('input_folder_path'), 'parameters.json')
+    if kwargs.get('sensitivity_config_file_path'):
+        parameters_path = kwargs.get('sensitivity_config_file_path')
+    else:
+        parameters_path = os.path.join(kwargs.get('input_folder_path'), 'parameters.json')
     with open(parameters_path) as json_file:
         standard_params = json.load(json_file)
 
