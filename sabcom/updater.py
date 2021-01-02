@@ -95,7 +95,7 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
             total_compliance = []
             critical_or_sick_detected = False
             for nb in environment.network.neighbors(agent.name):
-                if environment.agents[nb].status in ['c', 'd']: #TODO debug!
+                if environment.agents[nb].status in ['c', 'd']:
                     critical_or_sick_detected = True
                 total_compliance.append(environment.agents[nb].previous_compliance)
 
@@ -112,7 +112,7 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                             visiting_r_contacts_multiplier + neighbour_compliance_term)
                     likelihood_to_meet_neighbours.append(likelihood_to_meet)
             if total_compliance:
-                neighbour_signal = np.mean(total_compliance) # TODO change code her?
+                neighbour_signal = np.mean(total_compliance)
             else:
                 neighbour_signal = private_signal
 
