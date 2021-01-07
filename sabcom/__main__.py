@@ -60,6 +60,8 @@ def main():
               type=click.Choice(['None', 'initial', 'random'],  case_sensitive=False,))
 @click.option('--sensitivity_config_file_path', '-scf', type=click.Path(exists=True), required=False,
               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
+@click.option('--save_folder_path', '-save', type=click.Path(exists=False), required=False,
+              help="If this argument is given, the environment will be saved after the simulation as a pickle file")
 def simulate(**kwargs):
     """
     This function is used to run / simulate the model. It will first load and, optionally, change the initialisation.
@@ -113,6 +115,20 @@ def simulate(**kwargs):
     elif environment.parameters["data_output"] == 'csv-light':
         pd.DataFrame(environment.infection_quantities).to_csv(os.path.join(output_folder_path,
                                                                            'seed{}quantities_state_time.csv'.format(seed)))
+
+    # in case the environment needs to be saved after simulation TODO debug!
+    if kwargs.get('save_folder_path'):
+        folder_path = kwargs.get('save_folder_path')
+
+        if not os.path.exists('{}'.format(folder_path)):
+            os.makedirs('{}'.format(folder_path))
+            click.echo('Created save folder at {}'.format(folder_path))
+
+        # save environment objects as pickls
+        file_name = os.path.join(folder_path, "seed_{}.pkl".format(str(seed)))
+        save_objects = open(file_name, 'wb')
+        pickle.dump([environment, seed], save_objects)
+        save_objects.close()
 
     end = time.time()
     hours_total, rem_total = divmod(end - start, 3600)
