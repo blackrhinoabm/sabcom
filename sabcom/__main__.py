@@ -62,6 +62,8 @@ def main():
               help="Config file that contains parameter combinations for sensitivity analysis on HPC")
 @click.option('--save_folder_path', '-save', type=click.Path(exists=False), required=False,
               help="If this argument is given, the environment will be saved after the simulation as a pickle file")
+@click.option('--initial_seeds_folder', '-init', type=click.Path(exists=True), required=False,
+              help='used to specify folder where initialisation pkl files are, if not in default location')
 def simulate(**kwargs):
     """
     This function is used to run / simulate the model. It will first load and, optionally, change the initialisation.
