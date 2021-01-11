@@ -307,6 +307,8 @@ def sample(**kwargs):
               help="the estimated parameters will be deposited in this folder")
 @click.option('--sensitivity_config_file_path', '-scf', required=False,
               help="A path to a json file with parameters that need to be updated irrespective of the calibration")
+@click.option('--initial_seeds_folder', '-init', type=click.Path(exists=True), required=False,
+              help='used to specify folder where initialisation pkl files are, if not in default location')
 def estimate(**kwargs):
     """
     Estimates uncertain parameters with Nelder-Mead optimisation by fitting simulated deaths to observed excess deaths
@@ -335,14 +337,6 @@ def estimate(**kwargs):
     with open(kwargs.get('problems_file_path')) as json_file:
         problems = json.load(json_file)
 
-    # TODO consider this
-    # if 'lockdown_days' in problems[0]['names']:
-    #     stringency_index = [100.0 for x in range(optimal_lockdown_days)]
-    #     # then update stringency index
-
-
-
-    # and load optional sensitivity parameters
     # update optional parameters
     sensitivity_parameters = {}
     if kwargs.get('sensitivity_config_file_path'):
@@ -358,6 +352,11 @@ def estimate(**kwargs):
                 for param in config_file:
                     sensitivity_parameters[param] = config_file[param]
 
+    if kwargs.get('initial_seeds_folder'):
+        inititialisation_path = kwargs.get('initial_seeds_folder')
+    else:
+        inititialisation_path = os.path.join(kwargs.get('input_folder_path'), 'initialisations')
+
     # 2 for every initial parameter set find optimal output
     estimated_parameters = []
     average_costs = []
@@ -369,7 +368,7 @@ def estimate(**kwargs):
 
         args = (kwargs.get('input_folder_path'), kwargs.get('n_seeds'),
                 kwargs.get('output_folder_path'), kwargs.get('scenario'),
-                names, sensitivity_parameters, kwargs.get('learning_scenario'))
+                names, sensitivity_parameters, kwargs.get('learning_scenario'), inititialisation_path)
 
         output = constrNM(ls_model_performance, init_vars, LB, UB, args=args,
                           maxiter=kwargs.get('iterations'), full_output=True)
