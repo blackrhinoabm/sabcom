@@ -26,7 +26,19 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
     sick_with_symptoms = []
     sick_without_symptoms = []
     exposed = []
-    susceptible = [agent for agent in environment.agents]
+    susceptible = []#[agent for agent in environment.agents]
+    # add agents to their respective lists
+    for agent in environment.agents:
+        # only keep recoverd and dead agents in case of a second wave simulation
+        if agent.status in ['e', 'c', 'i1', 'i2', 'r']:
+            agent.status = 'r'
+            recovered.append(agent)
+        elif agent.status == 'd':
+            dead.append(agent)
+        elif agent.status == 's':
+            susceptible.append(agent)
+        else:
+            print('agent could not be placed in status list')
 
     # 3 Initialisation of infections
     initial_infections = initial_infections.sort_index()
@@ -43,7 +55,9 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
 
     for district in chosen_districts:
         # 3.3 infect appropriate number of random agents
-        chosen_agents = np.random.choice(environment.district_agents[district], chosen_districts[district],
+        susceptible_agents = [agent for agent in environment.district_agents[district] if agent.status == 's']
+        # only select susceptible agents for initial infection
+        chosen_agents = np.random.choice(susceptible_agents, chosen_districts[district],
                                          replace=False)
         categories = ['e', 'i1', 'i2']
         # 3.4 and give them a random status exposed, asymptomatic, or symptomatic with a random number of days

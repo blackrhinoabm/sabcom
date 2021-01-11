@@ -44,6 +44,10 @@ def runner(**kwargs):
     # add contacts section to csv light DataFrame TODO remove after re-initialisation
     environment.infection_quantities['contacts'] = []
 
+    if kwargs.get('initial_seeds_folder'): #TODO debug
+        environment.infection_quantities = {key: [] for key in
+                                            ['e', 's', 'i1', 'i2', 'c', 'r', 'd', 'compliance', 'contacts']}
+
     # initialise logging
     logging.basicConfig(filename=os.path.join(output_folder_path,
                                               'simulation_seed{}.log'.format(seed)), filemode='w', level=logging.DEBUG)
