@@ -24,7 +24,12 @@ def runner(**kwargs):
     input_folder_path = kwargs.get('input_folder_path')
 
     # formulate paths to initialisation folder and seed within input folder
-    inititialisation_path = os.path.join(input_folder_path, 'initialisations')
+    if kwargs.get('initial_seeds_folder'):
+        inititialisation_path = kwargs.get('initial_seeds_folder')
+        click.echo('Modified initialisations path: {}'.format(inititialisation_path))
+    else:
+        inititialisation_path = os.path.join(input_folder_path, 'initialisations')
+
     seed_path = os.path.join(inititialisation_path, 'seed_{}.pkl'.format(seed))
     if not os.path.exists(seed_path):
         click.echo(seed_path + ' not found', err=True)

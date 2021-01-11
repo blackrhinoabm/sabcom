@@ -9,7 +9,7 @@ import scipy.optimize as sciopt
 from sabcom.runner import runner
 
 
-def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder_path, scenario, names, sensitivity_parameters, learning_scenario):
+def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder_path, scenario, names, sensitivity_parameters, learning_scenario, inititialisation_path):
     """
     Simple function calibrate uncertain model parameters
     :param input_parameters: list of input parameters
@@ -50,7 +50,6 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
     costs = []
     for seed in range(mc_runs):
         # check if the seed can be found in the input folder, if not skip seed
-        inititialisation_path = os.path.join(input_folder_path, 'initialisations')
         seed_path = os.path.join(inititialisation_path, 'seed_{}.pkl'.format(seed))
 
         if not os.path.exists('{}'.format(seed_path)):
@@ -65,7 +64,8 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
                              initial_infections=initial_infections,
                              visiting_recurring_contacts_multiplier=vis_rec,
                              stringency_changed=True,
-                             sensitivity_config_file_path='estimation_parameters.json')
+                             sensitivity_config_file_path='estimation_parameters.json',
+                             initial_seeds_folder=inititialisation_path)
 
         sim_dead_curve = pd.DataFrame(environment.infection_quantities)['d'] * (empirical_population / param_file['number_of_agents'])
         sim_dead_curve = sim_dead_curve.diff().ewm(span=10).mean()
