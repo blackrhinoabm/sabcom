@@ -48,6 +48,8 @@ def main():
               help="integer that sets the number of simulation days")
 @click.option('--probability_transmission', '-pt', default=None, type=float, required=False,
               help="change the probability of transmission between two agents.")
+@click.option('--newly_susceptible_percentage', '-nsp', default=None, type=float, required=False,
+              help="The percentage of agents that should be made susceptible again if recoverd from previous strain")
 @click.option('--visiting_recurring_contacts_multiplier', '-cont', default=None, type=float, required=False,
               help="change the percentage of contacts agents may have.")
 @click.option('--initial_infections', '-ini', default=None, type=int, required=False,
@@ -309,6 +311,8 @@ def sample(**kwargs):
               help="A path to a json file with parameters that need to be updated irrespective of the calibration")
 @click.option('--initial_seeds_folder', '-init', type=click.Path(exists=True), required=False,
               help='used to specify folder where initialisation pkl files are, if not in default location')
+@click.option('--newly_susceptible_percentage', '-nsp', type=float, required=False,
+              help="The percentage of agents that should be made susceptible again if recoverd from previous strain")
 def estimate(**kwargs):
     """
     Estimates uncertain parameters with Nelder-Mead optimisation by fitting simulated deaths to observed excess deaths
@@ -368,7 +372,8 @@ def estimate(**kwargs):
 
         args = (kwargs.get('input_folder_path'), kwargs.get('n_seeds'),
                 kwargs.get('output_folder_path'), kwargs.get('scenario'),
-                names, sensitivity_parameters, kwargs.get('learning_scenario'), inititialisation_path)
+                names, sensitivity_parameters, kwargs.get('learning_scenario'),
+                inititialisation_path, kwargs.get('newly_susceptible_percentage'))
 
         output = constrNM(ls_model_performance, init_vars, LB, UB, args=args,
                           maxiter=kwargs.get('iterations'), full_output=True)
@@ -445,6 +450,9 @@ def demodel(**kwargs):
         for param in parameters:
             logging.debug('Parameter {} is {}'.format(param, parameters[param]))
 
+    # CONTACT Rate TODO DEBUG
+    contact_rate = parameters["stringency_index"]
+
     # arguments = city
     initial_infected = len(parameters['total_initial_infections'])
     simulation_time = parameters['time']  # total number of period simulated
@@ -507,16 +515,18 @@ def demodel(**kwargs):
     contact_probability_matrix = np.divide(contact_matrix,
                                            age_row_vector)  # X(i,j)=C(i,j)/N_age(j) - entries now measure fraction of each age group contacted on average per day
 
-    # Compute infection_rate from R0, exit_rate_asymptomatic, e_S and dominant eigenvalue of matrix X(i,j)*N_age(i)
+    # Compute transmissibility from R0, exit_rate_asymptomatic, e_S and dominant eigenvalue of matrix X(i,j)*N_age(i)
     age_column_vector = np.array(age_groups)
     age_column_vector.shape = (9, 1)
     eigen_values, eigen_vectors = np.linalg.eig(np.multiply(contact_probability_matrix, age_column_vector))
     dom_eig_val = max(eigen_values)
 
-    infection_rate = (((1 - probability_symptomatic
+    transmissibility = (((1 - probability_symptomatic
                         ) * exit_rate_asymptomatic + probability_symptomatic * exit_rate_symptomatic) * r_zero
                       ) / dom_eig_val
-    click.echo('infection rate (beta) is {}'.format(round(infection_rate, 4)))
+    click.echo('transmissibility (beta) is {}'.format(round(transmissibility, 4)))
+    # TODO add here
+    # transmissibility = kwargs.get('transmissibility') #initial_recovered
 
     # Set initial conditions
     # spread initial infections (exposed individuals) across age groups equally
@@ -538,7 +548,7 @@ def demodel(**kwargs):
 
     # Integrate the differential equations over the time grid, t.
     integrals = odeint(differential_equations_model, initial_compartments, time_points, args=(
-        infection_rate, contact_probability_matrix, exit_rate_exposed, exit_rate_asymptomatic, exit_rate_symptomatic,
+        transmissibility, contact_probability_matrix, exit_rate_exposed, exit_rate_asymptomatic, exit_rate_symptomatic,
         exit_rate_critical, probability_symptomatic, probability_critical, probability_to_die, hospital_capacity))
 
     # integrals is T by 63, needs to be split in compartments, each disease compartments has 9 age groups

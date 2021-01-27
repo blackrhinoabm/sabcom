@@ -3,6 +3,7 @@ import os
 import pickle
 import json
 import logging
+import numpy as np
 import pandas as pd
 import scipy.stats as stats
 
@@ -44,7 +45,7 @@ def runner(**kwargs):
     # add contacts section to csv light DataFrame TODO remove after re-initialisation
     environment.infection_quantities['contacts'] = []
 
-    if kwargs.get('initial_seeds_folder'): #TODO debug
+    if kwargs.get('initial_seeds_folder'):
         environment.infection_quantities = {key: [] for key in
                                             ['e', 's', 'i1', 'i2', 'c', 'r', 'd', 'compliance', 'contacts']}
 
@@ -153,7 +154,7 @@ def runner(**kwargs):
     scenario = kwargs.get('scenario', 'no-intervention')  # if no input was provided use no-intervention
     click.echo('scenario is {}'.format(scenario))
     if scenario == 'no-intervention':
-        environment.parameters['stringency_index'] = [0.0 for x in environment.parameters['stringency_index']] # TODO debug
+        environment.parameters['stringency_index'] = [0.0 for x in environment.parameters['stringency_index']]
         environment.stringency_index = environment.parameters['stringency_index']
         environment.parameters['informality_dummy'] = 0.0
     elif scenario == 'lockdown':
@@ -173,6 +174,17 @@ def runner(**kwargs):
         if sringency_index_updated:
             agent.compliance = environment.stringency_index[0] / 100 + shocks[i]
             agent.previous_compliance = agent.compliance
+
+        if agent.status in ['e', 'i1', 'i2', 'c']:
+            agent.status = 'r'
+
+        # next option update susceptibility ...  TODO debug!
+        if kwargs.get('newly_susceptible_percentage'):
+            if agent.status == 'r':
+                if np.random.random() < kwargs.get('newly_susceptible_percentage'):
+                   agent.status = 's'
+                   logging.debug(
+                       'Agent {} status has been changed from r to s'.format(agent))
 
     initial_infections = pd.read_csv(os.path.join(input_folder_path, 'f_initial_cases.csv'), index_col=0)
     environment.parameters["data_output"] = kwargs.get('data_output_mode',

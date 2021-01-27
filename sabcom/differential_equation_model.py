@@ -1,10 +1,11 @@
 import numpy as np
 
 
-def differential_equations_model(compartments, t, infection_rate, contact_probability_matrix,
+def differential_equations_model(compartments, t, transmissibility, contact_probability_matrix,
                                  exit_rate_exposed, exit_rate_asymptomatic,
                                  exit_rate_symptomatic, exit_rate_critical,
-                                 probability_symptomatic, probability_critical, probability_to_die, hospital_capacity):
+                                 probability_symptomatic, probability_critical, probability_to_die, hospital_capacity,
+                                 time_varying_contact_rates):
     # reshape 63 element vector Z into [7 x 9] matrix
     compartments = compartments.reshape(7, -1)
 
@@ -17,11 +18,12 @@ def differential_equations_model(compartments, t, infection_rate, contact_probab
     if critical.sum() > hospital_capacity:
         health_overburdened_multiplier = 1.79 #TODO add this as a parameter
         probability_to_die = np.minimum(health_overburdened_multiplier * probability_to_die, np.ones(9))
-        # print(t)
+
+    contact_rate = time_varying_contact_rates[int(t)] ** 2
 
     # construct differential equation evolution equations
-    delta_susceptible = -infection_rate * susceptible * contact_probability_matrix.dot((asymptomatic + symptomatic))
-    delta_exposed = infection_rate * susceptible * contact_probability_matrix.dot((
+    delta_susceptible = -transmissibility * contact_rate * susceptible * contact_probability_matrix.dot((asymptomatic + symptomatic))
+    delta_exposed = transmissibility * contact_rate * susceptible * contact_probability_matrix.dot((
             asymptomatic + symptomatic)) - exit_rate_exposed * exposed
     delta_asymptomatic = (1 - probability_symptomatic
                           ) * exit_rate_exposed * exposed - exit_rate_asymptomatic * asymptomatic

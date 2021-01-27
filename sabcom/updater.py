@@ -174,7 +174,7 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                 # Infect others / TAG SUSCEPTIBLE AGENTS FOR INFECTION
                 agent.others_infected = 0
                 for nb in environment.network.neighbors(agent.name):
-                    if environment.agents[nb].status == 's':
+                    if environment.agents[nb].status == 's': # TODO possibly add in ['s', 'r']
                         if environment.agents[nb].name in other_neighbours:
                             # for other neighbours determine the likelihood to meet
                             neighbour_compliance_term = (1 - visiting_r_contacts_multiplier) * (
@@ -229,9 +229,9 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
 
             elif agent.status == 'r':
                 agent.days_recovered += 1
-                if np.random.random() < (environment.parameters["probability_susceptible"] * agent.days_recovered):
+                if np.random.random() < (environment.parameters["probability_susceptible"] * agent.days_recovered): # TODO possibly add:    and agent.period_to_become_infected == t
                     recovered.remove(agent)
-                    agent.status = 's'
+                    agent.status = 's' # TODO possibly make this i1
                     susceptible.append(agent)
 
             # record compliance

@@ -9,7 +9,8 @@ import scipy.optimize as sciopt
 from sabcom.runner import runner
 
 
-def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder_path, scenario, names, sensitivity_parameters, learning_scenario, inititialisation_path):
+def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder_path, scenario, names,
+                         sensitivity_parameters, learning_scenario, inititialisation_path, newly_susceptible_percentage):
     """
     Simple function calibrate uncertain model parameters
     :param input_parameters: list of input parameters
@@ -63,6 +64,7 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
                              learning_scenario=learning_scenario,
                              initial_infections=initial_infections,
                              visiting_recurring_contacts_multiplier=vis_rec,
+                             newly_susceptible_percentage=newly_susceptible_percentage,
                              stringency_changed=True,
                              sensitivity_config_file_path='estimation_parameters.json',
                              initial_seeds_folder=inititialisation_path)
