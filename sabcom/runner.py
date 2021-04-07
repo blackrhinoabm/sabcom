@@ -4,6 +4,7 @@ import pickle
 import json
 import logging
 import numpy as np
+import random
 import pandas as pd
 import scipy.stats as stats
 
@@ -129,6 +130,39 @@ def runner(**kwargs):
         click.echo('Initial infections have been set to {}'.format(environment.parameters['total_initial_infections']))
         logging.debug(
             'Initial infections have been set to {}'.format(environment.parameters['total_initial_infections']))
+
+    # TODO debug!!! add extra parameters here!
+    if kwargs.get('vaccination_scenario'):
+        scenario = kwargs.get('vaccination_scenario')
+        if scenario == 'risk_based':
+            environment.parameters['agent_priority_list'] = ['age_80_plus', 'age_70_80',  'age_60_70',  'age_50_60',
+                                                             'age_40_50',  'age_30_40',  'age_20_30',  'age_10_20',
+                                                             'age_0_10']
+        elif scenario == 'connection_based':
+            environment.parameters['agent_priority_list'] = ['age_10_20', 'age_20_30', 'age_30_40',
+                                                             'age_40_50', 'age_0_10', 'age_50_60', 'age_60_70',
+                                                             'age_70_80', 'age_80_plus']
+        else:
+            environment.parameters['agent_priority_list'] = random.sample(['age_80_plus', 'age_70_80', 'age_60_70', 'age_50_60',
+             'age_40_50', 'age_30_40', 'age_20_30', 'age_10_20',
+             'age_0_10'], 9)
+        click.echo('Vaccination scenario is {}'.format(environment.parameters['agent_priority_list']))
+        logging.debug(
+            'Initial infections have been set to {}'.format(environment.parameters['agent_priority_list']))
+
+    else:
+        environment.parameters['agent_priority_list'] = random.sample(['age_80_plus', 'age_70_80', 'age_60_70', 'age_50_60',
+             'age_40_50', 'age_30_40', 'age_20_30', 'age_10_20',
+             'age_0_10'], 9)
+
+
+    # TODO debug!!
+    if kwargs.get('daily_vaccinations'):
+        environment.parameters['daily_vaccinations'] = kwargs.get('daily_vaccinations')
+        click.echo('Vaccination scenario is {}'.format(environment.parameters['daily_vaccinations']))
+        logging.debug(
+            'Initial infections have been set to {}'.format(environment.parameters['daily_vaccinations']))
+
 
     # check if the stringency index has changed in the parameter file
     sringency_index_updated = False

@@ -66,6 +66,10 @@ def main():
               help="If this argument is given, the environment will be saved after the simulation as a pickle file")
 @click.option('--initial_seeds_folder', '-init', type=click.Path(exists=True), required=False,
               help='used to specify folder where initialisation pkl files are, if not in default location')
+@click.option('--vaccination_scenario', '-vsc', default='random', show_default=True,
+              type=click.Choice(['random', 'risk_based', 'connection_based'],  case_sensitive=False,))
+@click.option('--daily_vaccinations', '-dv', default=None, type=int, required=False,
+              help="integer that sets the number of daily vaccines that are available")
 def simulate(**kwargs):
     """
     This function is used to run / simulate the model. It will first load and, optionally, change the initialisation.

@@ -26,9 +26,15 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
     sick_with_symptoms = []
     sick_without_symptoms = []
     exposed = []
-    susceptible = []#[agent for agent in environment.agents]
+    susceptible = []
+
+    # A.1 create age dictionary:
+    ages = {x: [] for x in environment.parameters["probability_critical"].keys()} # TODO debug
+
     # add agents to their respective lists
     for agent in environment.agents:
+        # add agent to ages dictionary
+        ages[agent.age_group].append(agent.name) # TODO debug
         # only keep recoverd and dead agents in case of a second wave simulation
         if agent.status in ['e', 'c', 'i1', 'i2', 'r']:
             agent.status = 'r'
@@ -39,6 +45,18 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
             susceptible.append(agent)
         else:
             print('agent could not be placed in status list')
+
+    # A.3 make list of agents based on agent priority list and flatten TODO debug all of this!!
+    agent_vaccine_list = [ages[x] for x in environment.parameters['agent_priority_list']]
+    agent_vaccine_list = [y for x in agent_vaccine_list for y in x]
+    # A.4 determine which agents will be vaccinated each period
+    vaccines_per_period = int(environment.parameters["daily_vaccinations"])
+    # A.5 create final list of lists using list comprehension
+    vaccines_per_period_list = [agent_vaccine_list[i:i + vaccines_per_period] for i in range(0, len(agent_vaccine_list), vaccines_per_period)]# [agent_vaccine_list[i * vaccines_per_period :(i + 1) * vaccines_per_period ] for i in range((len(agent_vaccine_list) + vaccines_per_period - 1) // vaccines_per_period )]
+    # extend the list ... to periods of time if too short
+    if len(vaccines_per_period_list) < environment.parameters["time"]:
+        for extra_period in range(environment.parameters["time"] - len(vaccines_per_period_list)):
+            vaccines_per_period_list.append([])
 
     # 3 Initialisation of infections
     initial_infections = initial_infections.sort_index()
@@ -142,11 +160,16 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
                                (environment.parameters['weight_private_signal'] * private_signal +
                                 (1 - environment.parameters['weight_private_signal']) * neighbour_signal)
 
-            # TODO debug!!!
             if environment.parameters['learning_scenario'] == 'lexicographic' and critical_or_sick_detected:
                 agent.compliance = 1.0
 
-            # 4.3.3 update the disease status of the agent and possibly infect others
+            # TODO debug! 4.3.3 have agents be vaccinated depending on strategy
+            # TODO Debug vaccinate agent
+            if agent.name in vaccines_per_period_list[t]:
+                if agent.status not in ['d']:
+                    agent.status = 'r'
+
+            # 4.3.4 update the disease status of the agent and possibly infect others
             if agent.status == 's' and agent.period_to_become_infected == t:
                 agent.status = 'e'
                 susceptible.remove(agent)
