@@ -43,7 +43,7 @@ def main():
 @click.option('--scenario', '-sc', default='no-intervention', show_default=True,
               type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
 @click.option('--learning_scenario', '-lsc', default='degroot', show_default=True,
-              type=click.Choice(['degroot', 'lexicographic'],  case_sensitive=False,))
+              type=click.Choice(['degroot', 'lexicographic', 'aggregate'],  case_sensitive=False,))
 @click.option('--days', '-day', default=None, type=int, required=False,
               help="integer that sets the number of simulation days")
 @click.option('--probability_transmission', '-pt', default=None, type=float, required=False,
@@ -70,6 +70,8 @@ def main():
               type=click.Choice(['random', 'risk_based', 'connection_based'],  case_sensitive=False,))
 @click.option('--daily_vaccinations', '-dv', default=None, type=int, required=False,
               help="integer that sets the number of daily vaccines that are available")
+@click.option('--death_response_intensity', '-dri', default=None, type=float, required=False,
+              help="change the impact deaths have on agent compliance between two agents.")
 def simulate(**kwargs):
     """
     This function is used to run / simulate the model. It will first load and, optionally, change the initialisation.
@@ -300,7 +302,7 @@ def sample(**kwargs):
 @click.option('--scenario', '-sc', default='no-intervention', show_default=True,
               type=click.Choice(['no-intervention', 'lockdown', 'ineffective-lockdown'],  case_sensitive=False,))
 @click.option('--learning_scenario', '-lsc', default='degroot', show_default=True,
-              type=click.Choice(['degroot', 'lexicographic'],  case_sensitive=False,))
+              type=click.Choice(['degroot', 'lexicographic', 'aggregate'],  case_sensitive=False,))
 @click.option('--problems_file_path', '-pfp', type=click.Path(exists=True), required=True,
               help="leads to a json file that was generated using the sample function.")
 @click.option('--n_seeds', '-n', type=int, default=1, required=False,
@@ -458,7 +460,7 @@ def demodel(**kwargs):
     contact_rate = parameters["stringency_index"]
 
     # arguments = city
-    initial_infected = len(parameters['total_initial_infections'])
+    initial_infected = parameters['total_initial_infections']
     simulation_time = parameters['time']  # total number of period simulated
 
     # Set Covid-19 Parameters:

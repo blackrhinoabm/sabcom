@@ -37,6 +37,10 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
             initial_infections = par
         else:
             initial_infections = None
+        if name == 'death_response_intensity':
+            dri = par
+        else:
+            dri = None
 
     for key in sensitivity_parameters:
         param_file[key] = sensitivity_parameters[key]
@@ -63,6 +67,7 @@ def ls_model_performance(input_params, input_folder_path, mc_runs, output_folder
                              scenario=scenario,
                              learning_scenario=learning_scenario,
                              initial_infections=initial_infections,
+                             death_response_intensity=dri,
                              visiting_recurring_contacts_multiplier=vis_rec,
                              newly_susceptible_percentage=newly_susceptible_percentage,
                              stringency_changed=True,

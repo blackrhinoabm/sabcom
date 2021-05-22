@@ -27,6 +27,8 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
     sick_without_symptoms = []
     exposed = []
     susceptible = []
+    compartments = [susceptible, exposed, sick_without_symptoms, sick_with_symptoms, critical, recovered, dead]
+    compartment_names = ['s', 'e', 'i1', 'i2', 'c', 'r', 'd']
 
     # A.1 create age dictionary:
     ages = {x: [] for x in environment.parameters["probability_critical"].keys()} # TODO debug
@@ -52,7 +54,10 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
     # A.4 determine which agents will be vaccinated each period
     vaccines_per_period = int(environment.parameters["daily_vaccinations"])
     # A.5 create final list of lists using list comprehension
-    vaccines_per_period_list = [agent_vaccine_list[i:i + vaccines_per_period] for i in range(0, len(agent_vaccine_list), vaccines_per_period)]# [agent_vaccine_list[i * vaccines_per_period :(i + 1) * vaccines_per_period ] for i in range((len(agent_vaccine_list) + vaccines_per_period - 1) // vaccines_per_period )]
+    if vaccines_per_period > 0:
+        vaccines_per_period_list = [agent_vaccine_list[i:i + vaccines_per_period] for i in range(0, len(agent_vaccine_list), vaccines_per_period)]# [agent_vaccine_list[i * vaccines_per_period :(i + 1) * vaccines_per_period ] for i in range((len(agent_vaccine_list) + vaccines_per_period - 1) // vaccines_per_period )]
+    else:
+        vaccines_per_period_list = []
     # extend the list ... to periods of time if too short
     if len(vaccines_per_period_list) < environment.parameters["time"]:
         for extra_period in range(environment.parameters["time"] - len(vaccines_per_period_list)):
@@ -156,18 +161,24 @@ def updater(environment, initial_infections, seed, data_folder='output_data/',
             total_contacts = len(household_neighbours) + (len(other_neighbours) * average_neighbours_met)
             contacts.append(total_contacts)
 
-            agent.compliance = (1 - agent.informality) * \
+            # TODO debug this aggregate learning
+            if environment.parameters['learning_scenario'] == 'aggregate':
+                neighbour_signal = environment.parameters['death_response_intensity'] * ((len(dead) + len(critical) + len(sick_with_symptoms)) / len(environment.agents))
+
+            agent.compliance = min((1 - agent.informality) * \
                                (environment.parameters['weight_private_signal'] * private_signal +
-                                (1 - environment.parameters['weight_private_signal']) * neighbour_signal)
+                                (1 - environment.parameters['weight_private_signal']) * neighbour_signal), 1.0)
 
             if environment.parameters['learning_scenario'] == 'lexicographic' and critical_or_sick_detected:
                 agent.compliance = 1.0
 
             # TODO debug! 4.3.3 have agents be vaccinated depending on strategy
-            # TODO Debug vaccinate agent
+            # TODO Debug if agent properly removed from list
             if agent.name in vaccines_per_period_list[t]:
-                if agent.status not in ['d']:
+                if agent.status in ['s']:
+                    compartments[compartment_names.index(agent.status)].remove(agent) # TODO debug!!
                     agent.status = 'r'
+                    recovered.append(agent)
 
             # 4.3.4 update the disease status of the agent and possibly infect others
             if agent.status == 's' and agent.period_to_become_infected == t:

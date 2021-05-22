@@ -155,13 +155,26 @@ def runner(**kwargs):
              'age_40_50', 'age_30_40', 'age_20_30', 'age_10_20',
              'age_0_10'], 9)
 
+    # TODO debug 2
+    if kwargs.get('death_response_intensity'):
+        environment.parameters['death_response_intensity'] = kwargs.get('death_response_intensity')
+    else:
+        try:
+            click.echo('keeping death response intensity at {}'.format(environment.parameters['death_response_intensity']))
 
-    # TODO debug!!
+        except:
+            environment.parameters['death_response_intensity'] = 0
+            click.echo('No death_response_intensity found... initiating as 0')
+
+
+
     if kwargs.get('daily_vaccinations'):
         environment.parameters['daily_vaccinations'] = kwargs.get('daily_vaccinations')
         click.echo('Vaccination scenario is {}'.format(environment.parameters['daily_vaccinations']))
         logging.debug(
             'Initial infections have been set to {}'.format(environment.parameters['daily_vaccinations']))
+    else:
+        environment.parameters['daily_vaccinations'] = 0
 
 
     # check if the stringency index has changed in the parameter file
