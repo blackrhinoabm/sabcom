@@ -5,7 +5,7 @@
 
 ![](https://cogeorg.github.io/images/black_rhino_logo.jpg)
 
- __The Spatial Agent-Based Covid-19 Model (SABCOM)__
+ __The Social Agent-Based Covid-19 Model (SABCOM)__
 
 SABCOM is an open source, easy-to-use-and-adapt, spatial network, multi-agent, model that can be used to simulate the effects of different lockdown policy measures on the spread of the Covid-19 virus in several (South African) cities. 
 
