@@ -423,8 +423,8 @@ def estimate(**kwargs):
               help="This should contain all necessary input files, specifically a parameter file")
 @click.option('--output_folder_path', '-o', type=click.Path(exists=True), required=True,
               help="All simulation output will be deposited here")
-@click.option('--r_zero', '-rz', type=float, required=True,
-              help="The reproductive rate of the virus in a fully susceptible population")
+@click.option('--transmissibility', '-tr', type=float, required=True,
+              help="The likelihood of one agent transmitting the virus to the next if they are in contact")
 def demodel(**kwargs):
     """
     This function is used to run / simulate a differential equation version of Sabcom.
@@ -439,32 +439,24 @@ def demodel(**kwargs):
     input_folder_path = kwargs.get('input_folder_path')
     output_folder_path = kwargs.get('output_folder_path')
 
-    # logging initialisation
-    logging.basicConfig(filename=os.path.join(output_folder_path,
-                                              'de_model.log'), filemode='w', level=logging.DEBUG)
-    logging.info('Start of DE simulation')
-
     parameters_path = os.path.join(input_folder_path, 'parameters.json')
-
-    if not os.path.exists(parameters_path):
-        click.echo(parameters_path + ' not found', err=True)
-        click.echo('No parameter file found')
-        return
 
     with open(parameters_path) as json_file:
         parameters = json.load(json_file)
         for param in parameters:
             logging.debug('Parameter {} is {}'.format(param, parameters[param]))
 
-    # CONTACT Rate TODO DEBUG
-    contact_rate = parameters["stringency_index"]
+    # CONTACT Rate
+    contact_rate = [x / 100 for x in parameters["stringency_index"]]
+    print(contact_rate)
 
     # arguments = city
     initial_infected = parameters['total_initial_infections']
-    simulation_time = parameters['time']  # total number of period simulated
+    T = len(parameters['stringency_index'])  # for estimation
 
     # Set Covid-19 Parameters:
-    r_zero = kwargs.get('r_zero')
+    # basic reproduction number
+    # r_zero = kwargs.get('r_zero') #initial_recovered
     exposed_days = float(parameters["exposed_days"])
     asymptomatic_days = float(parameters["asymptom_days"])
     symptomatic_days = float(parameters["symptom_days"])
@@ -477,68 +469,70 @@ def demodel(**kwargs):
     exit_rate_critical = 1.0 / critical_days
 
     probability_symptomatic = parameters["probability_symptomatic"]
+    # Probability to become critically ill if symptomatic (source: Verity et al.2020)
     probability_critical = np.array([x for x in parameters["probability_critical"].values()])
+    # Probability to die if critically ill (source: Silal et al.2020)
     probability_to_die = np.array([x for x in parameters["probability_critical"].values()])
 
-    # total population:
+    # Total population:
     district_population = pd.read_csv(os.path.join(input_folder_path, 'f_population.csv'), index_col=0)
     district_population = district_population.values
-    population = district_population.sum()  # sum over wards to obtain city population
+    population = parameters[
+        "empirical_population"]  # district_population.sum()  # sum over wards to obtain city population
 
-    # set city specific parameters
+    # Set city specific parameters
     hospital_capacity = int(round(parameters["health_system_capacity"] * population))
 
-    # population by age group (N_age(i) is the population of age group i)
+    # Population by age group (N_age(i) is the population of age group i)
     ward_age_distribution = pd.read_csv(os.path.join(input_folder_path, 'f_age_distribution.csv'),
                                         index_col=0)  # the datafile contains ward level fractions in each age group
-    age_groups = ward_age_distribution * district_population  # convert to number of people in age group per ward
-    age_groups = age_groups.sum()  # sum over wards
-    age_groups = age_groups.values  # store city level population sizes of each age group
+    N_age = ward_age_distribution * district_population  # convert to number of people in age group per ward
+    N_age = N_age.sum()  # sum over wards
+    N_age = N_age.values  # store city level population sizes of each age group
 
-    # load contact matrices
+    # Load raw contact matrices
     household_contacts = pd.read_csv(os.path.join(input_folder_path, 'f_household_contacts.csv'), index_col=0)
     other_contacts = pd.read_csv(os.path.join(input_folder_path, 'f_nonhousehold_contacts.csv'), index_col=0)
     contact_matrix = household_contacts + other_contacts
     contact_matrix = contact_matrix.values
 
-    # replicate last row and column to change the 8 category contact matrix to a 9 category matrix
+    # Replicate last row and column to change the 8 category contact matrix to a 9 category matrix
     contact_matrix = np.vstack((contact_matrix, contact_matrix[7, 0:8]))
-    last_column = contact_matrix[0:9, 7]
-    last_column.shape = (9, 1)
-    contact_matrix = np.hstack((contact_matrix, last_column))
+    C_last_column = contact_matrix[0:9, 7]
+    C_last_column.shape = (9, 1)
+    contact_matrix = np.hstack((contact_matrix, C_last_column))
 
     # Apply reciprocity correction (see Towers and Feng (2012))
     # C_corrected(j,k) = (C(j,k)*N(j) + C(k,j)*N(k))/(2*N(j))
     for j in range(contact_matrix.shape[0]):
         for k in range(contact_matrix.shape[0]):
-            contact_matrix[j, k] = (contact_matrix[j, k] * age_groups[j] + contact_matrix[
-                k, j] * age_groups[k]) / (2 * age_groups[j])
+            contact_matrix[j, k] = (contact_matrix[j, k] * N_age[j] + contact_matrix[k, j] * N_age[k]) / (2 * N_age[j])
 
     # Scale contact matrix by population size
     # - each column is normalized by the population of that age group: X(i,j)=C(i,j)/N_age(j)
-    age_row_vector = np.array(age_groups)
-    age_row_vector.shape = (1, 9)
-    contact_probability_matrix = np.divide(contact_matrix,
-                                           age_row_vector)  # X(i,j)=C(i,j)/N_age(j) - entries now measure fraction of each age group contacted on average per day
+    N_age_row_vector = np.array(N_age)
+    N_age_row_vector.shape = (1, 9)
+    contact_probability_matrix = np.divide(contact_matrix,  # TODO add here a reduction???
+                                           N_age_row_vector)  # X(i,j)=C(i,j)/N_age(j) - entries now measure fraction of each age group contacted on average per day
 
-    # Compute transmissibility from R0, exit_rate_asymptomatic, e_S and dominant eigenvalue of matrix X(i,j)*N_age(i)
-    age_column_vector = np.array(age_groups)
-    age_column_vector.shape = (9, 1)
-    eigen_values, eigen_vectors = np.linalg.eig(np.multiply(contact_probability_matrix, age_column_vector))
+    # Compute infection_rate from R0, exit_rate_asymptomatic, e_S and dominant eigenvalue of matrix X(i,j)*N_age(i)
+    N_age_column_vector = np.array(N_age)
+    N_age_column_vector.shape = (9, 1)
+    # try:
+    eigen_values, eigen_vectors = np.linalg.eig(np.multiply(contact_probability_matrix, N_age_column_vector))
+    # except:
+    #    print(np.multiply(contact_probability_matrix, N_age_column_vector))
     dom_eig_val = max(eigen_values)
 
-    transmissibility = (((1 - probability_symptomatic
-                        ) * exit_rate_asymptomatic + probability_symptomatic * exit_rate_symptomatic) * r_zero
-                      ) / dom_eig_val
-    click.echo('transmissibility (beta) is {}'.format(round(transmissibility, 4)))
-    # TODO add here
-    # transmissibility = kwargs.get('transmissibility') #initial_recovered
+    # TODO CAN WE CHANGE R_ZERO TO ...
+    # transmissibility = (((1 - probability_symptomatic) * exit_rate_asymptomatic + probability_symptomatic * exit_rate_symptomatic) * r_zero) / dom_eig_val
+    transmissibility = kwargs.get('transmissibility')  # initial_recovered
 
     # Set initial conditions
     # spread initial infections (exposed individuals) across age groups equally
     initial_exposed = (initial_infected / 9) * np.ones(9)
     # compute remaining initial populations in susceptible compartments
-    initial_susceptible = age_groups - initial_exposed
+    initial_susceptible = N_age - initial_exposed
     # initiallise other compartments at zero
     initial_asymptomatic = np.zeros(9)
     initial_symptomatic = np.zeros(9)
@@ -547,15 +541,16 @@ def demodel(**kwargs):
     initial_dead = np.zeros(9)
 
     # Solve model over time from initial conditions, using ODE solver from scipy:
-    time_points = np.linspace(1, simulation_time, simulation_time)  # Grid of time points (in days)
+    time_points = [x for x in range(T)]  # np.linspace(0, T-1, T-1)  # Grid of time points (in days)
     initial_compartments = np.concatenate((initial_susceptible, initial_exposed, initial_asymptomatic,
                                            initial_symptomatic, initial_critical, initial_recovered, initial_dead),
                                           axis=0)
 
-    # Integrate the differential equations over the time grid, t.
+    # Integrate the differential equations over the time grid, t.   # TODO here ...
     integrals = odeint(differential_equations_model, initial_compartments, time_points, args=(
         transmissibility, contact_probability_matrix, exit_rate_exposed, exit_rate_asymptomatic, exit_rate_symptomatic,
-        exit_rate_critical, probability_symptomatic, probability_critical, probability_to_die, hospital_capacity))
+        exit_rate_critical, probability_symptomatic, probability_critical, probability_to_die, hospital_capacity,
+        contact_rate))
 
     # integrals is T by 63, needs to be split in compartments, each disease compartments has 9 age groups
     susceptible = integrals[:, 0:9].sum(axis=1)
@@ -568,15 +563,17 @@ def demodel(**kwargs):
 
     infected = exposed + asymptomatic + symptomatic + critical + dead + recovered
     active_infections = exposed + asymptomatic + symptomatic + critical
+    infectious_infections = asymptomatic + symptomatic
+
     click.echo('Peak of disease:')
     click.echo('peak critical = {}'.format(round(max(critical))))
     click.echo('peak infected = {}'.format(round(max(active_infections))))
     click.echo('time-period at peak = day {}'.format(np.argmax(active_infections)))
     click.echo('At end of simulation:')
-    click.echo('total infected = {} ({} percent of population)'.format(round(infected[simulation_time - 1]),
-                                                                       round(infected[simulation_time - 1] * 100 / population, 2)))
-    click.echo('total deceased = {}, ({} percent of infected)'.format(round(dead[simulation_time - 1]),
-                                                                      round(dead[simulation_time - 1] * 100 / infected[simulation_time - 1], 2)))
+    click.echo('total infected = {} ({} percent of population)'.format(round(infected[T - 1]),
+                                                                       round(infected[T - 1] * 100 / population, 2)))
+    click.echo('total deceased = {}, ({} percent of infected)'.format(round(dead[T - 1]),
+                                                                      round(dead[T - 1] * 100 / infected[T - 1], 2)))
 
     # export data
     pd.DataFrame({'s': susceptible, 'e': exposed, 'i1': asymptomatic,
